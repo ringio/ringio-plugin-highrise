@@ -1,0 +1,44 @@
+# Ringio Plugin for Highrise
+
+## About
+
+IMPORTANT: this project has just started, so the functionality is not complete yet.
+
+Rails application that synchronizes [Ringio][ringio] and [Highrise CRM][highrise].
+Uses the gems [ringioAPI][ringioAPI-github] and [highrise][highrise-github] to access both APIs and then maps the fields from each side properly. 
+
+
+## Installation and configuration
+
+    gem install rails
+
+Download the code from [ringio-plugin-highrise from github][ringio-plugin-highrise-github]
+
+Follow the installation and configuration instructions for the gems [ringioAPI][ringioAPI-github] and [highrise][highrise-github].
+
+Remember to run this in the root of ringio-plugin-highrise:
+
+    bundle install
+    bundle check    
+
+### Dependencies
+
+Rails 3, ringioAPI, highrise
+
+    
+## License
+
+Under the Mozilla Public License Version 1.1
+
+
+## Author
+
+[Álvaro Martín Fraguas][alvaro] - amartin@ringio.com
+
+
+[ringio]: http://www.ringio.com
+[highrise]: http://highrisehq.com
+[ringioAPI-github]: http://github.com/ringio/ringioAPI
+[highrise-github]: http://github.com/tapajos/highrise
+[ringio-plugin-highrise-github]: http://github.com/ringio/ringio-plugin-highrise
+[alvaro]: http://github.com/amartinfraguas

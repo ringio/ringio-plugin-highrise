@@ -1,0 +1,8 @@
+.bundle
+db/*.sqlite3
+log/*.log
+tmp/**/*
+.project
+config/initializers/ringio.rb
+config/initializers/highrise.rb
+
