@@ -14,7 +14,11 @@ Uses the gems [ringioAPI][ringioAPI-github] and [highrise][highrise-github] to a
 
 Download the code from [ringio-plugin-highrise from github][ringio-plugin-highrise-github]
 
-Follow the installation and configuration instructions for the gems [ringioAPI][ringioAPI-github] and [highrise][highrise-github].
+Follow the installation and configuration instructions for the gem [ringioAPI][ringioAPI-github].
+Follow the installation and configuration instructions for the gem [highrise][highrise-github], but don't set these 2 lines:
+
+    Highrise::Base.site = 'https://your_site.highrisehq.com'
+    Highrise::Base.user = 'api-auth-token'
 
 Remember to run this in the root of ringio-plugin-highrise:
 
