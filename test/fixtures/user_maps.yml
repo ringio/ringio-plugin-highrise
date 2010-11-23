@@ -1,0 +1,15 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  hr_user_id: 1
+  rg_user_id: 1
+  hr_token: MyString
+  rg_email: MyString
+  master_user: false
+
+two:
+  hr_user_id: 1
+  rg_user_id: 1
+  hr_token: MyString
+  rg_email: MyString
+  master_user: false

@@ -1,0 +1,43 @@
+<%= form_for(@account) do |f| %>
+  <% if @account.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@account.errors.count, "error") %> prohibited this account from being saved:</h2>
+
+      <ul>
+      <% @account.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <h4><%= t('account.hr_subdomain') %></h4>
+  <div class="field">
+	    http://www.<%= f.text_field :hr_subdomain %>.highrisehq.com
+	</div>
+
+	<h4><%= t('account.existing_data') %></h4>
+  <div class="field">
+    <%= f.radio_button(:sync_only_new_data,true) %>
+		<%= f.label :sync_only_new_data, t('account.sync_only_new_data_true') %><br />
+    <%= f.radio_button(:sync_only_new_data,false) %>
+		<%= f.label :sync_only_new_data, t('account.sync_only_new_data_false') %><br />
+  </div>
+  <h4><%= t('account.without_hr') %></h4>
+  <div class="field">
+    <%= f.radio_button(:sync_missing_hr_accounts,false) %>
+    <%= f.label :sync_missing_hr_accounts, t('account.sync_missing_hr_accounts_false') %><br />
+		<%= f.radio_button(:sync_missing_hr_accounts,true) %>
+    <%= f.label :sync_missing_hr_accounts, t('account.sync_missing_hr_accounts_true') %><br />
+  </div>
+  <h4><%= t('account.phone_calls') %></h4>
+  <div class="field">
+    <%= f.radio_button(:sync_missing_hr_contacts,false) %>
+    <%= f.label :sync_missing_hr_contacts, t('account.sync_missing_hr_contacts_false') %><br />
+    <%= f.radio_button(:sync_missing_hr_contacts,true) %>
+    <%= f.label :sync_missing_hr_contacts, t('account.sync_missing_hr_contacts_true') %><br />
+  </div>
+  <div class="actions">
+    <%= f.submit t('account.submit') %>
+  </div>
+<% end %>

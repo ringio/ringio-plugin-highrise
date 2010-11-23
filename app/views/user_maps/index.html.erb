@@ -1,0 +1,31 @@
+<h1>Listing user_maps</h1>
+
+<table>
+  <tr>
+    <th>Hr user</th>
+    <th>Rg user</th>
+    <th>Hr user token</th>
+    <th>Rg email</th>
+    <th>Master user</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @user_maps.each do |user_map| %>
+  <tr>
+    <td><%= user_map.hr_user_id %></td>
+    <td><%= user_map.rg_user_id %></td>
+    <td><%= user_map.hr_user_token %></td>
+    <td><%= user_map.rg_email %></td>
+    <td><%= user_map.master_user %></td>
+    <td><%= link_to 'Show', user_map %></td>
+    <td><%= link_to 'Edit', edit_user_map_path(user_map) %></td>
+    <td><%= link_to 'Destroy', user_map, :confirm => 'Are you sure?', :method => :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New User map', new_user_map_path %>

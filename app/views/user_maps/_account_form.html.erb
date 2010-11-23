@@ -1,0 +1,38 @@
+<div>
+
+	<tr>
+		<%= form_for(user_map, html = {:class => 'edit_user_map'}) do |f| %>
+		  <% if user_map.errors.any? %>
+		    <div id="error_explanation">
+		      <h2><%= pluralize(user_map.errors.count, "error") %> prohibited this user_map from being saved:</h2>
+		
+		      <ul>
+		      <% user_map.errors.full_messages.each do |msg| %>
+		        <li><%= msg %></li>
+		      <% end %>
+		      </ul>
+		    </div>
+		  <% end %>
+		
+	    <td>
+	      <%= f.text_field :hr_user_token %>
+	    </td>
+	    <td>
+	      <%= f.text_field :rg_email %>
+	    </td>
+	    <td>
+	      <%= f.radio_button(:master_user, true) %>
+	    </td>
+	    <td>
+	      <%= f.submit t('update') %>
+	      <%= t('test') %>
+	    </td>
+		<% end %>
+		  
+		<td>
+	    <%= button_to(t('delete'), user_map, :method => :delete) %>
+	  <td>
+	
+	</tr>
+
+</div>

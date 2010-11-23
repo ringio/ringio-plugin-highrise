@@ -1,0 +1,65 @@
+<% content_for :javascript do %>
+
+	function ajaxCreateUserMapForm() {
+	  $('#new_user_map').submit(function() {
+	    $(this).ajaxSubmit({
+	      target: '#user_maps_index',
+	      clearForm: true
+	    });
+	    return false
+	  });
+	}
+
+	function ajaxUpdateUserMapForm() {
+    $('form.edit_user_map').live('submit', function() {
+      $(this).ajaxSubmit({
+        target: '#user_maps_index',
+        clearForm: true
+      });
+      return false
+    });
+  }
+
+  function ajaxDeleteUserMapForm() {
+    $('form.button_to').live('submit', function() {
+      $(this).ajaxSubmit({
+        target: '#user_maps_index',
+        clearForm: true
+      });
+      return false
+    });
+  }
+  
+	$(function() {
+	  ajaxCreateUserMapForm()
+    ajaxUpdateUserMapForm()
+		ajaxDeleteUserMapForm()
+	})
+
+<%end%>
+
+<div>
+	<h4><%= t('account.tokens_and_users') %></h4>
+	<%= t('account.find_token') %> <%= link_to t('screenshot'), '/images/find_token.png' %>
+</div>
+
+<br/>
+
+<tr>
+  <th><%= t('user_map.hr_user_token') %></th>
+  <th><%= t('user_map.rg_user') %></th>
+  <th><%= t('user_map.master_user') %></th>
+  <th><%= t('actions') %></th>
+</tr>
+
+<br/>
+<br/>
+
+<%= render 'user_maps/form' %>
+
+<br/>
+
+<%= render 'user_maps/index' %>
+
+<%= render 'form' %>
+

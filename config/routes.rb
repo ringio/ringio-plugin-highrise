@@ -1,4 +1,6 @@
 RingioPluginHighrise::Application.routes.draw do
+  resources :user_maps
+
   resources :accounts
 
   # The priority is based upon order of creation:

@@ -1,9 +1,13 @@
-<!DOCTYPE html>
 <html>
 <head>
-  <title>RingioPluginHighrise</title>
-  <%= stylesheet_link_tag :all %>
-  <%= javascript_include_tag :defaults %>
+  <title>Ringio Plugin Highrise</title>
+  <%= stylesheet_link_tag "style" %>
+	<%= javascript_include_tag :all %>
+	<script type="text/javascript" charset="utf-8">
+		$(document).ready(function() {
+	    <%= yield :javascript %>
+	  });
+	</script>
   <%= csrf_meta_tag %>
 </head>
 <body>

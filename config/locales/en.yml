@@ -2,4 +2,28 @@
 # See http://github.com/svenfuchs/rails-i18n/tree/master/rails%2Flocale for starting points.
 
 en:
-  hello: "Hello world"
+  account:
+    existing_data: "Existing data"
+    find_token: "You can find your token in Highrise under My Info > API Token"
+    hr_subdomain: "Highrise Subdomain"
+    phone_calls: "Phone call sync"
+    sync_missing_hr_accounts_false: "Don't sync it with Highrise"
+    sync_missing_hr_accounts_true: "Sync it as if it was the data of the Master User (see Token table above)"
+    sync_missing_hr_contacts_false: "Sync only phone calls for known contacts in Highrise"
+    sync_missing_hr_contacts_true: "Sync all phone calls (a Highrise \"Unknown Contact\" will be created)"
+    sync_only_new_data_false: "Sync all data in Ringio since the account was created"
+    sync_only_new_data_true: "Sync only new data"
+    submit: "Save plugin settings"
+    tokens_and_users: "Tokens and Users"
+    without_hr: "Data from users without a Highrise account"
+  actions: "Actions"
+  create: "Create"
+  delete: "Delete"
+  screenshot: "Screenshot"
+  test: "Test"
+  update: "Update"
+  user_map:
+    hr_user_token: "Highrise Token"
+    master_user: "Master User"
+    rg_user: "Ringio User"
+        

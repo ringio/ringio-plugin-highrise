@@ -1,0 +1,13 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  hr_subdomain: MyString
+  sync_only_new_data: false
+  sync_missing_hr_accounts: false
+  sync_missing_hr_contacts: false
+
+two:
+  hr_subdomain: MyString
+  sync_only_new_data: false
+  sync_missing_hr_accounts: false
+  sync_missing_hr_contacts: false

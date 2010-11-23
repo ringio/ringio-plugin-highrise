@@ -5,4 +5,5 @@ tmp/**/*
 .project
 config/initializers/ringio.rb
 config/initializers/highrise.rb
+.tmp*
 
