@@ -1,7 +1,12 @@
 RingioPluginHighrise::Application.routes.draw do
+
   resources :user_maps
 
   resources :accounts
+  
+  match 'not_rest/create_account' => 'not_rest#create_account'
+  match 'not_rest/edit_account' => 'not_rest#edit_account'
+  match 'not_rest/destroy_account' => 'not_rest#destroy_account'
 
   # The priority is based upon order of creation:
   # first created -> highest priority.

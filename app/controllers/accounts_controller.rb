@@ -1,4 +1,6 @@
 class AccountsController < ApplicationController
+
+=begin
   # GET /accounts
   # GET /accounts.xml
   def index
@@ -21,6 +23,7 @@ class AccountsController < ApplicationController
     end
   end
 
+
   # GET /accounts/new
   # GET /accounts/new.xml
   def new
@@ -32,6 +35,8 @@ class AccountsController < ApplicationController
     end
   end
 
+=end
+
   # GET /accounts/1/edit
   def edit
     @account = Account.find(params[:id])
@@ -39,10 +44,11 @@ class AccountsController < ApplicationController
     @user_maps = UserMap.all
   end
 
+=begin
   # POST /accounts
   # POST /accounts.xml
   def create
-    @account = Account.new(params[:account])
+    @account = Account.new(:rg_account_id => params[:rg_account_id], :rg_account_token => params[:rg_account_token])
 
     respond_to do |format|
       if @account.save
@@ -54,6 +60,7 @@ class AccountsController < ApplicationController
       end
     end
   end
+=end
 
   # PUT /accounts/1
   # PUT /accounts/1.xml
@@ -71,6 +78,7 @@ class AccountsController < ApplicationController
     end
   end
 
+=begin
   # DELETE /accounts/1
   # DELETE /accounts/1.xml
   def destroy
@@ -82,4 +90,6 @@ class AccountsController < ApplicationController
       format.xml  { head :ok }
     end
   end
+=end
+
 end

@@ -1,4 +1,6 @@
 class UserMapsController < ApplicationController
+
+=begin
   # GET /user_maps
   # GET /user_maps.xml
   def index
@@ -36,6 +38,7 @@ class UserMapsController < ApplicationController
   def edit
     @user_map = UserMap.find(params[:id])
   end
+=end
 
   # POST /user_maps
   # POST /user_maps.xml
