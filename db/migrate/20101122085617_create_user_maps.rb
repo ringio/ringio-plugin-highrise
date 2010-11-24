@@ -5,7 +5,6 @@ class CreateUserMaps < ActiveRecord::Migration
       t.integer :hr_user_id
       t.integer :rg_user_id
       t.string :hr_user_token
-      t.string :rg_email
       t.boolean :master_user, :default => false
 
       t.timestamps
