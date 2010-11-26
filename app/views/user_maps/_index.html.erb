@@ -1,5 +1,3 @@
-<div id="user_maps_index">
-	<% @user_maps.each do |user_map| %>
-	  <%= render('user_maps/account_form', locals = {:user_map => user_map}) %>
-	<% end %>
-</div>
+<% @user_maps.each do |user_map| %>
+  <%= render(:partial => 'user_maps/account_form', :locals => {:account => @account, :user_map => user_map}) %>
+<% end %>

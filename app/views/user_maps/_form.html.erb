@@ -1,28 +1,28 @@
-<%= form_for(@user_map) do |f| %>
-  <% if @user_map.errors.any? %>
+<%= form_for([@account,@new_user_map]) do |f| %>
+  <% if @new_user_map.errors.any? %>
     <div id="error_explanation">
-      <h2><%= pluralize(@user_map.errors.count, "error") %> prohibited this user_map from being saved:</h2>
+      <h2><%= pluralize(@new_user_map.errors.count, "error") + t('user_map.prohibited_saving') %>:</h2>
 
       <ul>
-      <% @user_map.errors.full_messages.each do |msg| %>
-        <li><%= msg %></li>
-      <% end %>
+	      <% @new_user_map.errors.full_messages.each do |msg| %>
+	        <li><%= msg %></li>
+	      <% end %>
       </ul>
     </div>
   <% end %>
 
   <tr>
-	  <td>
-	    <%= f.text_field :hr_user_token %>
-	  </td>
-	  <td>
-	    <%= f.text_field :rg_user_id %>
-	  </td>
-	  <td>
-	    <%= f.radio_button(:master_user, true) %>
-	  </td>
-	  <td>
-	    <%= f.submit t('create') %>
-	  </td>
-	</tr>
+    <td>
+      <%= f.text_field :hr_user_token%>
+    </td>
+    <td>
+      <%= select(:user_map, :rg_user_id, @mails_for_select) %>
+    </td>
+    <td>
+      <%= f.radio_button(:master_user, true) %>
+    </td>
+    <td>
+      <%= f.submit t('create') %>
+    </td>
+  </tr>
 <% end %>

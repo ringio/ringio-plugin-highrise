@@ -1,8 +1,8 @@
 RingioPluginHighrise::Application.routes.draw do
 
-  resources :user_maps
-
-  resources :accounts
+  resources :accounts do
+    resources :user_maps    
+  end
   
   match 'not_rest/create_account' => 'not_rest#create_account'
   match 'not_rest/edit_account' => 'not_rest#edit_account'

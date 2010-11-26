@@ -4,19 +4,40 @@
 en:
   account:
     existing_data: "Existing data"
+    save_subdomain: "Save your Highrise Subdomain first to be able to map users and tokens."
     find_token: "You can find your token in Highrise under My Info > API Token"
     hr_subdomain: "Highrise Subdomain"
     phone_calls: "Phone call sync"
+    problem_updating: "A problem ocurred when trying to update your account."
+    prohibited_saving: " prohibited this account from being saved"
+    submit: "Save plugin settings"
+    successfully_updated: "Account was successfully updated."
     sync_missing_hr_accounts_false: "Don't sync it with Highrise"
     sync_missing_hr_accounts_true: "Sync it as if it was the data of the Master User (see Token table above)"
     sync_missing_hr_contacts_false: "Sync only phone calls for known contacts in Highrise"
     sync_missing_hr_contacts_true: "Sync all phone calls (a Highrise \"Unknown Contact\" will be created)"
     sync_only_new_data_false: "Sync all data in Ringio since the account was created"
     sync_only_new_data_true: "Sync only new data"
-    submit: "Save plugin settings"
     tokens_and_users: "Tokens and Users"
     without_hr: "Data from users without a Highrise account"
   actions: "Actions"
+  activerecord:
+    attributes:
+      account:
+        rg_account_id: "Ringio account id" 
+        hr_subdomain: "Highrise subdomain"
+        sync_only_new_data: "sync only new data"
+        sync_missing_hr_accounts: "sync missing Highrise accounts"
+        sync_missing_hr_contacts: "sync missing Highrise contacts"
+      user_map:
+        account_id: "plugin account id"
+        hr_user_id: "Highrise user id"
+        rg_user_id: "Ringio user id"
+        hr_user_token: "Highrise user token"
+        master_user: "master user"
+    models:
+      account: "plugin account"
+      user_map: "user map"
   create: "Create"
   delete: "Delete"
   screenshot: "Screenshot"
@@ -25,5 +46,7 @@ en:
   user_map:
     hr_user_token: "Highrise Token"
     master_user: "Master User"
+    prohibited_saving: " prohibited this user map from being saved"
     rg_user: "Ringio User"
+    successfully_created: "User map was successfully created."
         

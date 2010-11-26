@@ -1,19 +1,19 @@
 <%= form_for(@account) do |f| %>
   <% if @account.errors.any? %>
     <div id="error_explanation">
-      <h2><%= pluralize(@account.errors.count, "error") %> prohibited this account from being saved:</h2>
+      <h2><%= pluralize(@account.errors.count, "error") + t('account.prohibited_saving') %>:</h2>
 
       <ul>
-      <% @account.errors.full_messages.each do |msg| %>
-        <li><%= msg %></li>
-      <% end %>
+	      <% @account.errors.full_messages.each do |msg| %>
+	        <li><%= msg %></li>
+	      <% end %>
       </ul>
     </div>
   <% end %>
 
   <h4><%= t('account.hr_subdomain') %></h4>
   <div class="field">
-	    http://www.<%= f.text_field :hr_subdomain %>.highrisehq.com
+	    https://www.<%= f.text_field :hr_subdomain %>.highrisehq.com
 	</div>
 
 	<h4><%= t('account.existing_data') %></h4>

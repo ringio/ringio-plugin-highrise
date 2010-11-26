@@ -1,7 +1,7 @@
 <% content_for :javascript do %>
 
 	function ajaxCreateUserMapForm() {
-	  $('#new_user_map').submit(function() {
+	  $('#new_user_map').live('submit', function() {
 	    $(this).ajaxSubmit({
 	      target: '#user_maps_index',
 	      clearForm: true
@@ -13,8 +13,7 @@
 	function ajaxUpdateUserMapForm() {
     $('form.edit_user_map').live('submit', function() {
       $(this).ajaxSubmit({
-        target: '#user_maps_index',
-        clearForm: true
+        target: ('#' + $(this).parent().attr('id'))
       });
       return false
     });
@@ -23,8 +22,7 @@
   function ajaxDeleteUserMapForm() {
     $('form.button_to').live('submit', function() {
       $(this).ajaxSubmit({
-        target: '#user_maps_index',
-        clearForm: true
+        target: '#user_maps_index'
       });
       return false
     });
@@ -38,28 +36,36 @@
 
 <%end%>
 
-<div>
-	<h4><%= t('account.tokens_and_users') %></h4>
-	<%= t('account.find_token') %> <%= link_to t('screenshot'), '/images/find_token.png' %>
-</div>
+<p id="notice"><%= notice %></p>
+<p id="alert"><%= alert %></p>
 
-<br/>
+<% if @account.hr_subdomain.present? %>
 
-<tr>
-  <th><%= t('user_map.hr_user_token') %></th>
-  <th><%= t('user_map.rg_user') %></th>
-  <th><%= t('user_map.master_user') %></th>
-  <th><%= t('actions') %></th>
-</tr>
+	<div>
+		<h4><%= t('account.tokens_and_users') %></h4>
+		<%= t('account.find_token') %> <%= link_to t('screenshot'), '/images/find_token.png', :target => '_blank' %>
+	</div>
+	
+	<br/>
+	
+	<tr>
+	  <th><%= t('user_map.hr_user_token') %></th>
+	  <th><%= t('user_map.rg_user') %></th>
+	  <th><%= t('user_map.master_user') %></th>
+	  <th><%= t('actions') %></th>
+	</tr>
+	
+	<br/>
+	<br/>
+  <div id="user_maps_index">
+    <%= render 'user_maps/block_for_ajax' %>
+  </div>
 
-<br/>
-<br/>
+<% else %>
 
-<%= render 'user_maps/form' %>
+  <h4><%= t('account.save_subdomain') %></h4>
 
-<br/>
-
-<%= render 'user_maps/index' %>
+<% end %>
 
 <%= render 'form' %>
 

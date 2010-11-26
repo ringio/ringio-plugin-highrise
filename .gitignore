@@ -3,7 +3,7 @@ db/*.sqlite3
 log/*.log
 tmp/**/*
 .project
-config/initializers/ringio.rb
+config/initializers/ringioAPI.rb
 config/initializers/highrise.rb
 .tmp*
 
