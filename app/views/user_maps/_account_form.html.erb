@@ -1,38 +1,30 @@
 <div id="user_map_edit_<%= user_map.id.to_s %>">
-
-	<tr>
-		<%= form_for([account,user_map], html = {:class => 'edit_user_map'}) do |f| %>
-		  <% if user_map.errors.any? %>
-		    <div id="error_explanation">
-		      <h2><%= pluralize(user_map.errors.count, "error") + t('user_map.prohibited_saving') %>:</h2>
-		
-		      <ul>
-			      <% user_map.errors.full_messages.each do |msg| %>
-			        <li><%= msg %></li>
-			      <% end %>
-		      </ul>
-		    </div>
-		  <% end %>
-		
-	    <td>
-	      <%= f.text_field :hr_user_token %>
-	    </td>
-	    <td>
-	      <%= select(:user_map, :rg_user_id, @mails_for_select, :selected => user_map.rg_user_id) %>
-	    </td>
-	    <td>
-	      <%= f.radio_button(:master_user, true) %>
-	    </td>
-	    <td>
-	      <%= f.submit t('update') %>
-	      <%= t('test') %>
-	    </td>
-		<% end %>
-		  
-		<td>
-	    <%= button_to(t('delete'), [@account,user_map], :method => :delete) %>
-	  <td>
+	<%= form_for([account,user_map], html = {:class => 'edit_user_map'}) do |f| %>
+	  <% if user_map.errors.any? %>
+	    <div id="error_explanation">
+	      <h2><%= pluralize(user_map.errors.count, "error") + t('user_map.prohibited_saving') %>:</h2>
 	
-	</tr>
-
+	      <ul>
+		      <% user_map.errors.full_messages.each do |msg| %>
+		        <li><%= msg %></li>
+		      <% end %>
+	      </ul>
+	    </div>
+	  <% end %>
+	
+    <div class="highrise">
+      <%= f.text_field :hr_user_token %>
+    </div>
+    <div class="ringioUser">
+      <%= select :user_map, :rg_user_id, @mails_for_select, :selected => user_map.rg_user_id %>
+    </div>
+    <div class="radioCell">
+      <%= f.radio_button :master_user, true, :class => 'master_radio' %>
+    </div>
+    <div class="actions">
+      <%= f.submit t('update') %>
+    </div>
+  <% end %>
+    | <%= t('test') %> |    
+    <%= button_to t('delete'), [@account,user_map], :method => :delete %>
 </div>

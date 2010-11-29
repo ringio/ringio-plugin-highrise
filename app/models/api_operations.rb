@@ -1,7 +1,7 @@
 module ApiOperations
   def self.mails_for_select(rg_account_id)
     mails = []
-    RingioAPI::Feed.find(:one, :from => "/feed/accounts/" + rg_account_id.to_s + "/users" ).updated.each do |rg_user_id|
+    (RingioAPI::Feed.find(:one, :from => "/feeds/accounts/" + rg_account_id.to_s + "/users" )).updated.each do |rg_user_id|
       mails << [(RingioAPI::User.find(rg_user_id)).email,rg_user_id]
     end
     mails

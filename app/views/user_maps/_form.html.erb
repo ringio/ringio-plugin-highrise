@@ -1,28 +1,28 @@
-<%= form_for([@account,@new_user_map]) do |f| %>
-  <% if @new_user_map.errors.any? %>
-    <div id="error_explanation">
-      <h2><%= pluralize(@new_user_map.errors.count, "error") + t('user_map.prohibited_saving') %>:</h2>
+<div id="newRecordTable" class="hidden">
+	<%= render 'user_maps/heads' %>
+  <%= form_for([@account,@new_user_map]) do |f| %>
+    <% if @new_user_map.errors.any? %>
+      <div id="error_explanation">
+        <h2><%= pluralize(@new_user_map.errors.count, "error") + t('user_map.prohibited_saving') %>:</h2>
+        <ul>
+          <% @new_user_map.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
 
-      <ul>
-	      <% @new_user_map.errors.full_messages.each do |msg| %>
-	        <li><%= msg %></li>
-	      <% end %>
-      </ul>
+    <div class="highrise">
+      <%= f.text_field :hr_user_token%>
+    </div>
+    <div class="ringioUser">
+      <%= select :user_map, :rg_user_id, @mails_for_select %>
+    </div>
+    <div class="radioCell">
+      <%= f.radio_button :master_user, true %>
+    </div>
+    <div class="actions">
+      <%= f.submit t('create') %>
     </div>
   <% end %>
-
-  <tr>
-    <td>
-      <%= f.text_field :hr_user_token%>
-    </td>
-    <td>
-      <%= select(:user_map, :rg_user_id, @mails_for_select) %>
-    </td>
-    <td>
-      <%= f.radio_button(:master_user, true) %>
-    </td>
-    <td>
-      <%= f.submit t('create') %>
-    </td>
-  </tr>
-<% end %>
+</div>

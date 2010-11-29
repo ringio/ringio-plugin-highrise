@@ -1,71 +1,88 @@
 <% content_for :javascript do %>
 
-	function ajaxCreateUserMapForm() {
-	  $('#new_user_map').live('submit', function() {
-	    $(this).ajaxSubmit({
-	      target: '#user_maps_index',
-	      clearForm: true
-	    });
-	    return false
-	  });
-	}
-
-	function ajaxUpdateUserMapForm() {
-    $('form.edit_user_map').live('submit', function() {
-      $(this).ajaxSubmit({
-        target: ('#' + $(this).parent().attr('id'))
+  function ajaxCreateUserMapForm() {
+    $('#new_user_map').live('submit', function() {
+      $('#wait').show();
+  		$(this).ajaxSubmit({
+        target: '#ajax_block',
+        clearForm: true,
+  			success: function () {
+  			  $('#wait').hide();
+  			}
       });
+      return false
+    });
+  }
+
+  function ajaxUpdateUserMapForm() {
+    $('form.edit_user_map').live('submit', function() {
+  	  $('#wait').show();
+      $(this).ajaxSubmit({
+        target: ('#' + $(this).parent().attr('id')),
+        success: function () {
+          $('#wait').hide();
+        }
+  	  });
       return false
     });
   }
 
   function ajaxDeleteUserMapForm() {
     $('form.button_to').live('submit', function() {
-      $(this).ajaxSubmit({
-        target: '#user_maps_index'
+      $('#wait').show();
+  		$(this).ajaxSubmit({
+        target: '#ajax_block',
+  			success: function () {
+          $('#wait').hide();
+        }
       });
       return false
     });
   }
   
-	$(function() {
-	  ajaxCreateUserMapForm()
+  $(function() {
+    ajaxCreateUserMapForm()
     ajaxUpdateUserMapForm()
-		ajaxDeleteUserMapForm()
-	})
+  	ajaxDeleteUserMapForm()
+  })
+	
+  // manage master user radio buttons	
+  $('input.master_radio').live('click', function() {
+    $('input.master_radio').removeAttr('checked');
+  	$(this).attr('checked','checked');
+  	$(this).parent().submit();		
+  });
+	
+  $('#wait').hide();
+	
+	$('#newRecordButton').live('click', function() {
+    var tb = $('#newRecordTable');
+    if (tb.hasClass('hidden')){
+      tb.slideDown();
+      $('#newRecordButton').hide();
+    }
+  });
 
 <%end%>
 
-<p id="notice"><%= notice %></p>
-<p id="alert"><%= alert %></p>
+<div class="plugin">
 
-<% if @account.hr_subdomain.present? %>
-
-	<div>
-		<h4><%= t('account.tokens_and_users') %></h4>
-		<%= t('account.find_token') %> <%= link_to t('screenshot'), '/images/find_token.png', :target => '_blank' %>
-	</div>
+	<p id="notice"><%= notice %></p>
+	<p id="alert"><%= alert %></p>
 	
-	<br/>
+	<div id="wait"><%= t('wait_loading') %></div>
 	
-	<tr>
-	  <th><%= t('user_map.hr_user_token') %></th>
-	  <th><%= t('user_map.rg_user') %></th>
-	  <th><%= t('user_map.master_user') %></th>
-	  <th><%= t('actions') %></th>
-	</tr>
+	<% if @account.hr_subdomain.present? %>
 	
-	<br/>
-	<br/>
-  <div id="user_maps_index">
-    <%= render 'user_maps/block_for_ajax' %>
-  </div>
+	  <h4><%= t('account.tokens_and_users') %></h4>
+		<%= render 'user_maps/block_for_ajax' %>
+	
+	<% else %>
+	
+	  <h4><%= t('account.save_subdomain') %></h4>
+	
+	<% end %>
+	
+	<%= render 'form' %>
 
-<% else %>
-
-  <h4><%= t('account.save_subdomain') %></h4>
-
-<% end %>
-
-<%= render 'form' %>
-
+</div>

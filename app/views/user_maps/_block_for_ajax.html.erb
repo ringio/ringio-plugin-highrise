@@ -1,8 +1,10 @@
-<p id="alert"><%= alert %></p>
-
-<%= render 'user_maps/form' %>
-
-<br/>
-<br/>
-
-<%= render 'user_maps/index' %>
+<div id="ajax_block" class="tableContent">
+	<%= t('account.find_token') %>: <%= link_to t('screenshot'), '/images/find_token.png', :target => '_blank' %>
+	
+	<%= render 'user_maps/index' %>
+	
+	<br/>
+	<a href="javascript:void(0)" id="newRecordButton" class="button"><%= t('account.add_token') %></a>
+	
+  <%= render 'user_maps/form' %>	
+</div>

@@ -3,13 +3,14 @@
 
 en:
   account:
+    add_token: "Add Token"
     existing_data: "Existing data"
-    save_subdomain: "Save your Highrise Subdomain first to be able to map users and tokens."
     find_token: "You can find your token in Highrise under My Info > API Token"
     hr_subdomain: "Highrise Subdomain"
     phone_calls: "Phone call sync"
     problem_updating: "A problem ocurred when trying to update your account."
     prohibited_saving: " prohibited this account from being saved"
+    save_subdomain: "Save your Highrise Subdomain first to be able to map users and tokens."
     submit: "Save plugin settings"
     successfully_updated: "Account was successfully updated."
     sync_missing_hr_accounts_false: "Don't sync it with Highrise"
@@ -49,4 +50,5 @@ en:
     prohibited_saving: " prohibited this user map from being saved"
     rg_user: "Ringio User"
     successfully_created: "User map was successfully created."
+  wait_loading: "Loading, please wait..."
         

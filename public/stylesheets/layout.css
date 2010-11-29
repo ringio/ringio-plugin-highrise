@@ -1,0 +1,550 @@
+body {
+	width:972px;
+	margin: 0 auto;
+	text-align:center;
+	font: 11px "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", sans-serif;
+}
+
+#page {
+	text-align:left;
+}
+
+a { color:#36F;}
+a:hover { color:#79F;}
+
+.fontRed, .fieldGroup span.fontRed { color:#FF0000;}
+.fontGreen, .fieldGroup span.fontGreen { color:#4BB300;}
+
+.hidden { display:none;}
+.floatRight { float:right;}
+.floatLeft { float:left;}
+
+.clearAll { clear:both;}
+.block { display:block;}
+
+input, select { font: 11px "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", sans-serif; }
+
+/* 	########################
+	#####   HEADER    ######
+	######################## */
+header {
+	background:#0e5381 url('../images/img15/header_bg.png') repeat-x top left;
+	margin-bottom:30px;
+	color:#fff;
+	position:relative;
+    height:70px;
+}
+header .wrapper {
+	padding: 10px 10px 0 20px;
+}
+header  .mainInfo p, header  .mainInfo h1 {
+	width:200px;
+	float:left;
+	line-height:15px;
+	color:#87B1D7;
+	margin-bottom:12px;
+}
+header  h1.companyName{
+	width:280px;
+	padding-left:80px;
+	background:url('../images/img15/header_company_bg.png') no-repeat top left;
+	font-size:11px;
+	font-weight:normal;
+}
+header  .mainInfo p strong, header  .mainInfo h1 strong {
+	display:block;
+	color:#fff;
+	font-size:18px;
+	line-height:18px;
+}
+p.companyPhone strong {
+	display:block;
+	font-size:18px;
+	line-height:18px;
+	margin-left:-23px;
+	padding-left:23px;
+	background:url('../images/img15/sprite_small.png') no-repeat top left;
+}
+header #appLogo {
+	float:left;
+	padding:4px 3px;
+}
+header #appLogo img { float:left; margin-bottom:10px;}
+header #appLogo .claim {
+	color:#FEF54E;
+	display:block;
+	float:left;
+	padding-left:5px;
+	margin-top:4px;
+}
+header .mainInfo {
+	float:left;
+}
+header ul li{
+	float:left;
+}
+header .configList {
+	float:right;
+}
+header .configList li {
+	padding:0 0 0 5px;
+}
+
+header .configList a {
+	color:#fff;
+	
+}
+header .mainTabs {
+	position:absolute;
+	right:0;
+	bottom:0;
+}
+header .mainTabs li {
+	background:#fff url('../images/img15/mainTabs_bg.png') repeat-x left bottom;
+	font-size:12px;
+	font-weight:bold;
+	line-height:20px;
+	margin-right:7px;
+	
+	
+	-moz-border-radius: 4px 4px 0 0;
+	-ms-border-radius: 4px 4px 0 0;   
+	-webkit-border-radius: 4px 4px 0 0;
+	border-radius: 4px 4px 0 0;
+}
+header .mainTabs li:hover {
+	background:#D7E7F6;
+}
+header .mainTabs li  a {
+	color:#0E5381;
+	padding:0 7px;
+}
+header .mainTabs li.dashboard a {
+	background:url('../images/img15/sprite_small.png') no-repeat 5px -69px;
+	padding-left:20px;
+}
+header .mainTabs li.download a {
+	background:url('../images/img15/sprite_small.png') no-repeat 5px -89px;
+	padding-left:20px;
+}
+header .mainTabs ul ul { 
+	display:none;
+	position:absolute;
+	z-index:8;
+	margin-left:-1px;
+	border:solid 1px #0E5381;
+	border-top-width:0;
+	background:#D7E7F6;
+	width:130px;
+}
+header .mainTabs ul ul  li { 
+	display:block; 
+	clear:both;
+	float:none;
+	margin:0;
+	background:#D7E7F6 !important;
+}
+header .mainTabs ul ul  li a {
+	background:#D7E7F6 !important;
+	padding-left:5px !important;
+	display:block;
+}
+header .mainTabs ul ul  li a:hover {
+	color:#000;
+	background-color:#DFF0FF !important;
+}
+header .mainTabs:hover ul ul { 
+	display:block;
+}
+
+header .configList li.user {
+	background:url('../images/img15/sprite_small.png') no-repeat 0 -24px;
+	padding-left:25px;
+	line-height:18px;
+}
+header .configList li.logout a {
+	background:url('../images/img15/sprite_small.png') no-repeat 0 -49px;
+	padding-left:21px;
+	line-height:18px;
+}
+header .configList li.logout a:hover {
+	color:#FF7979;
+}
+
+/* 	########################
+	#####   FOOTER    ######
+	######################## */
+
+footer  .wrapper {
+	width:50%;
+	margin:10px auto 0 auto;	
+}	
+footer .poweredBy{
+	float:left;
+}
+footer li { float:left; padding-left:10px;}
+
+
+/* 	########################
+	#####   COLUMNS    #####
+	######################## */
+.twoColumns .left, .twoColumns .right { float:left;}	
+
+.twoColumns .left .wrapper {
+	padding:0 20px 0 0;
+}
+
+.twoColumns.ten .left{ width:10%; }
+	.twoColumns.ten .right{ width:90%; }
+.twoColumns.twenty .left{ width:20%; }
+	.twoColumns.twenty .right{ width:80%; }
+.twoColumns.thirty .left{ width:30%; }
+	.twoColumns.thirty .right{ width:70%; }
+.twoColumns.fourty .left{ width:40%; }
+	.twoColumns.fourty .right{ width:60%; }
+.twoColumns.fifty .left{ width:50%; }
+	.twoColumns.fifty .right{ width:50%; }
+.twoColumns.sixty .left{ width:60%; }
+	.twoColumns.sixty .right{ width:40%; }
+.twoColumns.sixtyFive .left{ width:65%; }
+	.twoColumns.sixtyFive .right{ width:35%; }
+.twoColumns.seventy .left{ width:70%; }
+	.twoColumns.seventy .right{ width:30%; }
+.twoColumns.eighty .left{ width:80%; }
+	.twoColumns.eighty .right{ width:20%; }
+.twoColumns.ninety .left{ width:90%; }
+	.twoColumns.ninety .right{ width:10%; }
+	
+.twoColumns .twoColumns.ten .left{ width:10%; }
+	.twoColumns .twoColumns.ten .right{ width:90%; }
+.twoColumns .twoColumns.twenty .left{ width:20%; }
+	.twoColumns .twoColumns.twenty .right{ width:80%; }
+.twoColumns .twoColumns.thirty .left{ width:30%; }
+	.twoColumns .twoColumns.thirty .right{ width:70%; }
+.twoColumns .twoColumns.fourty .left{ width:40%; }
+	.twoColumns .twoColumns.fourty .right{ width:60%; }
+.twoColumns .twoColumns.fifty .left{ width:50%; }
+	.twoColumns .twoColumns.fifty .right{ width:50%; }
+.twoColumns .twoColumns.sixty .left{ width:60%; }
+	.twoColumns .twoColumns.sixty .right{ width:40%; }
+.twoColumns .twoColumns.seventy .left{ width:70%; }
+	.twoColumns .twoColumns.seventy .right{ width:30%; }
+.twoColumns .twoColumns.eighty .left{ width:80%; }
+	.twoColumns .twoColumns.eighty .right{ width:20%; }
+.twoColumns .twoColumns.ninety .left{ width:90%; }
+	.twoColumns .twoColumns.ninety .right{ width:10%; }	
+
+.threeColumns .column { float:left; width:33.33%;}
+
+/* 	######################
+	#####   DIMENSIONS    #####
+	###################### */
+
+.ui1 { width:162px;}
+.ui2 { width:324px;}
+.ui3 { width:486px;}
+.ui4 { width:648px;}
+
+/* 	######################
+	#####   FORMS    #####
+	###################### */
+.fieldGroup { margin-bottom: 10px; clear: both;}
+
+.fieldGroup label {
+	float:left;
+	padding-top:3px;
+	color:#87B1D7;
+}
+
+.phoneSettings {
+       margin-left:50px;
+}
+body .phoneSettings  .checkboxPanel {
+    margin-left:122px;    
+}
+
+.phoneSettings label {
+    color:#064168;
+    text-align:right;
+    padding-right:5px;
+}
+
+.fieldGroup span {
+	float:left;
+	font-weight:bold;
+	color:#064168;
+	padding-left:3px;
+	line-height:20px;
+}
+.fieldGroup input {
+	border:solid 1px #87B1D7;
+	color:#064168;
+	height:18px;
+	cursor:default;
+	padding-left:1px;
+}
+.fieldGroup input[type=file] {
+	height:auto;
+	width:auto;
+	border-width:0;
+}
+.fieldGroup input:hover { border:solid 1px #0A6CAA;}
+.fieldGroup input:focus, .fieldGroup input.active { border:solid 1px #064168;}
+
+.checkboxPanel { float:left;}
+.checkboxPanel input {
+	height:auto;
+	width:20px !important;
+	float:left;
+	margin-top:5px;
+	border-width:0;
+}
+.checkboxPanel input:focus, .checkboxPanel input:hover	{ 
+	border-width:0;
+}
+.checkboxPanel label { color:#064168;}
+.checkboxPanel select { margin-left:10px;}
+/* SIZES */
+.label_ui05 label { width: 80px;}
+.label_ui075 label { width: 120px;}
+.label_ui1 label { width:160px;}
+
+.input_ui025 input, .input_ui025 select { width: 40px;}
+.input_ui05 input, .input_ui05 select { width: 80px;}
+.input_ui075 input, .input_ui075 select { width: 120px;}
+.input_ui1 input, .input_ui1 select { width: 160px;}
+.input_ui125 input, .input_ui125 select { width: 200px;}
+.input_ui15 input, .input_ui15 select { width: 240px;}
+
+input.input_ui025, select.input_ui025 { width: 40px;}
+input.input_ui05, select.input_ui05 { width: 80px;}
+input.input_ui075, select.input_ui075 { width: 120px;}
+input.input_ui1, select.input_ui1 { width: 160px;}
+input.input_ui125, select.input_ui125 { width: 200px;}
+input.input_ui15, select.input_ui15 { width: 240px;}
+
+.input_ui1 span { width: 160px;}
+
+
+.label_ui1 .actionPanel, .label_ui1 span.downNote  { padding-left:160px;}
+.labelRight .actionPanel { margin-left:10px;}
+
+.labelRight label { text-align:right; padding-right:10px;}
+.horizontalForm .fieldGroup label { float:none; display:block;}
+.threeColumns .fieldGroup {
+	width:33%;
+	float:left;
+	clear:none;
+}
+
+.fieldGroup span.note {
+	float:none;
+	font-weight:normal;
+	color:#87B1D7;
+}
+
+.fieldGroup span.downNote {
+	float:none;
+	font-weight:normal;
+	color:#87B1D7;
+	display:block;
+	width:auto;
+	line-height:14px;
+	margin-bottom:3px;
+}
+
+.fieldGroup span.fieldError {
+	float:none;
+	font-weight:normal;
+	color:#F00;
+	background:url("../images/img15/sprite_small.png") no-repeat 1px -207px;
+	padding-left:25px;
+	display:inline-block;
+	line-height:19px;
+}
+.fieldGroup input.fieldError {
+	border:solid 1px #f00
+}
+
+
+
+/* 	######################
+	####   BUTTONS    ####
+	###################### */
+.actionPanel {
+	margin-top:10px;
+    margin-bottom:10px;
+}
+.button {
+	float:left;
+	margin-right:5px;
+    margin-bottom:3px;
+	background:#4F92C3 url('../images/img15/button.png') repeat-x left bottom;
+	border:solid 1px #0A6CAA;
+	
+	color:#fff;
+	line-height:21px;
+	padding:0 10px;
+	
+	-moz-border-radius: 4px;
+	-ms-border-radius: 4px;   
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+}
+
+.button span { color:#fff; font-weight:normal;}
+
+.button:hover {
+	color:#fff;
+	background-position:left top;
+}
+
+form .button span { width:auto;}
+
+.floatRight .button { margin-right:0; margin-left:5px;}
+
+.secondButton {
+	float:left;
+	line-height:22px;
+	margin:0 10px;
+}
+.secondButton:hover { text-decoration:underline;}
+.secondButton span {
+	color:#36F;
+	font-weight:normal;
+}
+
+.buttonWhite {
+	float:left;
+	margin-right:5px;
+	background:#D8E8F6 url('../images/img15/smallButtonWhite.png') repeat-x left bottom;
+	border:solid 1px #0A6CAA;
+	
+	color:#064168;
+	line-height:21px;
+	padding:0 10px;
+	
+	-moz-border-radius: 4px;
+	-ms-border-radius: 4px;   
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+}
+.buttonWhite span {
+	font-weight:normal;
+}
+.buttonWhite:hover { color:#000; background-position: left top; border-color:#064168;}
+.floatRight .buttonWhite { margin-right:0; margin-left:5px;}
+
+.smallButtonWhite {
+	float:left;
+	margin-right:5px;
+	background:#D8E8F6 url('../images/img15/smallButtonWhite.png') repeat-x left bottom;
+	border:solid 1px #0A6CAA;
+	
+	color:#064168;
+	padding:0 5px;
+	
+	-moz-border-radius: 4px;
+	-ms-border-radius: 4px;   
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+}
+.smallButtonWhite span {
+	font-weight:normal;
+	line-height:15px;
+	padding:0;
+}
+.smallButtonWhite:hover { color:#000; background-position: left top; border-color:#064168;}
+.floatRight .smallButtonWhite { margin-right:0; margin-left:5px;}
+
+.smallButtonBlue {
+	float:left;
+	margin-right:5px;
+	background:#4F92C3 url('../images/img15/button.png') repeat-x left bottom;
+	border:solid 1px #0A6CAA;
+	
+	color:#fff;
+	padding:0 5px;
+	
+	-moz-border-radius: 4px;
+	-ms-border-radius: 4px;   
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+}
+.smallButtonBlue span {
+	color:#fff;
+	font-weight:normal;
+	line-height:15px;
+	padding:0;
+}
+.smallButtonBlue:hover { color:#fff; background-position: left top; }
+.floatRight .smallButtonBlue { margin-right:0; margin-left:5px;}
+
+/* 	####################
+	####   MODAL    ####
+	#################### */
+.simplemodal-overlay {
+	background-color:#333;
+	-moz-opacity:.30; 
+	filter:alpha(opacity=30); 
+	opacity:.30;
+}
+.simplemodal-container {
+	border:solid 4px #0A6CAA;
+	background-color:#fff;
+	
+	
+	-moz-border-radius: 4px;
+	-ms-border-radius: 4px;   
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+	
+	
+	-webkit-box-shadow: 1px 1px 7px #000;
+	-moz-box-shadow: 1px 1px 7px #000;
+	box-shadow: 1px 1px 7px #000;
+}
+.simplemodal-container .modalHeader {
+	background-color:#0A6CAA;
+	display:block;
+}
+.simplemodal-container .modalHeader h2 {
+	color:#fff;
+	font-size:12px;
+	padding-left:10px;
+	line-height:20px;
+	padding-bottom:3px;
+}
+
+#simplemodal-container a.modalCloseImg {
+	background:url("../images/img15/sprite_small.png") no-repeat -2px -230px;
+	width:18px;
+	height:19px;
+	display:inline;
+	z-index:3200;
+	position:absolute;
+	top:0;
+	right:0;
+	cursor:pointer;
+}
+
+.SI-FILES-STYLIZED label.cabinet
+{
+    width: 20px;
+    height: 22px;    
+    background: url(../images/attach-grey.png) 0 0 no-repeat;
+
+    display: block;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.SI-FILES-STYLIZED label.cabinet input.file
+{
+    position: relative;
+    height: 100%;
+    width: auto;
+    opacity: 0;
+    -moz-opacity: 0;
+    filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);
+}

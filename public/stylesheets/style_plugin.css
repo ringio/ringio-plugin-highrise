@@ -1,0 +1,87 @@
+.plugin {
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	border-radius:4px;
+	border:1px solid #8EBBE4;
+	margin:10px 0;
+	padding:5px;
+	width:600px;
+
+}
+.plugin h4 {
+	clear:both;
+	float:left;
+	width:150px;
+	font-weight:bold;
+}
+.plugin caption {
+	text-transform:uppercase;
+	font-weight:bold;
+}
+.plugin .sectionContent {
+	float:left;
+	margin-bottom:20px;
+	width:440px;
+}
+.plugin .tableContent {
+	clear:both;
+}
+.plugin .highrise input  {
+	width:230px;
+}
+.plugin .ringioUser select  {
+  width:120px;
+}
+
+.plugin #user_maps_index {
+	margin-top:20px;
+}
+.plugin #newRecordTable , #newRecordButton{
+	margin-bottom:20px;
+}
+
+.plugin input {
+	border:1px solid #87B1D7;
+	color:#064168;
+	cursor:default;
+	height:18px;
+	padding-left:1px;
+}
+.plugin table th {
+	padding-left:3px;
+}
+.plugin table .highrise {
+	width:33%;
+}
+.plugin table .ringioUser {
+	width:20%;
+}
+.plugin table .actions input {
+	border-width:0;
+	color:#36F;
+	background-color:transparent;
+	cursor:pointer;
+}
+.plugin .radioCell {
+	text-align:center;
+	width:15%;
+}
+.checkboxPanel label {
+	float:none;
+	
+}
+
+.plugin input.button {
+	height:21px;
+	cursor:pointer;
+	color:#fff;
+}
+
+.plugin #savePlugin {
+	clear:both;
+	padding-left:150px;
+}
+
+.plugin .fieldGroup {
+	margin-bottom:5px;
+}

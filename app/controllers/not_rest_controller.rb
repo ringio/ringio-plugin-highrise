@@ -17,15 +17,15 @@ class NotRestController < ApplicationController
   
   # GET /not_rest/edit_account?rg_account_id={Ringio Account Id}
   def edit_account
-    account = Account.find_by_rg_account_id(params[:rg_account_id])
+    account = Account.find_by_rg_account_id params[:rg_account_id]
     account_id = account.nil? ? nil : account.id
     
-    redirect_to(:controller => 'accounts', :action => 'edit', :id => account_id)
+    redirect_to :controller => 'accounts', :action => 'edit', :id => account_id
   end
   
   # GET /not_rest/destroy_account?rg_account_id={Ringio Account Id}
   def destroy_account
-    @account = Account.find_by_rg_account_id(params[:rg_account_id])
+    @account = Account.find_by_rg_account_id params[:rg_account_id]
     @account.destroy
 
     respond_to do |format|

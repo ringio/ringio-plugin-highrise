@@ -43,10 +43,10 @@ class UserMapsController < ApplicationController
   # POST /user_maps
   # POST /user_maps.xml
   def create
-    @new_user_map = UserMap.new(params[:user_map])
-    @account = Account.find(params[:account_id])
+    @new_user_map = UserMap.new params[:user_map]
+    @account = Account.find params[:account_id]
     @new_user_map.account = @account
-    @mails_for_select = ApiOperations.mails_for_select(@account.rg_account_id)
+    @mails_for_select = ApiOperations.mails_for_select @account.rg_account_id
 
     respond_to do |format|
       if @new_user_map.save
@@ -74,13 +74,13 @@ class UserMapsController < ApplicationController
   # PUT /user_maps/1
   # PUT /user_maps/1.xml
   def update
-    prepare(params[:id])
+    prepare params[:id]
 
     respond_to do |format|
-      if @user_map.update_attributes(params[:user_map])
+      if @user_map.update_attributes params[:user_map]
         if request.xhr?
           @user_maps = UserMap.all
-          format.html { render(:partial => "account_form", :locals => {:account => @account, :user_map => @user_map}) }        
+          format.html { render :partial => "account_form", :locals => {:account => @account, :user_map => @user_map} }        
         else
           format.html { head :ok }
           format.xml  { head :ok }
@@ -88,7 +88,7 @@ class UserMapsController < ApplicationController
       else
         if request.xhr?
           @user_maps = UserMap.all
-          format.html { render(:partial => "account_form", :locals => {:account => @account, :user_map => @user_map}) }        
+          format.html { render :partial => "account_form", :locals => {:account => @account, :user_map => @user_map} }        
         else
           format.html { head :unprocessable_entity }
           format.xml  { render :xml => @user_map.errors, :status => :unprocessable_entity }
@@ -100,7 +100,7 @@ class UserMapsController < ApplicationController
   # DELETE /user_maps/1
   # DELETE /user_maps/1.xml
   def destroy
-    prepare(params[:id])
+    prepare params[:id]
 
     @user_map.destroy
     
@@ -117,9 +117,9 @@ class UserMapsController < ApplicationController
   
   private
     def prepare(user_map_id)
-      @user_map = UserMap.find(user_map_id)
+      @user_map = UserMap.find user_map_id
       @account = @user_map.account
-      @mails_for_select = ApiOperations.mails_for_select(@account.rg_account_id)
+      @mails_for_select = ApiOperations.mails_for_select @account.rg_account_id
       @new_user_map = UserMap.new
       @new_user_map.account = @account
     end

@@ -1,3 +1,4 @@
+<%= render 'user_maps/heads' %>
 <% @user_maps.each do |user_map| %>
-  <%= render(:partial => 'user_maps/account_form', :locals => {:account => @account, :user_map => user_map}) %>
+  <%= render :partial => 'user_maps/account_form', :locals => {:account => @account, :user_map => user_map} %>
 <% end %>

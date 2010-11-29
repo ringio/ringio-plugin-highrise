@@ -1,0 +1,88 @@
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p,
+blockquote, pre, a, abbr, acronym, address, big,
+cite, code, del, dfn, em, font, img,
+ins, kbd, q, s, samp, small, strike,
+strong, sub, sup, tt, var, dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+center, u, b, i {
+     margin: 0;
+     padding: 0;
+     border: 0;
+     outline: 0;
+     font-weight: normal;
+     font-style: normal;
+     font-size: 100%;
+     font-family: inherit;
+     vertical-align: baseline;
+	 text-align:left;
+}
+strong {
+	font-weight:bold;
+}
+
+body {
+     line-height: 1
+}
+
+:focus {
+     outline: 0
+}
+
+ol, ul {
+     list-style: none
+}
+
+table {
+     border-collapse: collapse;
+     border-spacing: 0
+}
+
+blockquote:before, blockquote:after, q:before, q:after {
+     content: ""
+}
+
+blockquote, q {
+     quotes: "" ""
+}
+
+input, textarea {
+     margin: 0;
+     padding: 0
+}
+
+hr {
+     margin: 0;
+     padding: 0;
+     border: 0;
+     color: #000;
+     background-color: #000;
+     height: 1px
+}
+
+/* BOX MODEL */
+div:after,
+ul:after, form:after, section:after, header:after, article:after, p:after
+	{content:"."; display:block; clear:both; height:0; visibility:hidden;}
+	
+/* end of BOX MODEL */
+h1 ,h2,h3 {font-weight:bold; display:block; clear:both; color:#0E5381;}
+h1 { font-size:25px; line-height:25px; }
+h2 { font-size:18px; }
+h3 { font-size:14px; line-height:14px; margin-top:10px;}
+
+/* HTML5 tags */
+header, section, footer,
+aside, nav, article, figure, time {
+	display: block;
+	text-align:left;
+}
+
+a {
+	text-decoration:none;
+}
+p, li {
+	cursor:default;
+}
+p { margin-bottom:5px;}
