@@ -1,4 +1,4 @@
-<div id="user_map_edit_<%= user_map.id.to_s %>">
+<div id="user_map_edit_<%= user_map.id.to_s %>" class="tableRecord">
 	<%= form_for([account,user_map], html = {:class => 'edit_user_map'}) do |f| %>
 	  <% if user_map.errors.any? %>
 	    <div id="error_explanation">
@@ -12,19 +12,22 @@
 	    </div>
 	  <% end %>
 	
-    <div class="highrise">
-      <%= f.text_field :hr_user_token %>
-    </div>
-    <div class="ringioUser">
-      <%= select :user_map, :rg_user_id, @mails_for_select, :selected => user_map.rg_user_id %>
-    </div>
-    <div class="radioCell">
-      <%= f.radio_button :master_user, true, :class => 'master_radio' %>
-    </div>
-    <div class="actions">
-      <%= f.submit t('update') %>
-    </div>
+	    <span class="highrise">
+	      <%= f.text_field :hr_user_token %>
+	    </span>
+	    <span class="ringioUser">
+	      <%= select :user_map, :rg_user_id, @mails_for_select, :selected => user_map.rg_user_id %>
+	    </span>
+	    <span class="radioCell">
+	      <%= f.radio_button :master_user, true, :class => 'master_radio' %>
+	    </span>
+	    <span class="actions">
+	      <%= f.submit t('update') %>
+	    </span>
+
   <% end %>
     | <%= t('test') %> |    
     <%= button_to t('delete'), [@account,user_map], :method => :delete %>
+  
+	
 </div>

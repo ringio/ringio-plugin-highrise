@@ -6,6 +6,7 @@
 	margin:10px 0;
 	padding:5px;
 	width:600px;
+	font-size:11px;
 
 }
 .plugin h4 {
@@ -50,27 +51,30 @@
 .plugin table th {
 	padding-left:3px;
 }
-.plugin table .highrise {
-	width:33%;
+.plugin span.highrise {
+	width:233px;
 }
-.plugin table .ringioUser {
-	width:20%;
+.plugin span.ringioUser {
+	width:125px;
 }
-.plugin table .actions input {
+.plugin span.actions {
+	text-align:center;
+}
+.plugin span.actions input, .plugin .button_to input {
 	border-width:0;
 	color:#36F;
 	background-color:transparent;
 	cursor:pointer;
 }
-.plugin .radioCell {
+.plugin span.radioCell {
 	text-align:center;
-	width:15%;
+	width:80px;
 }
 .checkboxPanel label {
 	float:none;
 	
 }
-
+.plugin .button_to input { padding-top:7px; height:22px;}
 .plugin input.button {
 	height:21px;
 	cursor:pointer;
@@ -84,4 +88,44 @@
 
 .plugin .fieldGroup {
 	margin-bottom:5px;
+}
+
+div.thead {
+	background: #8EBBE4;
+	color:#fff;
+	margin-top:10px;
+}
+ div.tableRecord {
+ 	border-bottom:solid 1px #8EBBE4;
+	
+ }
+form.edit_user_map {
+	float:left;
+	
+}
+div.thead span, div.tableRecord span {
+	float:left;
+	padding:5px 0 5px 3px;
+	
+	
+}
+
+#wait {	  
+    background: url("../images/preloader.gif") no-repeat  10px 5px #FFFFFF;
+    border: 1px solid #8EBBE4;
+    float: left;
+    font-size: 13px;
+    left: 50%;
+    line-height: 36px;
+    padding: 3px 20px 3px 55px;
+    position: absolute;
+    top: 50%;
+		
+		-moz-border-radius: 7px;
+    webkit-border-radius: 7px;
+    border-radius: 7px;
+		
+    -moz-box-shadow: 0 0 10px #CCC;
+    webkit-box-shadow: 0 0 10px #CCC;
+    box-shadow: 0 0 10px #CCC;	
 }
