@@ -8,6 +8,9 @@
         clearForm: true,
   			success: function () {
   			  $('#wait').hide();
+					if ($('#error_explanation').length > 0) {
+					  $('#newRecordButton').click();
+					}
   			}
       });
       return false
@@ -62,6 +65,10 @@
       $('#newRecordButton').hide();
     }
   });
+
+  if ($('#notice').text().length > 0) {
+    $('#notice').animate({}, 500).delay(3000).fadeOut('slow');
+  }
 
 <%end%>
 

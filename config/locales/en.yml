@@ -43,6 +43,7 @@ en:
   delete: "Delete"
   screenshot: "Screenshot"
   test: "Test"
+  test_and_update: "Test & Update"
   update: "Update"
   user_map:
     hr_user_token: "Highrise Token"
@@ -50,5 +51,6 @@ en:
     prohibited_saving: " prohibited this user map from being saved"
     rg_user: "Ringio User"
     successfully_created: "User map was successfully created."
+    unauthorized_token: "is not authorized"
   wait_loading: "Loading, please wait..."
         
