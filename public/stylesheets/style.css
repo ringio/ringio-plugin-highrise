@@ -47,15 +47,17 @@ form.button_to div {
   display: table;
 }
 
-#error_explanation {
+#error_explanation, #error_explanation_set {
   border: 1px solid #FF3838;
   color: #666666;
   margin-bottom: 10px;
   padding: 5px;
-	-moz-border-radius: 4px 4px 4px 4px;
+	-moz-border-radius: 4px;
+	webkit-border-radius: 4px;
+	border-radius: 4px;
 }
 
-#error_explanation h2 {
+#error_explanation h2, #error_explanation_set h2 {
   background: url("../images/img15/msg_ko.png") no-repeat scroll left top transparent;
   border-bottom: 1px solid #FF3838;
   color: #FF3838;
@@ -64,7 +66,8 @@ form.button_to div {
   padding: 0 0 5px 40px;
 }
 
-#error_explanation ul li {
+#error_explanation ul li, #error_explanation_set ul li {
   font-size: 12px;
   list-style: square;
+	margin-left: 40px;
 }

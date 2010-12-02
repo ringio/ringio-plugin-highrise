@@ -4,6 +4,5 @@ log/*.log
 tmp/**/*
 .project
 config/initializers/ringioAPI.rb
-config/initializers/highrise.rb
 .tmp*
 

@@ -10,6 +10,7 @@
   			  $('#wait').hide();
 					if ($('#error_explanation').length > 0) {
 					  $('#newRecordButton').click();
+						move_error();
 					}
   			}
       });
@@ -24,6 +25,9 @@
         target: ('#' + $(this).parent().attr('id')),
         success: function () {
           $('#wait').hide();
+					if ($('#error_explanation').length > 0) {
+            move_error();
+          }
         }
   	  });
       return false
@@ -37,6 +41,9 @@
         target: '#ajax_block',
   			success: function () {
           $('#wait').hide();
+					if ($('#error_explanation').length > 0) {
+            move_error();
+          }
         }
       });
       return false
@@ -57,6 +64,7 @@
   });
 	
   $('#wait').hide();
+	$('#error_container').hide();
 	
 	$('#newRecordButton').live('click', function() {
     var tb = $('#newRecordTable');
@@ -69,6 +77,24 @@
   if ($('#notice').text().length > 0) {
     $('#notice').animate({}, 500).delay(3000).fadeOut('slow');
   }
+	
+	if ($('#error_explanation').length > 0) {
+	  move_error();
+	}
+	
+	function move_error() {
+    $('#error_container').show();
+    $('#error_container').append($('#error_explanation'));
+    $('#error_explanation').attr('id','error_explanation_set');
+	}
+	
+	$('#error_container').ajaxSuccess(function () {
+	  if ($('#error_explanation').length > 0) {
+      $('#error_explanation').addClass('error_div');
+			$('#error_container').show();
+      $('#error_container').append($('#error_explanation'));
+    }
+	});
 
 <%end%>
 
@@ -76,6 +102,7 @@
 
 	<p id="notice"><%= notice %></p>
 	<p id="alert"><%= alert %></p>
+	<div id="error_container" ></div>
 	
 	<div id="wait"><%= t('wait_loading') %></div>
 	
@@ -86,8 +113,9 @@
 	
 	<% else %>
 	
-	  <h4><%= t('account.save_subdomain') %></h4>
-	
+	  <h3><%= t('account.save_subdomain') %></h3>
+    <br/>
+
 	<% end %>
 	
 	<%= render 'form' %>

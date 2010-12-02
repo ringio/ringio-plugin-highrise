@@ -1,6 +1,7 @@
 class UserMap < ActiveRecord::Base
 
   belongs_to :account
+  has_many :contact_maps, :dependent => :destroy
   
   validates_presence_of :account_id, :hr_user_id, :rg_user_id, :hr_user_token 
   validates_uniqueness_of :hr_user_id, :rg_user_id, :hr_user_token
@@ -39,9 +40,17 @@ class UserMap < ActiveRecord::Base
     end
   end
   
+  def update_hr_last_synchronized_at
+    # create a fake contact, set timestamp to the created_at in the response and then destroy that fake contact
+    timestamp_person = Highrise::Person.new(:first_name => 'Ringio Check')
+    timestamp_person.save
+    self.hr_last_synchronized_at = timestamp_person.created_at
+    timestamp_person.destroy
+  end
+  
   private
     def hr_user
-      ApiOperations.set_hr_base self.account.hr_subdomain, self.hr_user_token
+      ApiOperations.set_hr_base self
 
       begin
         user_hr = Highrise::User.me

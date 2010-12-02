@@ -10,7 +10,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20101122085617) do
+ActiveRecord::Schema.define(:version => 20101201160623) do
 
   create_table "accounts", :force => true do |t|
     t.integer  "rg_account_id"
@@ -22,12 +22,23 @@ ActiveRecord::Schema.define(:version => 20101122085617) do
     t.datetime "updated_at"
   end
 
+  create_table "contact_maps", :force => true do |t|
+    t.integer  "user_map_id"
+    t.integer  "rg_contact_id"
+    t.integer  "hr_party_id"
+    t.string   "hr_party_type"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
   create_table "user_maps", :force => true do |t|
     t.integer  "account_id"
     t.integer  "hr_user_id"
     t.integer  "rg_user_id"
     t.string   "hr_user_token"
-    t.boolean  "master_user",   :default => false
+    t.boolean  "master_user",             :default => false
+    t.integer  "rg_last_timestamp",       :default => 0
+    t.datetime "hr_last_synchronized_at", :default => '1900-01-01 00:14:44'
     t.datetime "created_at"
     t.datetime "updated_at"
   end

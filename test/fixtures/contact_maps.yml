@@ -1,0 +1,13 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  user_map_id: 1
+  rg_contact_id: 1
+  hr_party_id: 1
+  hr_party_type: MyString
+
+two:
+  user_map_id: 1
+  rg_contact_id: 1
+  hr_party_id: 1
+  hr_party_type: MyString

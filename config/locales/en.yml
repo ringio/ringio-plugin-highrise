@@ -10,7 +10,7 @@ en:
     phone_calls: "Phone call sync"
     problem_updating: "A problem ocurred when trying to update your account."
     prohibited_saving: " prohibited this account from being saved"
-    save_subdomain: "Save your Highrise Subdomain first to be able to map users and tokens."
+    save_subdomain: "Save your Highrise Subdomain first to be able to map users and tokens"
     submit: "Save plugin settings"
     successfully_updated: "Account was successfully updated."
     sync_missing_hr_accounts_false: "Don't sync it with Highrise"
