@@ -7,11 +7,7 @@
         target: '#ajax_block',
         clearForm: true,
   			success: function () {
-  			  $('#wait').hide();
-					if ($('#error_explanation').length > 0) {
-					  $('#newRecordButton').click();
-						move_error();
-					}
+  			  createSuccess();
   			}
       });
       return false
@@ -24,10 +20,7 @@
       $(this).ajaxSubmit({
         target: ('#' + $(this).parent().attr('id')),
         success: function () {
-          $('#wait').hide();
-					if ($('#error_explanation').length > 0) {
-            move_error();
-          }
+          updateOrDeleteSuccess();
         }
   	  });
       return false
@@ -40,16 +33,32 @@
   		$(this).ajaxSubmit({
         target: '#ajax_block',
   			success: function () {
-          $('#wait').hide();
-					if ($('#error_explanation').length > 0) {
-            move_error();
-          }
+          updateOrDeleteSuccess();
         }
       });
       return false
     });
   }
   
+	function updateOrDeleteSuccess() {
+	  $('#wait').hide();
+    if ($('#error_explanation').length > 0) {
+      move_error();
+    } else {
+		  $('#error_container').hide();
+		}
+	}
+	
+	function createSuccess() {
+    $('#wait').hide();
+    if ($('#error_explanation').length > 0) {
+      $('#newRecordButton').click();
+      move_error();
+    } else {
+      $('#error_container').hide();
+    }
+  }
+	
   $(function() {
     ajaxCreateUserMapForm()
     ajaxUpdateUserMapForm()
