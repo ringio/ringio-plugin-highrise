@@ -6,6 +6,5 @@ class Account < ActiveRecord::Base
   validates_uniqueness_of :rg_account_id, :hr_subdomain
   
   SYNC_PERIOD_MINUTES = 60
-  MINUTES_SYNCHRONIZE_MARGIN = 10
   
 end

@@ -1,45 +1,5 @@
 class UserMapsController < ApplicationController
 
-=begin
-  # GET /user_maps
-  # GET /user_maps.xml
-  def index
-    @user_maps = UserMap.all
-
-    respond_to do |format|
-      format.html # index.html.erb
-      format.xml  { render :xml => @user_maps }
-    end
-  end
-
-  # GET /user_maps/1
-  # GET /user_maps/1.xml
-  def show
-    @user_map = UserMap.find(params[:id])
-
-    respond_to do |format|
-      format.html # show.html.erb
-      format.xml  { render :xml => @user_map }
-    end
-  end
-
-  # GET /user_maps/new
-  # GET /user_maps/new.xml
-  def new
-    @user_map = UserMap.new
-
-    respond_to do |format|
-      format.html # new.html.erb
-      format.xml  { render :xml => @user_map }
-    end
-  end
-
-  # GET /user_maps/1/edit
-  def edit
-    @user_map = UserMap.find(params[:id])
-  end
-=end
-
   # POST /user_maps
   # POST /user_maps.xml
   def create

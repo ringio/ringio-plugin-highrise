@@ -6,10 +6,9 @@ class NotRestController < ApplicationController
 
     respond_to do |format|
       if @account.save
-        format.html { head :ok } # redirect_to(@account, :notice => 'Account was successfully created.') }
-        format.xml  { head :ok } # render :xml => @account, :status => :created, :location => @account }
+        format.html { head :ok }
+        format.xml  { head :ok }
       else
-        # format.html { render :action => "new" }
         format.xml  { render :xml => @account.errors, :status => :unprocessable_entity }
       end
     end
@@ -29,7 +28,7 @@ class NotRestController < ApplicationController
     @account.destroy
 
     respond_to do |format|
-      format.html { head :ok } # redirect_to(accounts_url) }
+      format.html { head :ok }
       format.xml  { head :ok }
     end
   end

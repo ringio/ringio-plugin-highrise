@@ -7,7 +7,7 @@ class UserMap < ActiveRecord::Base
   validates_uniqueness_of :hr_user_id, :rg_user_id, :hr_user_token
 
   before_validation do |um|
-    um.hr_user_id = hr_user ? hr_user.id : nil
+    um.hr_user_id = hr_resource_user ? hr_resource_user.id : nil
   end
 
   before_save do |um|
@@ -40,16 +40,30 @@ class UserMap < ActiveRecord::Base
     end
   end
   
-  def update_hr_last_synchronized_at
-    # create a fake contact, set timestamp to the created_at in the response and then destroy that fake contact
-    timestamp_person = Highrise::Person.new(:first_name => 'Ringio Check')
-    timestamp_person.save
-    self.hr_last_synchronized_at = timestamp_person.created_at
-    timestamp_person.destroy
+  def rg_contacts_feed
+    feed = RingioAPI::Feed.find(
+      :one,
+      :from => RingioAPI::Feed.prefix + "feeds/users/" + self.rg_user_id.to_s + "/contacts",
+      :params => { :since => self.rg_last_timestamp }
+    )
+    self.rg_last_timestamp = feed.timestamp
+  end
+  
+  def hr_parties_feed
+      # get only the Highrise people and companies that were created by this user and
+      # filter to keep those that were created_at or updated at after the last synchronization datetime
+      hr_updated_people = Highrise::Person.find_all_across_pages_since(self.hr_last_synchronized_at).reject{|p| p.author_id != self.hr_user_id}
+      hr_updated_companies = Highrise::Company.find_all_across_pages_since(self.hr_last_synchronized_at).reject{|c| c.author_id != self.hr_user_id}
+  
+      # get deletions of person and companies, mind that author_id is not provided
+      hr_party_deletions = Highrise::Party.deletions_since(self.hr_last_synchronized_at)
+      self.update_hr_last_synchronized_at
+      
+      [hr_updated_people,hr_updated_companies,hr_party_deletions]
   end
   
   private
-    def hr_user
+    def hr_resource_user
       ApiOperations.set_hr_base self
 
       begin
@@ -61,6 +75,14 @@ class UserMap < ActiveRecord::Base
       ApiOperations.empty_hr_base
       
       user_hr
+    end
+  
+    def update_hr_last_synchronized_at
+      # create a fake contact, set timestamp to the created_at in the response and then destroy that fake contact
+      timestamp_person = Highrise::Person.new(:first_name => 'Ringio Check')
+      timestamp_person.save
+      self.hr_last_synchronized_at = timestamp_person.created_at
+      timestamp_person.destroy
     end
 
 end

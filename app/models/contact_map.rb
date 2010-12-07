@@ -7,4 +7,19 @@ class ContactMap < ActiveRecord::Base
   validates_uniqueness_of :hr_party_id, :scope => :hr_party_type
   validates_uniqueness_of :hr_party_type, :scope => :hr_party_id
   
+  def hr_resource_party
+    case self.hr_party_type 
+      when 'Person'
+        Highrise::Person.find self.hr_party_id
+      when 'Company'
+        Highrise::Company.find self.hr_party_id
+      else
+        raise 'Incomplete contact map'
+    end
+  end
+  
+  def rg_resource_contact
+    RingioAPI::Contact.find self.rg_contact_id
+  end
+  
 end
