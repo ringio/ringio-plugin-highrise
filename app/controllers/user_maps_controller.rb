@@ -6,7 +6,7 @@ class UserMapsController < ApplicationController
     @new_user_map = UserMap.new params[:user_map]
     @account = Account.find params[:account_id]
     @new_user_map.account = @account
-    @mails_for_select = ApiOperations.mails_for_select @account.rg_account_id
+    @mails_for_select = ApiOperations::Common.mails_for_select @account.rg_account_id
 
     respond_to do |format|
       if @new_user_map.save
@@ -79,7 +79,7 @@ class UserMapsController < ApplicationController
     def prepare(user_map_id)
       @user_map = UserMap.find user_map_id
       @account = @user_map.account
-      @mails_for_select = ApiOperations.mails_for_select @account.rg_account_id
+      @mails_for_select = ApiOperations::Common.mails_for_select @account.rg_account_id
       @new_user_map = UserMap.new
       @new_user_map.account = @account
     end

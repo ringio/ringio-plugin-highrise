@@ -24,7 +24,7 @@ class AccountsController < ApplicationController
   private
     def prepare(account_id)
       @account = Account.find account_id
-      @mails_for_select = ApiOperations.mails_for_select @account.rg_account_id
+      @mails_for_select = ApiOperations::Common.mails_for_select @account.rg_account_id
       @user_maps = UserMap.find_all_by_account_id account_id
       @new_user_map = UserMap.new
       @new_user_map.account = @account
