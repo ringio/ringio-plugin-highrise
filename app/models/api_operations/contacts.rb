@@ -4,7 +4,7 @@ module ApiOperations
 
 
     def self.synchronize_user(user_map)
-      
+
       # get the feed of changed contacts both in Ringio and Highrise
       rg_contacts_feed = user_map.rg_contacts_feed
       rg_updated_contacts_ids = rg_contacts_feed.updated
@@ -19,7 +19,7 @@ module ApiOperations
       self.purge_contacts(hr_updated_people,hr_updated_companies,hr_party_deletions,rg_updated_contacts_ids,rg_deleted_contacts_ids)
 
       self.apply_changes_rg_to_hr(user_map,rg_updated_contacts_ids,rg_deleted_contacts_ids)
-      
+
       self.apply_changes_hr_to_rg(user_map,hr_updated_people,hr_updated_companies,hr_party_deletions)
 
     end
@@ -34,7 +34,7 @@ module ApiOperations
   
         hr_party_deletions.each do |p_deletion|
           # if the party was already mapped to Ringio, delete it there
-          if (cm = ContactMap.find_by_party_id_and_party_type(p_deletion.id,p_deletion.type))
+          if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(p_deletion.id,p_deletion.type))
             cm.rg_resource_contact.destroy
             cm.destroy
           end
@@ -52,9 +52,9 @@ module ApiOperations
           new_rg_contact = rg_contact.new?
           if rg_contact.save! && new_rg_contact
             new_cm = ContactMap.new(:user_map_id => user_map.id, :rg_contact_id => rg_contact.id, :hr_party_id => hr_party.id)
-            new_cm.hr_party_type = case hr_party.class
-              when 'Highrise::Person' then 'Person'
-              when 'Highrise::Company' then 'Company'
+            new_cm.hr_party_type = case hr_party
+              when Highrise::Person then 'Person'
+              when Highrise::Company then 'Company'
               else
                 raise 'Unknown Party type'
             end
@@ -66,15 +66,15 @@ module ApiOperations
   
       def self.prepare_rg_contact(user_map,hr_party)
         # get the party type
-        type = case hr_party.class
-          when 'Highrise::Person' then 'Person'
-          when 'Highrise::Company' then 'Company'
+        type = case hr_party
+          when Highrise::Person then 'Person'
+          when Highrise::Company then 'Company'
           else
             raise 'Unknown Party type'
         end
   
         # if the contact was already mapped to Ringio, we must update it there
-        if (cm = ContactMap.find_by_party_id_and_party_type(hr_party.id,type))
+        if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(hr_party.id,type))
           rg_contact = cm.rg_resource_contact
         else
         # if the contact is new, we must create it in Ringio
@@ -87,8 +87,8 @@ module ApiOperations
   
       def self.hr_party_to_rg_contact(hr_party,rg_contact)
         # note: we need the Highrise party to be already created because we cannot create the ContactData structure
-        case hr_party.class
-          when 'Highrise::Person'
+        case hr_party
+          when Highrise::Person
             if hr_party.first_name.present?
               if hr_party.last_name.present?
                 rg_contact.name = hr_party.first_name + ' ' + hr_party.last_name              
@@ -101,8 +101,12 @@ module ApiOperations
               rg_contact.name = 'Anonymous Highrise Contact'
             end
             rg_contact.title = hr_party.title
-            rg_contact.business = (comp = Highrise::Company.find(hr_party.company_id))? comp.name : nil
-          when 'Highrise::Company'
+            begin
+              comp = Highrise::Company.find(hr_party.company_id)
+            rescue ActiveResource::ResourceNotFound
+            end
+            rg_contact.business = comp ? comp.name : nil
+          when Highrise::Company
             rg_contact.name = hr_party.name ? hr_party.name : 'Anonymous Highrise Contact'
           else
             raise 'Unknown Party type'
@@ -128,6 +132,7 @@ module ApiOperations
               when 'Other' then 'other'
               else 'other'
             end
+            cd.type = 'email'
           end
   
           # set the phone numbers
@@ -147,6 +152,7 @@ module ApiOperations
               when 'Other' then 'other'
               else 'other'
             end
+            cd.type = 'telephone'
           end
           
           # set the IM data
@@ -163,6 +169,7 @@ module ApiOperations
               when 'Other' then 'other'
               else 'other'
             end
+            cd.type = 'im'
           end
   
           # set the twitter accounts
@@ -180,6 +187,7 @@ module ApiOperations
               when 'Other' then 'other'
               else 'other'
             end
+            cd.type = 'website'
           end
           
           # set the addresses
@@ -197,19 +205,20 @@ module ApiOperations
               when 'Other' then 'other'
               else 'other'
             end
+            cd.type = 'address'
           end
         end
         
         # set the website as the URL for the Highrise party
-        hr_contact_url = Highrise::Base.site + '/parties/' + hr_party.id.to_s + '-' + rg_contact.name.downcase.gsub(' ','-')
+        url_hr_contact = Highrise::Base.site.to_s + '/parties/' + hr_party.id.to_s + '-' + rg_contact.name.downcase.gsub(' ','-')
         if d_index = rg_contact.data.index{|cd| (cd.type == 'website') && (cd.value == hr_contact_url)}
           cd = rg_contact.data[d_index]
         else
           rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
-          cd.value = hr_contact_url
+          cd.value = url_hr_contact
         end
         cd.rel = 'other'
-  
+        cd.type = 'website'
       end
   
   
@@ -229,9 +238,9 @@ module ApiOperations
           new_hr_party = hr_party.new?
           if hr_party.save! && new_hr_party
             new_cm = ContactMap.new(:user_map_id => user_map.id, :rg_contact_id => rg_contact_id, :hr_party_id => hr_party.id)
-            new_cm.hr_party_type = case hr_party.class
-              when 'Highrise::Person' then 'Person'
-              when 'Highrise::Company' then 'Company'
+            new_cm.hr_party_type = case hr_party
+              when Highrise::Person then 'Person'
+              when Highrise::Company then 'Company'
               else
                 raise 'Unknown Party type'
             end
@@ -283,12 +292,17 @@ module ApiOperations
   
         
       def self.rg_contact_to_hr_party(rg_contact,hr_party)
-        case hr_party.class
-          when 'Highrise::Person'
+
+        case hr_party
+          when Highrise::Person
             hr_party.first_name = rg_contact.name ? rg_contact.name : 'Anonymous Ringio Contact'
             hr_party.title = rg_contact.title
-            hr_party.company_id = (comp = Highrise::Company.find_by_name(rg_contact.business))? comp.id : nil
-          when 'Highrise::Company'
+            begin
+              comp = Highrise::Company.find_by_name(rg_contact.business)
+            rescue ActiveResource::ResourceNotFound
+            end
+            hr_party.company_id = comp ? comp.id : nil
+          when Highrise::Company
             hr_party.name = rg_contact.name ? rg_contact.name : 'Anonymous Ringio Contact'
           else
             raise 'Unknown Party type'

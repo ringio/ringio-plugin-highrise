@@ -41,25 +41,30 @@ class UserMap < ActiveRecord::Base
   end
   
   def rg_contacts_feed
+    # TODO: give support to shared contacts (group to Client in Ringio)
     feed = RingioAPI::Feed.find(
       :one,
       :from => RingioAPI::Feed.prefix + "feeds/users/" + self.rg_user_id.to_s + "/contacts",
       :params => { :since => self.rg_last_timestamp }
     )
     self.rg_last_timestamp = feed.timestamp
+    feed
   end
   
   def hr_parties_feed
-      # get only the Highrise people and companies that were created by this user and
-      # filter to keep those that were created_at or updated at after the last synchronization datetime
-      hr_updated_people = Highrise::Person.find_all_across_pages_since(self.hr_last_synchronized_at).reject{|p| p.author_id != self.hr_user_id}
-      hr_updated_companies = Highrise::Company.find_all_across_pages_since(self.hr_last_synchronized_at).reject{|c| c.author_id != self.hr_user_id}
-  
-      # get deletions of person and companies, mind that author_id is not provided
-      hr_party_deletions = Highrise::Party.deletions_since(self.hr_last_synchronized_at)
-      self.update_hr_last_synchronized_at
-      
-      [hr_updated_people,hr_updated_companies,hr_party_deletions]
+    # get only the Highrise people and companies that were created by this user and
+    # filter to keep those that were created_at or updated at after the last synchronization datetime
+    hr_updated_people = Highrise::Person.find_all_across_pages_since(self.hr_last_synchronized_at).reject{|p| p.author_id != self.hr_user_id}
+    hr_updated_companies = Highrise::Company.find_all_across_pages_since(self.hr_last_synchronized_at).reject{|c| c.author_id != self.hr_user_id}
+
+    # TODO: give support to shared contacts (set the group to Client in Ringio)
+
+    # get deletions of person and companies, mind that author_id is not provided
+    hr_party_deletions = Highrise::Party.deletions_since(self.hr_last_synchronized_at)
+
+    update_hr_last_synchronized_at
+    
+    [hr_updated_people,hr_updated_companies,hr_party_deletions]
   end
   
   private

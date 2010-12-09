@@ -26,13 +26,21 @@ module ApiOperations
     
   
     # run a complete synchronization event between Ringio and Highrise
-    def self.synchronize
+    def self.complete_synchronization
+
       Account.all.each do |account|
+
         account.user_maps.each do |user_map|
           self.set_hr_base user_map
+debugger
           ApiOperations::Contacts.synchronize_user user_map
+          user_map.contact_maps.each do |contact_map|
+            ApiOperations::Notes.synchronize_contact contact_map
+          end
+
           self.empty_hr_base
         end
+
       end
   
       return
