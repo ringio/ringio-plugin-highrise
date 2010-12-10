@@ -47,8 +47,6 @@ class UserMap < ActiveRecord::Base
       :from => RingioAPI::Feed.prefix + "feeds/users/" + self.rg_user_id.to_s + "/contacts",
       :params => { :since => self.rg_last_timestamp }
     )
-    self.rg_last_timestamp = feed.timestamp
-    feed
   end
   
   def hr_parties_feed
@@ -62,11 +60,9 @@ class UserMap < ActiveRecord::Base
     # get deletions of person and companies, mind that author_id is not provided
     hr_party_deletions = Highrise::Party.deletions_since(self.hr_last_synchronized_at)
 
-    update_hr_last_synchronized_at
-    
     [hr_updated_people,hr_updated_companies,hr_party_deletions]
   end
-  
+
   private
     def hr_resource_user
       ApiOperations::Common.set_hr_base self
@@ -82,12 +78,4 @@ class UserMap < ActiveRecord::Base
       user_hr
     end
   
-    def update_hr_last_synchronized_at
-      # create a fake contact, set timestamp to the created_at in the response and then destroy that fake contact
-      timestamp_person = Highrise::Person.new(:first_name => 'Ringio Check')
-      timestamp_person.save
-      self.hr_last_synchronized_at = timestamp_person.created_at
-      timestamp_person.destroy
-    end
-
 end

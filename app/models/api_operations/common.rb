@@ -24,6 +24,15 @@ module ApiOperations
       return
     end
     
+    def self.hr_current_timestamp
+      # create a fake contact, set timestamp to the created_at in the response and then destroy that fake contact
+      timestamp_person = Highrise::Person.new(:first_name => 'Ringio Check')
+      timestamp_person.save
+      timestamp = timestamp_person.created_at
+      timestamp_person.destroy
+      timestamp
+    end
+    
   
     # run a complete synchronization event between Ringio and Highrise
     def self.complete_synchronization
@@ -32,10 +41,11 @@ module ApiOperations
 
         account.user_maps.each do |user_map|
           self.set_hr_base user_map
-debugger
+
           ApiOperations::Contacts.synchronize_user user_map
+
           user_map.contact_maps.each do |contact_map|
-            ApiOperations::Notes.synchronize_contact contact_map
+            #ApiOperations::Notes.synchronize_contact contact_map
           end
 
           self.empty_hr_base

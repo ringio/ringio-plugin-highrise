@@ -22,6 +22,13 @@ module ApiOperations
 
       self.apply_changes_hr_to_rg(user_map,hr_updated_people,hr_updated_companies,hr_party_deletions)
 
+      # update timestamps: we must set the timestamp AFTER the changes we made in the synchronization, or
+      # we would update those changes again and again in every synchronization (and, to keep it simple, we ignore
+      # the changes that other agents may have caused for this user just when we were synchronizing)
+      # TODO: ignore only our changes but not the changes made by other agents
+      user_map.rg_last_timestamp = user_map.rg_contacts_feed.timestamp
+      user_map.hr_last_synchronized_at = ApiOperations::Common.hr_current_timestamp
+      user_map.save
     end
 
 
@@ -83,49 +90,64 @@ module ApiOperations
         end
         rg_contact
       end
-  
-  
+
+      def self.update_hr_person_name(hr_person,name)
+        # update name in Highrise to avoid duplication in next synchronization
+        hr_person.first_name = name
+        hr_person.last_name = ''
+        hr_person.save
+      end
+
       def self.hr_party_to_rg_contact(hr_party,rg_contact)
         # note: we need the Highrise party to be already created because we cannot create the ContactData structure
         case hr_party
           when Highrise::Person
             if hr_party.first_name.present?
               if hr_party.last_name.present?
-                rg_contact.name = hr_party.first_name + ' ' + hr_party.last_name              
+                rg_contact.name = hr_party.first_name + ' ' + hr_party.last_name
+                self.update_hr_person_name(hr_party,rg_contact.name)
               else
                 rg_contact.name = hr_party.first_name
               end
             elsif hr_party.last_name.present?
               rg_contact.name = hr_party.last_name
+              self.update_hr_person_name(hr_party,rg_contact.name)
             else
               rg_contact.name = 'Anonymous Highrise Contact'
             end
-            rg_contact.title = hr_party.title
+            rg_contact.title = hr_party.title ? hr_party.title : ''
             begin
               comp = Highrise::Company.find(hr_party.company_id)
             rescue ActiveResource::ResourceNotFound
             end
-            rg_contact.business = comp ? comp.name : nil
+            rg_contact.business = comp ? comp.name : ''
           when Highrise::Company
             rg_contact.name = hr_party.name ? hr_party.name : 'Anonymous Highrise Contact'
           else
             raise 'Unknown Party type'
         end
   
-        # if the Ringio contact is new, prepare the contact data structure
-        rg_contact.data = Array.new if rg_contact.new?
-  
+        # clean the contact data structure of the updated Ringio contact
+        if rg_contact.new?
+          rg_contact.data = Array.new
+        else
+          # make sure that the corresponding data is empty (though Ringio API does not allow deletion of data) in the Ringio contact
+          # (the corresponding data is the data that would have been synchronized from Ringio to Highrise if it existed)
+          rg_contact.data.each do |cd|
+            case cd.type
+              when 'email' then cd = nil
+              when 'telephone' then cd = nil
+            end
+          end
+        end
+
         # TODO: refactor to move repeated structures to a method
         if hr_party.contact_data.present?
-  
           # set the email addresses
           hr_party.contact_data.email_addresses.each do |ea|
-            if d_index = rg_contact.data.index{|cd| (cd.type == 'email') && (cd.value == ea.address)}
-              cd = rg_contact.data[d_index]
-            else
-              rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
-              cd.value = ea.address
-            end
+            rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
+            cd.value = ea.address
+            cd.is_primary = nil
             cd.rel = case ea.location
               when 'Work' then 'work'
               when 'Home' then 'home'
@@ -137,12 +159,9 @@ module ApiOperations
   
           # set the phone numbers
           hr_party.contact_data.phone_numbers.each do |pn|
-            if d_index = rg_contact.data.index{|cd| (cd.type == 'telephone') && (cd.value == pn.number)}
-              cd = rg_contact.data[d_index]
-            else
-              rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
-              cd.value = pn.number
-            end
+            rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
+            cd.value = pn.number
+            cd.is_primary = nil
             cd.rel = case pn.location
               when 'Work' then 'work'
               when 'Mobile' then 'mobile'
@@ -162,6 +181,7 @@ module ApiOperations
             else
               rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
               cd.value = im.address + ' in ' + im.protocol
+              cd.is_primary = nil
             end
             cd.rel = case im.location
               when 'Work' then 'work'
@@ -180,6 +200,7 @@ module ApiOperations
             else
               rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
               cd.value = hr_twitter_url
+              cd.is_primary = nil
             end
             cd.rel = case ta.location
               when 'Personal' then 'home'
@@ -198,6 +219,7 @@ module ApiOperations
             else
               rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
               cd.value = full_address
+              cd.is_primary = nil
             end
             cd.rel = case ad.location
               when 'Work' then 'work'
@@ -207,15 +229,17 @@ module ApiOperations
             end
             cd.type = 'address'
           end
+
         end
         
         # set the website as the URL for the Highrise party
-        url_hr_contact = Highrise::Base.site.to_s + '/parties/' + hr_party.id.to_s + '-' + rg_contact.name.downcase.gsub(' ','-')
-        if d_index = rg_contact.data.index{|cd| (cd.type == 'website') && (cd.value == hr_contact_url)}
+        url_hr_contact = Highrise::Base.site.to_s + 'parties/' + hr_party.id.to_s + '-' + rg_contact.name.downcase.gsub(' ','-')
+        if d_index = rg_contact.data.index{|cd| (cd.type == 'website') && (cd.value == url_hr_contact)}
           cd = rg_contact.data[d_index]
         else
           rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
           cd.value = url_hr_contact
+          cd.is_primary = nil
         end
         cd.rel = 'other'
         cd.type = 'website'
@@ -295,8 +319,8 @@ module ApiOperations
 
         case hr_party
           when Highrise::Person
-            hr_party.first_name = rg_contact.name ? rg_contact.name : 'Anonymous Ringio Contact'
-            hr_party.title = rg_contact.title
+            hr_party.first_name = rg_contact.name.present? ? rg_contact.name : 'Anonymous Ringio Contact'
+            hr_party.title = rg_contact.title ? rg_contact.title : ''
             begin
               comp = Highrise::Company.find_by_name(rg_contact.business)
             rescue ActiveResource::ResourceNotFound
@@ -308,25 +332,30 @@ module ApiOperations
             raise 'Unknown Party type'
         end
     
+        # clean the contact data structure of the updated Highrise contact
+        if hr_party.new?
+          hr_party.contact_data = Highrise::Person::ContactData.new
+          hr_party.contact_data.email_addresses = Array.new
+          hr_party.contact_data.phone_numbers = Array.new
+        else
+          # make sure that the corresponding data is empty (or deleted) in the Highrise contact
+          # (the corresponding data is the data that would have been synchronized from Highrise to Ringio if it existed)
+          hr_party.contact_data.email_addresses.each{|ea| ea.id = -ea.id}
+          hr_party.contact_data.phone_numbers.each{|pn| pn.id = -pn.id}
+          hr_party.contact_data.instant_messengers.each{|im| im.id = -im.id}
+          hr_party.contact_data.twitter_accounts.each{|ta| ta.id = -ta.id}
+          hr_party.contact_data.addresses.each{|ad| ad.id = -ad.id}
+        end
+    
         if rg_contact.data.present?
-          # if the Highrise party is new, prepare the ContactData structure
-          if hr_party.new?
-            hr_party.contact_data = Highrise::Person::ContactData.new
-            hr_party.contact_data.email_addresses = Array.new
-            hr_party.contact_data.phone_numbers = Array.new
-          end
-  
+
           # set the contact data
           # TODO: refactor to move repeated structures to a method
           rg_contact.data.each do |datum|
             case datum.type
               when 'email'
-                if e_index = hr_party.contact_data.email_addresses.index{|ea| ea.address == datum.value}
-                  ea = hr_party.contact_data.email_addresses[e_index]
-                else
-                  hr_party.contact_data.email_addresses << (ea = Highrise::Person::ContactData::EmailAddress.new)
-                  ea.address = datum.value
-                end
+                hr_party.contact_data.email_addresses << (ea = Highrise::Person::ContactData::EmailAddress.new)
+                ea.address = datum.value
                 ea.location = case datum.rel
                   when 'work' then 'Work'
                   when 'home' then 'Home'
@@ -334,12 +363,8 @@ module ApiOperations
                   else 'Other'
                 end
               when 'telephone'
-                if p_index = hr_party.contact_data.phone_numbers.index{|pn| pn.number == datum.value}
-                  pn = hr_party.contact_data.phone_numbers[p_index]
-                else
-                  hr_party.contact_data.phone_numbers << (pn = Highrise::Person::ContactData::PhoneNumber.new)
-                  pn.number = datum.value
-                end
+                hr_party.contact_data.phone_numbers << (pn = Highrise::Person::ContactData::PhoneNumber.new)
+                pn.number = datum.value
                 pn.location = case datum.rel
                   when 'work' then 'Work'
                   when 'mobile' then 'Mobile'
@@ -352,8 +377,7 @@ module ApiOperations
             end
           end
         end
-        
-        return
+
       end
 
 
