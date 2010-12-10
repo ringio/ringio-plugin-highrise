@@ -45,7 +45,7 @@ module ApiOperations
           ApiOperations::Contacts.synchronize_user user_map
 
           user_map.contact_maps.each do |contact_map|
-            #ApiOperations::Notes.synchronize_contact contact_map
+            ApiOperations::Notes.synchronize_contact contact_map
           end
 
           self.empty_hr_base
