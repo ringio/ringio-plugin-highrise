@@ -28,29 +28,6 @@
 		</div>
   </div>
 	
-  <h4><%= t('account.without_hr') %></h4>
-  <div class="sectionContent">
-    <div class="fieldGroup checkboxPanel">
-      <%= f.radio_button(:sync_missing_hr_accounts,false) %>
-      <%= f.label :sync_missing_hr_accounts, t('account.sync_missing_hr_accounts_false') %>
-		</div>
-	  <div class="fieldGroup checkboxPanel">
-			<%= f.radio_button(:sync_missing_hr_accounts,true) %>
-	    <%= f.label :sync_missing_hr_accounts, t('account.sync_missing_hr_accounts_true') %>
-		</div>
-  </div>
-	
-  <h4><%= t('account.phone_calls') %></h4>
-  <div class="sectionContent">
-    <div class="fieldGroup checkboxPanel">
-	    <%= f.radio_button(:sync_missing_hr_contacts,false) %>
-	    <%= f.label :sync_missing_hr_contacts, t('account.sync_missing_hr_contacts_false') %>
-    </div>
-    <div class="fieldGroup checkboxPanel">
-    	<%= f.radio_button(:sync_missing_hr_contacts,true) %>
-      <%= f.label :sync_missing_hr_contacts, t('account.sync_missing_hr_contacts_true') %>
-		</div>
-  </div>
   <div id="savePlugin" class="actions">
     <%= f.submit t('account.submit'), :class => 'button' %>
   </div>
