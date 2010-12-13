@@ -4,7 +4,6 @@ module ApiOperations
 
 
     def self.synchronize_user(user_map)
-
       # get the feed of changed contacts both in Ringio and Highrise
       rg_contacts_feed = user_map.rg_contacts_feed
       rg_updated_contacts_ids = rg_contacts_feed.updated

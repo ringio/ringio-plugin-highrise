@@ -10,7 +10,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20101209114546) do
+ActiveRecord::Schema.define(:version => 20101213164155) do
 
   create_table "accounts", :force => true do |t|
     t.integer  "rg_account_id"
@@ -33,6 +33,14 @@ ActiveRecord::Schema.define(:version => 20101209114546) do
   create_table "note_maps", :force => true do |t|
     t.integer  "contact_map_id"
     t.integer  "rg_note_id"
+    t.integer  "hr_note_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "ring_maps", :force => true do |t|
+    t.integer  "contact_map_id"
+    t.integer  "rg_ring_id"
     t.integer  "hr_note_id"
     t.datetime "created_at"
     t.datetime "updated_at"

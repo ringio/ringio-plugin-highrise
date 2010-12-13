@@ -1,0 +1,11 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  contact_map_id: 1
+  rg_ring_id: 1
+  hr_note_id: 1
+
+two:
+  contact_map_id: 1
+  rg_ring_id: 1
+  hr_note_id: 1

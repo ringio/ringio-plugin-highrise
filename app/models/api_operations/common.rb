@@ -46,10 +46,18 @@ module ApiOperations
         account.user_maps.each do |user_map|
           self.set_hr_base user_map
 
+          # TODO: refactor to make one request per user (one for contacts, one for notes and one for rings)
           ApiOperations::Contacts.synchronize_user user_map
 
           user_map.contact_maps.each do |contact_map|
             ApiOperations::Notes.synchronize_contact contact_map
+          end
+
+          begin
+            user_map.contact_maps.each do |contact_map|
+              ApiOperations::Rings.synchronize_contact contact_map
+            end
+          rescue
           end
 
           self.empty_hr_base
