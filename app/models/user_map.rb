@@ -65,6 +65,7 @@ class UserMap < ActiveRecord::Base
 
   private
     def hr_resource_user
+      previous_user_map = ApiOperations::Session.current_user_map
       ApiOperations::Common.set_hr_base self
 
       begin
@@ -73,7 +74,7 @@ class UserMap < ActiveRecord::Base
         self.errors[:hr_user_token] = I18n.t('user_map.unauthorized_token')
       end
 
-      ApiOperations::Common.empty_hr_base
+      ApiOperations::Common.set_hr_base previous_user_map
       
       user_hr
     end

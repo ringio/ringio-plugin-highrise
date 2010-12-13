@@ -3,7 +3,7 @@ class CreateAccounts < ActiveRecord::Migration
     create_table :accounts do |t|
       t.integer :rg_account_id
       t.string :hr_subdomain
-      t.boolean :sync_only_new_data, :default => true
+      t.boolean :sync_only_new_data, :default => false
 
       t.timestamps
     end

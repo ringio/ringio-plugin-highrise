@@ -4,5 +4,7 @@ class Account < ActiveRecord::Base
   
   validates_presence_of :rg_account_id
   validates_uniqueness_of :rg_account_id, :hr_subdomain
+    
+  # TODO: add support for the "Sync only new data" option
   
 end
