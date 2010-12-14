@@ -28,7 +28,7 @@ module ApiOperations
 
     private
 
-      def self.apply_changes_hr_to_rg(contact_map,hr_notes,new_hr_notes_ids)
+      def self.apply_changes_hr_to_rg(contact_map, hr_notes, new_hr_notes_ids)
         hr_notes.each do |hr_note|
           rg_note = self.prepare_rg_note(contact_map,hr_note)
           self.hr_note_to_rg_note(contact_map,hr_note,rg_note)
@@ -61,7 +61,7 @@ module ApiOperations
       end
 
 
-      def self.prepare_rg_note(contact_map,hr_note)
+      def self.prepare_rg_note(contact_map, hr_note)
         # if the note was already mapped to Ringio, we must update it there
         if (nm = NoteMap.find_by_hr_note_id(hr_note.id))
           rg_note = nm.rg_resource_note
@@ -74,13 +74,13 @@ module ApiOperations
       end
 
 
-      def self.hr_note_to_rg_note(contact_map,hr_note,rg_note)
+      def self.hr_note_to_rg_note(contact_map, hr_note, rg_note)
         rg_note.contact_id = contact_map.rg_contact_id
         rg_note.body =  hr_note.body  
       end
 
 
-      def self.apply_changes_rg_to_hr(contact_map,rg_updated_notes_ids,rg_deleted_notes_ids,new_hr_notes_ids)
+      def self.apply_changes_rg_to_hr(contact_map, rg_updated_notes_ids, rg_deleted_notes_ids, new_hr_notes_ids)
 
         rg_updated_notes_ids.each do |rg_note_id|
           # if the note was already mapped to Highrise, update it there
@@ -146,7 +146,7 @@ module ApiOperations
       end
 
 
-      def self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
+      def self.rg_note_to_hr_note(contact_map, rg_note,hr_note)
         hr_note.subject_id = contact_map.hr_party_id
         hr_note.subject_type = 'Party'
         # it is not necessary to specify if it is a Person or a Company (they can't have id collision),

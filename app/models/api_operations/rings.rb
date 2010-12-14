@@ -28,7 +28,7 @@ module ApiOperations
 
     private
 
-      def self.apply_changes_hr_to_rg(contact_map,hr_notes,new_hr_notes_ids)
+      def self.apply_changes_hr_to_rg(contact_map, hr_notes, new_hr_notes_ids)
         hr_notes.each do |hr_note|
           rg_ring = self.prepare_rg_ring(contact_map,hr_note)
           self.hr_note_to_rg_ring(contact_map,hr_note,rg_ring)
@@ -61,7 +61,7 @@ module ApiOperations
       end
 
 
-      def self.prepare_rg_ring(contact_map,hr_note)
+      def self.prepare_rg_ring(contact_map, hr_note)
         # if the ring was already mapped to Ringio, we must update it there
         if (rm = RingMap.find_by_hr_note_id(hr_note.id))
           rg_ring = rm.rg_resource_ring
@@ -74,13 +74,13 @@ module ApiOperations
       end
 
 
-      def self.hr_note_to_rg_ring(contact_map,hr_note,rg_ring)
+      def self.hr_note_to_rg_ring(contact_map, hr_note, rg_ring)
         rg_ring.contact_id = contact_map.rg_contact_id
         rg_ring.body =  hr_note.body  
       end
 
 
-      def self.apply_changes_rg_to_hr(contact_map,rg_updated_rings_ids,rg_deleted_rings_ids,new_hr_notes_ids)
+      def self.apply_changes_rg_to_hr(contact_map, rg_updated_rings_ids, rg_deleted_rings_ids, new_hr_notes_ids)
 
         rg_updated_rings_ids.each do |rg_ring_id|
           # if the ring was already mapped to Highrise, update it there
@@ -146,7 +146,7 @@ module ApiOperations
       end
 
 
-      def self.rg_ring_to_hr_note(contact_map,rg_ring,hr_note)
+      def self.rg_ring_to_hr_note(contact_map, rg_ring,hr_note)
         hr_note.subject_id = contact_map.hr_party_id
         hr_note.subject_type = 'Party'
         # it is not necessary to specify if it is a Person or a Company (they can't have id collision),

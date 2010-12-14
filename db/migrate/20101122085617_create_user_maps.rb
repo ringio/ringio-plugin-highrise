@@ -6,8 +6,6 @@ class CreateUserMaps < ActiveRecord::Migration
       t.integer :rg_user_id
       t.string :hr_user_token
       t.boolean :master_user, :default => false
-      t.integer :rg_last_timestamp, :default => 1
-      t.datetime :hr_last_synchronized_at, :default => (Date.parse('1900-01-01')).to_time
 
       t.timestamps
     end

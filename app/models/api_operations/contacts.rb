@@ -2,39 +2,75 @@ module ApiOperations
 
   module Contacts
 
-
-    def self.synchronize_user(user_map)
-      # get the feed of changed contacts both in Ringio and Highrise
-      rg_contacts_feed = user_map.rg_contacts_feed
-      rg_updated_contacts_ids = rg_contacts_feed.updated
-      rg_deleted_contacts_ids = rg_contacts_feed.deleted
-
-      hr_parties_feed = user_map.hr_parties_feed
-      hr_updated_people = hr_parties_feed[0]
-      hr_updated_companies = hr_parties_feed[1]
-      hr_party_deletions = hr_parties_feed[2]
-
-      # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
-      self.purge_contacts(hr_updated_people,hr_updated_companies,hr_party_deletions,rg_updated_contacts_ids,rg_deleted_contacts_ids)
-
-      self.apply_changes_rg_to_hr(user_map,rg_updated_contacts_ids,rg_deleted_contacts_ids)
-
-      self.apply_changes_hr_to_rg(user_map,hr_updated_people,hr_updated_companies,hr_party_deletions)
+    def self.synchronize_account(account)
+      account_rg_feed = account.rg_contacts_feed
+      user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed)
+      rg_deleted_contact_ids = rg_contacts_feed.deleted
+      
+      user_rg_feeds.each do |rg_feed|
+        ApiOperations::Common.set_hr_base rg_feed[0]
+debugger
+        ApiOperations::Contacts.synchronize_user(rg_feed,rg_deleted_contact_ids)
+        ApiOperations::Common.empty_hr_base
+      end
 
       # update timestamps: we must set the timestamp AFTER the changes we made in the synchronization, or
       # we would update those changes again and again in every synchronization (and, to keep it simple, we ignore
-      # the changes that other agents may have caused for this user just when we were synchronizing)
+      # the changes that other agents may have caused for this account just when we were synchronizing)
       # TODO: ignore only our changes but not the changes made by other agents
-      user_map.rg_last_timestamp = user_map.rg_contacts_feed.timestamp
-      user_map.hr_last_synchronized_at = ApiOperations::Common.hr_current_timestamp
-      user_map.save
+      account.rg_contacts_last_timestamp = account.rg_contacts_feed.timestamp
+      account.hr_parties_last_synchronized_at = ApiOperations::Common.hr_current_timestamp(account.user_maps.first)
+      account.save
+      
     end
 
 
     private
+
+
+      # returns an array with each element containing information for each user_map:
+      # [0] => user map
+      # [1] => updated Ringio contacts for this user map
+      def self.fetch_user_rg_feeds(account_rg_feed)
+
+        account_rg_feed.updated.inject([]) do |user_feeds,rg_contact_id|
+          rg_contact = RingioAPI::Contact.find rg_contact_id
+
+          # synchronize only contacts of users already mapped
+          if (um = UserMap.find_by_rg_user_id(rg_contact.owner_id))
+            if (um_index = user_feeds.index{|uf| uf[0] == um})
+              user_feed = user_feeds[um_index]
+              user_feed[1] << rg_contact
+            else
+              user_feed = []
+              user_feed[0] = um
+              user_feed[1] = [rg_contact]
+              user_feeds << user_feed
+            end
+          end
+
+          user_feeds
+        end
+        
+      end
+
+
+      def self.synchronize_user(user_rg_feed, rg_deleted_contacts_ids)
+        hr_parties_feed = user_rg_feed[0].hr_parties_feed
+        hr_updated_people = hr_parties_feed[0]
+        hr_updated_companies = hr_parties_feed[1]
+        hr_party_deletions = hr_parties_feed[2]
+  
+        # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
+        self.purge_contacts(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed[1],rg_deleted_contacts_ids)
+
+        self.apply_changes_rg_to_hr(user_rg_feed[0],user_rg_feed[1],rg_deleted_contacts_ids)
+debugger  
+        self.apply_changes_hr_to_rg(user_rg_feed[0],hr_updated_people,hr_updated_companies,hr_party_deletions)
+      end
   
   
-      def self.apply_changes_hr_to_rg(user_map,hr_updated_people,hr_updated_companies,hr_party_deletions)
+      def self.apply_changes_hr_to_rg(user_map, hr_updated_people, hr_updated_companies, hr_party_deletions)
         self.process_updated_parties(user_map, hr_updated_people)
         self.process_updated_parties(user_map, hr_updated_companies)
   
@@ -70,7 +106,7 @@ module ApiOperations
       end
   
   
-      def self.prepare_rg_contact(user_map,hr_party)
+      def self.prepare_rg_contact(user_map, hr_party)
         # get the party type
         type = case hr_party
           when Highrise::Person then 'Person'
@@ -90,6 +126,7 @@ module ApiOperations
         rg_contact
       end
 
+
       def self.update_hr_person_name(hr_person,name)
         # update name in Highrise to avoid duplication in next synchronization
         hr_person.first_name = name
@@ -97,7 +134,8 @@ module ApiOperations
         hr_person.save
       end
 
-      def self.hr_party_to_rg_contact(hr_party,rg_contact)
+
+      def self.hr_party_to_rg_contact(hr_party, rg_contact)
         # note: we need the Highrise party to be already created because we cannot create the ContactData structure
         case hr_party
           when Highrise::Person
@@ -245,22 +283,22 @@ module ApiOperations
       end
   
   
-      def self.apply_changes_rg_to_hr(user_map,rg_updated_contacts_ids,rg_deleted_contacts_ids)
-        rg_updated_contacts_ids.each do |rg_contact_id|
+      def self.apply_changes_rg_to_hr(user_map, rg_updated_contacts, rg_deleted_contacts_ids)
+        rg_updated_contacts.each do |rg_contact|
           # if the contact was already mapped to Highrise, update it there
-          if (cm = ContactMap.find_by_rg_contact_id(rg_contact_id))
+          if (cm = ContactMap.find_by_rg_contact_id(rg_contact.id))
             hr_party = cm.hr_resource_party
-            self.rg_contact_to_hr_party(cm.rg_resource_contact,hr_party)
+            self.rg_contact_to_hr_party(rg_contact,hr_party)
           else
           # if the contact is new, create it in Highrise (always as a Person, Ringio GUI does not allow creating a Company) and map it
             hr_party = Highrise::Person.new
-            self.rg_contact_to_hr_party(RingioAPI::Contact.find(rg_contact_id),hr_party)
+            self.rg_contact_to_hr_party(rg_contact,hr_party)
           end
           
           # if the Highrise party is saved properly and it didn't exist before, create a new contact map
           new_hr_party = hr_party.new?
           if hr_party.save! && new_hr_party
-            new_cm = ContactMap.new(:user_map_id => user_map.id, :rg_contact_id => rg_contact_id, :hr_party_id => hr_party.id)
+            new_cm = ContactMap.new(:user_map_id => user_map.id, :rg_contact_id => rg_contact.id, :hr_party_id => hr_party.id)
             new_cm.hr_party_type = case hr_party
               when Highrise::Person then 'Person'
               when Highrise::Company then 'Company'
@@ -283,38 +321,39 @@ module ApiOperations
       end
   
   
-      def self.purge_contacts(hr_updated_people,hr_updated_companies,hr_party_deletions,rg_updated_contacts_ids,rg_deleted_contacts_ids)
+      def self.purge_contacts(hr_updated_people, hr_updated_companies, hr_party_deletions, rg_updated_contacts, rg_deleted_contacts_ids)
   
         # delete duplicated changes for Highrise updated people
         hr_updated_people.map{|p| p.id}.each do |person_id|
           if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(person_id,'Person'))
-            self.delete_rg_duplicated_changes(cm.rg_contact_id,rg_updated_contacts_ids,rg_deleted_contacts_ids)
+            self.delete_rg_duplicated_changes(cm.rg_contact_id,rg_updated_contacts,rg_deleted_contacts_ids)
           end
         end
         
         # delete duplicated changes for Highrise updated companies
-        hr_updated_companies.map{|p| p.id}.each do |company_id|
+        hr_updated_companies.map{|c| c.id}.each do |company_id|
           if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(company_id,'Company'))
-            self.delete_rg_duplicated_changes(cm.rg_contact_id,rg_updated_contacts_ids,rg_deleted_contacts_ids)
+            self.delete_rg_duplicated_changes(cm.rg_contact_id,rg_updated_contacts,rg_deleted_contacts_ids)
           end
         end
         
         # delete duplicated changes for Highrise deleted parties
         hr_party_deletions.each do |p_deletion|
           if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(p_deletion.id,p_deletion.type))
-            self.delete_rg_duplicated_changes(cm.rg_contact_id,rg_updated_contacts_ids,rg_deleted_contacts_ids)
+            self.delete_rg_duplicated_changes(cm.rg_contact_id,rg_updated_contacts,rg_deleted_contacts_ids)
           end
         end
+
       end
   
   
-      def self.delete_rg_duplicated_changes(cm_rg_id,rg_updated_contacts_ids,rg_deleted_contacts_ids)
-        rg_updated_contacts_ids.delete_if{|c_id| c_id == cm_rg_id}
-        rg_deleted_contacts_ids.delete_if{|c_id| c_id == cm_rg_id}      
+      def self.delete_rg_duplicated_changes(rg_contact_id, rg_updated_contacts, rg_deleted_contacts_ids)
+        rg_updated_contacts.delete_if{|c| c.id == rg_contact_id}
+        rg_deleted_contacts_ids.delete_if{|c_id| c_id == rg_contact_id}      
       end
   
         
-      def self.rg_contact_to_hr_party(rg_contact,hr_party)
+      def self.rg_contact_to_hr_party(rg_contact, hr_party)
 
         case hr_party
           when Highrise::Person

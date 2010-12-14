@@ -4,6 +4,12 @@ class CreateAccounts < ActiveRecord::Migration
       t.integer :rg_account_id
       t.string :hr_subdomain
       t.boolean :sync_only_new_data, :default => false
+      t.integer :rg_contacts_last_timestamp, :default => 1
+      t.integer :rg_notes_last_timestamp, :default => 1
+      t.integer :rg_rings_last_timestamp, :default => 1
+      t.datetime :hr_parties_last_synchronized_at, :default => (Date.parse('1900-01-01')).to_time
+      t.datetime :hr_notes_last_synchronized_at, :default => (Date.parse('1900-01-01')).to_time
+      t.datetime :hr_ring_notes_last_synchronized_at, :default => (Date.parse('1900-01-01')).to_time      
 
       t.timestamps
     end
