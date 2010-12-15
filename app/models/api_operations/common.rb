@@ -15,13 +15,15 @@ module ApiOperations
       if ApiOperations::Session.locked
         raise 'Highrise Base is currently locked, run ApiOperations::Common.set_hr_base_pop first'        
       else
-        if user_map
-          Highrise::Base.site = 'https://' + user_map.account.hr_subdomain + '.highrisehq.com' 
-          Highrise::Base.user = user_map.hr_user_token
-          ApiOperations::Session.current_user_map = user_map
-        else
-          self.empty_hr_base
-        end
+        self.set_hr_base_basic user_map
+      end
+    end
+
+    def self.empty_hr_base
+      if ApiOperations::Session.locked
+        raise 'Highrise Base is currently locked, run ApiOperations::Common.set_hr_base_pop first'        
+      else
+        self.empty_hr_base_basic
       end
     end
     
@@ -30,31 +32,22 @@ module ApiOperations
       if ApiOperations::Session.locked
         raise 'Highrise Base is currently locked, run ApiOperations::Common.set_hr_base_pop first'        
       else
+        ApiOperations::Session.locked = true
         ApiOperations::Session.previous_user_map = ApiOperations::Session.current_user_map
-        ApiOperations::Common.set_hr_base user_map
+        self.set_hr_base_basic user_map
       end
     end
     
     # set Highrise Base to the previous user (MUST be preceded by ApiOperations::Common.set_hr_base_push(user_map))
     def self.set_hr_base_pop
       if ApiOperations::Session.locked
-        ApiOperations::Common.set_hr_base(ApiOperations::Session.previous_user_map)
+        self.set_hr_base_basic(ApiOperations::Session.previous_user_map)
+        ApiOperations::Session.locked = false
       else
         raise 'Highrise Base is not currently locked, run ApiOperations::Common.set_hr_base_push(user_map) first'
       end
     end
-  
-    
-    def self.empty_hr_base
-      if ApiOperations::Session.locked
-        raise 'Highrise Base is currently locked, run ApiOperations::Common.set_hr_base_pop first'        
-      else
-        Highrise::Base.site = ''
-        Highrise::Base.user = ''
-        ApiOperations::Session.current_user_map = nil
-      end
-    end
-    
+   
     def self.hr_current_timestamp(user_map)
       ApiOperations::Common.set_hr_base_push user_map
 
@@ -77,11 +70,12 @@ module ApiOperations
 
           ApiOperations::Contacts.synchronize_account account
 
+debugger
           ApiOperations::Notes.synchronize_account account
 
           ApiOperations::Rings.synchronize_account account
 
-
+=begin
           user_map.contact_maps.each do |contact_map|
             ApiOperations::Notes.synchronize_contact contact_map
           end
@@ -92,14 +86,31 @@ module ApiOperations
             end
           rescue
           end
-
-          
+=end        
 
       end
   
       return
     end
-  
+
+
+    private
+    
+    def self.set_hr_base_basic(user_map)
+      if user_map
+        Highrise::Base.site = 'https://' + user_map.account.hr_subdomain + '.highrisehq.com' 
+        Highrise::Base.user = user_map.hr_user_token
+        ApiOperations::Session.current_user_map = user_map
+      else
+        self.empty_hr_base_basic
+      end
+    end
+    
+    def self.empty_hr_base_basic
+      Highrise::Base.site = ''
+      Highrise::Base.user = ''
+      ApiOperations::Session.current_user_map = nil
+    end
     
   end
   

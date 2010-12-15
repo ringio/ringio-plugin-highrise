@@ -7,7 +7,8 @@ class UserMap < ActiveRecord::Base
   validates_uniqueness_of :hr_user_id, :rg_user_id, :hr_user_token
 
   before_validation do |um|
-    um.hr_user_id = hr_resource_user ? hr_resource_user.id : nil
+    user_hr = hr_resource_user
+    um.hr_user_id = user_hr ? user_hr.id : nil
   end
 
   before_save do |um|
@@ -40,25 +41,16 @@ class UserMap < ActiveRecord::Base
     end
   end
   
-  def rg_contacts_feed
-    # TODO: give support to shared contacts (group to Client in Ringio)
-    feed = RingioAPI::Feed.find(
-      :one,
-      :from => RingioAPI::Feed.prefix + "feeds/users/" + self.rg_user_id.to_s + "/contacts",
-      :params => { :since => self.rg_last_timestamp }
-    )
-  end
-  
   def hr_parties_feed
     # get only the Highrise people and companies that were created by this user and
     # filter to keep those that were created_at or updated at after the last synchronization datetime
-    hr_updated_people = Highrise::Person.find_all_across_pages_since(self.hr_last_synchronized_at).reject{|p| p.author_id != self.hr_user_id}
-    hr_updated_companies = Highrise::Company.find_all_across_pages_since(self.hr_last_synchronized_at).reject{|c| c.author_id != self.hr_user_id}
+    hr_updated_people = Highrise::Person.find_all_across_pages_since(self.account.hr_parties_last_synchronized_at).reject{|p| p.author_id != self.hr_user_id}
+    hr_updated_companies = Highrise::Company.find_all_across_pages_since(self.account.hr_parties_last_synchronized_at).reject{|c| c.author_id != self.hr_user_id}
 
     # TODO: give support to shared contacts (set the group to Client in Ringio)
 
     # get deletions of person and companies, mind that author_id is not provided
-    hr_party_deletions = Highrise::Party.deletions_since(self.hr_last_synchronized_at)
+    hr_party_deletions = Highrise::Party.deletions_since(self.account.hr_parties_last_synchronized_at)
 
     [hr_updated_people,hr_updated_companies,hr_party_deletions]
   end

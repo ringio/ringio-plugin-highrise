@@ -8,4 +8,13 @@ class Account < ActiveRecord::Base
     
   # TODO: add support for the "Sync only new data" option
   
+  def rg_contacts_feed
+    # TODO: give support to shared contacts (group to Client in Ringio)
+    feed = RingioAPI::Feed.find(
+      :one,
+      :from => RingioAPI::Feed.prefix + "feeds/accounts/" + self.rg_account_id.to_s + "/contacts",
+      :params => { :since => self.rg_contacts_last_timestamp }
+    )
+  end
+  
 end

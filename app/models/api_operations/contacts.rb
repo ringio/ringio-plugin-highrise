@@ -4,12 +4,11 @@ module ApiOperations
 
     def self.synchronize_account(account)
       account_rg_feed = account.rg_contacts_feed
-      user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed)
-      rg_deleted_contact_ids = rg_contacts_feed.deleted
+      user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
+      rg_deleted_contact_ids = account_rg_feed.deleted
       
       user_rg_feeds.each do |rg_feed|
         ApiOperations::Common.set_hr_base rg_feed[0]
-debugger
         ApiOperations::Contacts.synchronize_user(rg_feed,rg_deleted_contact_ids)
         ApiOperations::Common.empty_hr_base
       end
@@ -31,13 +30,13 @@ debugger
       # returns an array with each element containing information for each user_map:
       # [0] => user map
       # [1] => updated Ringio contacts for this user map
-      def self.fetch_user_rg_feeds(account_rg_feed)
+      def self.fetch_user_rg_feeds(account_rg_feed, account)
 
         account_rg_feed.updated.inject([]) do |user_feeds,rg_contact_id|
           rg_contact = RingioAPI::Contact.find rg_contact_id
 
-          # synchronize only contacts of users already mapped
-          if (um = UserMap.find_by_rg_user_id(rg_contact.owner_id))
+          # synchronize only contacts of users already mapped for this account
+          if (um = UserMap.find_by_account_id_and_rg_user_id(account.id,rg_contact.owner_id))
             if (um_index = user_feeds.index{|uf| uf[0] == um})
               user_feed = user_feeds[um_index]
               user_feed[1] << rg_contact
@@ -65,7 +64,7 @@ debugger
         self.purge_contacts(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed[1],rg_deleted_contacts_ids)
 
         self.apply_changes_rg_to_hr(user_rg_feed[0],user_rg_feed[1],rg_deleted_contacts_ids)
-debugger  
+
         self.apply_changes_hr_to_rg(user_rg_feed[0],hr_updated_people,hr_updated_companies,hr_party_deletions)
       end
   

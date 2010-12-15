@@ -24,15 +24,6 @@ class ContactMap < ActiveRecord::Base
     RingioAPI::Contact.find self.rg_contact_id
   end
   
-  def rg_notes_feed
-    # TODO: give support to note visibility
-    feed = RingioAPI::Feed.find(
-      :one,
-      :from => RingioAPI::Feed.prefix + "feeds/contacts/" + self.rg_contact_id.to_s + "/notes",
-      :params => { :since => self.rg_last_timestamp }
-    )
-  end
-  
   def hr_notes_feed
     # get only the Highrise notes that were created for this contact
     case self.hr_party_type
@@ -43,15 +34,6 @@ class ContactMap < ActiveRecord::Base
     # TODO: give support to more than 25 notes returned, using pagination with the n parameter as offset
     # TODO: give support to visibility
     # TODO: give support to feeds of updated or deleted notes (currently Highrise does not offer a feed for deleted notes)
-  end
-  
-  def rg_rings_feed
-    # TODO: give support to ring visibility
-    feed = RingioAPI::Feed.find(
-      :one,
-      :from => RingioAPI::Feed.prefix + "feeds/contacts/" + self.rg_contact_id.to_s + "/rings",
-      :params => { :since => self.rg_last_timestamp }
-    )
   end
   
   def hr_rings_feed
