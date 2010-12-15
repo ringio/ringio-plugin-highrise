@@ -2,31 +2,74 @@ module ApiOperations
 
   module Notes
 
-    def self.synchronize_contact(contact_map)
+    def self.synchronize_account(account)
       
-      # get the feed of changed notes both in Ringio and Highrise
-      rg_notes_feed = contact_map.rg_notes_feed
-      rg_updated_notes_ids = rg_notes_feed.updated
-      rg_deleted_notes_ids = rg_notes_feed.deleted
+      # get the feed of changed notes per contact of this Ringio account from Ringio
+      account_rg_feed = account.rg_notes_feed
+debugger
+      contact_rg_feeds = self.fetch_contact_rg_feeds(account_rg_feed,account)
+      rg_deleted_note_ids = account_rg_feed.deleted
 
-      # reject the notes from users different than the current one
-      hr_notes = contact_map.hr_notes_feed.reject{|n| n.author_id.to_i != contact_map.user_map.hr_user_id}
-
-      # give priority to Highrise: apply changes first to Ringio
-      new_hr_notes_ids = []
-      self.apply_changes_rg_to_hr(contact_map,rg_updated_notes_ids,rg_deleted_notes_ids,new_hr_notes_ids)
-      self.apply_changes_hr_to_rg(contact_map,hr_notes,new_hr_notes_ids)
+      # synchronize each contact whose notes have changed
+      contact_rg_feeds.each do |rg_feed|
+        ApiOperations::Common.set_hr_base rg_feed[0]
+        self.synchronize_contact(rg_feed,rg_deleted_note_ids)
+        ApiOperations::Common.empty_hr_base
+      end
 
       # update timestamps: we must set the timestamp AFTER the changes we made in the synchronization, or
       # we would update those changes again and again in every synchronization (and, to keep it simple, we ignore
       # the changes that other agents may have caused for this user just when we were synchronizing)
       # TODO: ignore only our changes but not the changes made by other agents
-      contact_map.rg_last_timestamp = contact_map.rg_notes_feed.timestamp
-      contact_map.save
+      account.rg_notes_last_timestamp = account.rg_notes_feed.timestamp
+      account.hr_notes_last_synchronized_at = ApiOperations::Common.hr_current_timestamp(account.user_maps.first)
+      account.save
+
     end
 
 
     private
+
+
+      # returns an array with each element containing information for each contact map:
+      # [0] => user map of this contact map
+      # [1] => updated Ringio notes for this contact map
+      def self.fetch_user_rg_feeds(account_rg_feed, account)
+
+        account_rg_feed.updated.inject([]) do |user_feeds,rg_contact_id|
+          rg_contact = RingioAPI::Contact.find rg_contact_id
+
+          # synchronize only contacts of users already mapped for this account
+          if (um = UserMap.find_by_account_id_and_rg_user_id(account.id,rg_contact.owner_id))
+            if (um_index = user_feeds.index{|uf| uf[0] == um})
+              user_feed = user_feeds[um_index]
+              user_feed[1] << rg_contact
+            else
+              user_feed = []
+              user_feed[0] = um
+              user_feed[1] = [rg_contact]
+              user_feeds << user_feed
+            end
+          end
+
+          user_feeds
+        end
+        
+      end
+
+
+      def self.synchronize_contact(rg_feed, rg_deleted_note_ids)
+
+        # reject the notes from users different than the current one
+        hr_notes = contact_map.hr_notes_feed.reject{|n| n.author_id.to_i != contact_map.user_map.hr_user_id}
+  
+        # give priority to Highrise: apply changes first to Ringio
+        new_hr_notes_ids = []
+        self.apply_changes_rg_to_hr(contact_map,rg_updated_notes_ids,rg_deleted_notes_ids,new_hr_notes_ids)
+        self.apply_changes_hr_to_rg(contact_map,hr_notes,new_hr_notes_ids)        
+
+      end
+
 
       def self.apply_changes_hr_to_rg(contact_map, hr_notes, new_hr_notes_ids)
         hr_notes.each do |hr_note|

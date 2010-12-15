@@ -7,7 +7,7 @@ class UserMap < ActiveRecord::Base
   validates_uniqueness_of :hr_user_id, :rg_user_id, :hr_user_token
 
   before_validation do |um|
-    user_hr = hr_resource_user
+    user_hr = um.hr_resource_user
     um.hr_user_id = user_hr ? user_hr.id : nil
   end
 

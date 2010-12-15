@@ -3,13 +3,16 @@ module ApiOperations
   module Contacts
 
     def self.synchronize_account(account)
+
+      # get the feed of changed contacts per user of this Ringio account from Ringio
       account_rg_feed = account.rg_contacts_feed
       user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
       rg_deleted_contact_ids = account_rg_feed.deleted
       
+      # synchronize each user whose contacts have changed
       user_rg_feeds.each do |rg_feed|
         ApiOperations::Common.set_hr_base rg_feed[0]
-        ApiOperations::Contacts.synchronize_user(rg_feed,rg_deleted_contact_ids)
+        self.synchronize_user(rg_feed,rg_deleted_contact_ids)
         ApiOperations::Common.empty_hr_base
       end
 
@@ -27,7 +30,7 @@ module ApiOperations
     private
 
 
-      # returns an array with each element containing information for each user_map:
+      # returns an array with each element containing information for each user map:
       # [0] => user map
       # [1] => updated Ringio contacts for this user map
       def self.fetch_user_rg_feeds(account_rg_feed, account)
