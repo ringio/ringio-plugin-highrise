@@ -44,8 +44,8 @@ class UserMap < ActiveRecord::Base
   def hr_parties_feed
     # get only the Highrise people and companies that were created by this user and
     # filter to keep those that were created_at or updated at after the last synchronization datetime
-    hr_updated_people = Highrise::Person.find_all_across_pages_since(self.account.hr_parties_last_synchronized_at).reject{|p| p.author_id != self.hr_user_id}
-    hr_updated_companies = Highrise::Company.find_all_across_pages_since(self.account.hr_parties_last_synchronized_at).reject{|c| c.author_id != self.hr_user_id}
+    hr_updated_people = Highrise::Person.find_all_across_pages_since(self.account.hr_parties_last_synchronized_at).reject{|p| p.author_id.to_i != self.hr_user_id}
+    hr_updated_companies = Highrise::Company.find_all_across_pages_since(self.account.hr_parties_last_synchronized_at).reject{|c| c.author_id.to_i != self.hr_user_id}
 
     # TODO: give support to shared contacts (set the group to Client in Ringio)
 

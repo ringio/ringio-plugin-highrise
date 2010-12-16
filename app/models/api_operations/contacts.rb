@@ -326,15 +326,15 @@ module ApiOperations
       def self.purge_contacts(hr_updated_people, hr_updated_companies, hr_party_deletions, rg_updated_contacts, rg_deleted_contacts_ids)
   
         # delete duplicated changes for Highrise updated people
-        hr_updated_people.map{|p| p.id}.each do |person_id|
-          if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(person_id,'Person'))
+        hr_updated_people.each do |person|
+          if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(person.id,'Person'))
             self.delete_rg_duplicated_changes(cm.rg_contact_id,rg_updated_contacts,rg_deleted_contacts_ids)
           end
         end
         
         # delete duplicated changes for Highrise updated companies
-        hr_updated_companies.map{|c| c.id}.each do |company_id|
-          if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(company_id,'Company'))
+        hr_updated_companies.each do |company|
+          if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(company.id,'Company'))
             self.delete_rg_duplicated_changes(cm.rg_contact_id,rg_updated_contacts,rg_deleted_contacts_ids)
           end
         end
