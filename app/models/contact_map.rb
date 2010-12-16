@@ -35,23 +35,11 @@ class ContactMap < ActiveRecord::Base
   end
 
   def hr_updated_note_recordings
-    # get only the Highrise recordings for notes for the current contact and user and
+    # get only the Highrise recordings for notes for the current contact and
     # filter to keep those that were created_at or updated at after the last synchronization datetime
-    Highrise::Recording.find_all_across_pages_since(self.account.hr_notes_last_synchronized_at).reject do |r|
-      (r.type != 'Note') || (r.subject_type != 'Party') || (r.subject_id.to_i != self.hr_party_id) || (r.author_id.to_i != self.user_map.hr_user_id)
+    Highrise::Recording.find_all_across_pages_since(self.user_map.account.hr_notes_last_synchronized_at).reject do |r|
+      (r.type != 'Note') || (r.subject_type != 'Party') || (r.subject_id.to_i != self.hr_party_id)
     end
-  end
-  
-  def hr_rings_feed
-    # get only the Highrise notes that were created for this contact
-    case self.hr_party_type
-      when 'Person' then (Highrise::Person.find(self.hr_party_id)).notes
-      when 'Company' then (Highrise::Company.find(self.hr_party_id)).notes
-      else raise 'Unknown party type'
-    end
-    # TODO: give support to more than 25 notes returned, using pagination with the n parameter as offset
-    # TODO: give support to visibility
-    # TODO: give support to feeds of updated or deleted notes (currently Highrise does not offer a feed for deleted notes)
   end
   
 end

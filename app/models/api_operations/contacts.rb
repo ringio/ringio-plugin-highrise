@@ -44,10 +44,7 @@ module ApiOperations
               user_feed = user_feeds[um_index]
               user_feed[1] << rg_contact
             else
-              user_feed = []
-              user_feed[0] = um
-              user_feed[1] = [rg_contact]
-              user_feeds << user_feed
+              user_feeds << [um,[rg_contact]]
             end
           end
 

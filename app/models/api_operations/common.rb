@@ -68,27 +68,11 @@ module ApiOperations
     def self.complete_synchronization
 
       Account.all.each do |account|
+        ApiOperations::Contacts.synchronize_account account
 
-          ApiOperations::Contacts.synchronize_account account
-
+        ApiOperations::Notes.synchronize_account account
 debugger
-          ApiOperations::Notes.synchronize_account account
-
-          ApiOperations::Rings.synchronize_account account
-
-=begin
-          user_map.contact_maps.each do |contact_map|
-            ApiOperations::Notes.synchronize_contact contact_map
-          end
-
-          begin
-            user_map.contact_maps.each do |contact_map|
-              ApiOperations::Rings.synchronize_contact contact_map
-            end
-          rescue
-          end
-=end        
-
+        ApiOperations::Rings.synchronize_account account
       end
   
       return

@@ -6,20 +6,21 @@ module ApiOperations
       
       # get the feed of changed notes per contact of this Ringio account from Ringio
       account_rg_feed = account.rg_notes_feed
-      contact_rg_feeds = self.fetch_contact_rg_feeds(account_rg_feed,account)
+      user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
       rg_deleted_notes_ids = account_rg_feed.deleted
 
-      # synchronize each contact whose notes have changed
-      contact_rg_feeds.each do |rg_feed|
-        ApiOperations::Common.set_hr_base(rg_feed[0].user_map)
-debugger
-        self.synchronize_contact(rg_feed,rg_deleted_notes_ids)
+      # synchronize each user whose notes (note.author_id = user) have changed
+      user_rg_feeds.each do |user_feed|
+        ApiOperations::Common.set_hr_base(user_feed[0])
+        user_feed[1].each do |contact_feed|
+          self.synchronize_contact(user_feed[0],contact_feed,rg_deleted_notes_ids)
+        end
         ApiOperations::Common.empty_hr_base
       end
-
+      
       # update timestamps: we must set the timestamp AFTER the changes we made in the synchronization, or
       # we would update those changes again and again in every synchronization (and, to keep it simple, we ignore
-      # the changes that other agents may have caused for this user just when we were synchronizing)
+      # the changes that other agents may have caused for this account just when we were synchronizing)
       # TODO: ignore only our changes but not the changes made by other agents
       account.rg_notes_last_timestamp = account.rg_notes_feed.timestamp
       account.hr_notes_last_synchronized_at = ApiOperations::Common.hr_current_timestamp(account.user_maps.first)
@@ -29,39 +30,39 @@ debugger
 
 
     private
+      
+      # returns an array with each element containing information for each author user map:
+      # [0] => author user map
+      # [1][i][0] => contact map i
+      # [1][i][1] => updated Ringio notes for contact map i and author user map
+      def self.fetch_user_rg_feeds(account_rg_feed, account)
 
-
-      # returns an array with each element containing information for each contact map:
-      # [0] => contact map
-      # [1] => updated Ringio notes for this contact map
-      def self.fetch_contact_rg_feeds(account_rg_feed, account)
-
-        account_rg_feed.updated.inject([]) do |contact_feeds,rg_note_id|
+        account_rg_feed.updated.inject([]) do |user_feeds,rg_note_id|
           rg_note = RingioAPI::Note.find rg_note_id
 
           # synchronize only notes of users already mapped for this account
           if (um = UserMap.find_by_account_id_and_rg_user_id(account.id,rg_note.author_id))
-            # synchronize only notes of contacts already mapped for this user map
-            if (cm = ContactMap.find_by_rg_contact_id(rg_note.contact_id)) && cm.user_map = um
-              if (cf_index = contact_feeds.index{|cf| cf[0] == cm})
-                contact_feed = contact_feeds[cf_index]
-                contact_feed[1] << rg_note
+            # synchronize only notes of contacts already mapped for this account
+            if (cm = ContactMap.find_by_rg_contact_id(rg_note.contact_id)) && (cm.user_map.account == account)
+              if (uf_index = user_feeds.index{|uf| uf[0] == um})
+                if (cf_index = user_feeds[uf_index][1].index{|cf| cf[0] == cm})
+                  user_feeds[uf_index][1][cf_index][1] << rg_note
+                else
+                  user_feeds[uf_index][1] << [cm,[rg_note]]
+                end
               else
-                contact_feed = []
-                contact_feed[0] = cm
-                contact_feed[1] = [rg_note]
-                contact_feeds << contact_feed
+                user_feeds << [ um , [[cm,[rg_note]]] ]
               end
             end
           end
 
-          contact_feeds
+          user_feeds
         end
         
       end
 
 
-      def self.synchronize_contact(contact_rg_feed, rg_deleted_notes_ids)
+      def self.synchronize_contact(user_map, contact_rg_feed, rg_deleted_notes_ids)
 
         contact_map = contact_rg_feed[0]
 
@@ -74,10 +75,9 @@ debugger
         # give priority to Highrise: discard changes in Ringio to notes that have been changed in Highrise
         self.purge_notes(hr_updated_note_recordings,hr_deleted_notes_ids,contact_rg_feed[1],rg_deleted_notes_ids)
         
-        new_hr_notes_ids = []
-        self.apply_changes_rg_to_hr(contact_map,contact_rg_feed[1],rg_deleted_notes_ids,new_hr_notes_ids)
-debugger
-        self.apply_changes_hr_to_rg(contact_map,hr_updated_note_recordings,hr_deleted_notes_ids,new_hr_notes_ids)        
+        self.apply_changes_rg_to_hr(contact_map,contact_rg_feed[1],rg_deleted_notes_ids)
+
+        self.apply_changes_hr_to_rg(user_map,contact_map,hr_updated_note_recordings,hr_deleted_notes_ids)        
 
       end
 
@@ -107,10 +107,11 @@ debugger
       end
 
 
-      def self.apply_changes_hr_to_rg(contact_map, hr_updated_note_recordings, hr_deleted_notes_ids, new_hr_notes_ids)
-        hr_notes.each do |hr_note|
+      def self.apply_changes_hr_to_rg(user_map, contact_map, hr_updated_note_recordings, hr_deleted_notes_ids)
+
+        hr_updated_note_recordings.each do |hr_note|
           rg_note = self.prepare_rg_note(contact_map,hr_note)
-          self.hr_note_to_rg_note(contact_map,hr_note,rg_note)
+          self.hr_note_to_rg_note(user_map,contact_map,hr_note,rg_note)
   
           # if the Ringio note is saved properly and it didn't exist before, create a new note map
           new_rg_note = rg_note.new?
@@ -119,24 +120,16 @@ debugger
             new_nm.save!
           end
         end
-
-        # check to destroy all currently mapped Ringio notes that don't exist anymore in Highrise
-        # (remember that Highrise does not offer a feed for note deletions)
-        contact_map.note_maps.each do |nm|
-          # skip Highrise notes that have just been created
-          if new_hr_notes_ids.include?(nm.hr_note_id)
-            next
+        
+        hr_deleted_notes_ids.each do |n_id|
+          # if the note was already mapped to Ringio, delete it there
+          if (nm = NoteMap.find_by_hr_note_id(n_id))
+            nm.rg_resource_note.destroy
+            nm.destroy
           end
-          
-          # check only for notes from the current user
-          rg_note = nm.rg_resource_note
-          if rg_note.author_id.to_i == contact_map.user_map.rg_user_id
-            unless hr_notes.index{|n| n.id == nm.hr_note_id}
-              rg_note.destroy
-              nm.destroy
-            end
-          end
+          # otherwise, don't do anything, because that Highrise party has not been created yet in Ringio
         end
+
       end
 
 
@@ -146,20 +139,20 @@ debugger
           rg_note = nm.rg_resource_note
         else
         # if the note is new, we must create it in Ringio
-          # in Ringio (unlike in Highrise) we don't have one token per user, so we have to specify the author of the new note
-          rg_note = RingioAPI::Note.new(:author_id => contact_map.user_map.rg_user_id)
+          rg_note = RingioAPI::Note.new
         end
         rg_note
       end
 
 
-      def self.hr_note_to_rg_note(contact_map, hr_note, rg_note)
+      def self.hr_note_to_rg_note(user_map, contact_map, hr_note, rg_note)
+        rg_note.author_id = user_map.rg_user_id
         rg_note.contact_id = contact_map.rg_contact_id
         rg_note.body =  hr_note.body  
       end
 
 
-      def self.apply_changes_rg_to_hr(contact_map, rg_updated_notes, rg_deleted_notes_ids, new_hr_notes_ids)
+      def self.apply_changes_rg_to_hr(contact_map, rg_updated_notes, rg_deleted_notes_ids)
 
         rg_updated_notes.each do |rg_note|
           # if the note was already mapped to Highrise, update it there
@@ -180,7 +173,6 @@ debugger
           if hr_note.save! && new_hr_note
             new_nm = NoteMap.new(:contact_map_id => contact_map.id, :rg_note_id => rg_note.id, :hr_note_id => hr_note.id)
             new_nm.save!
-            new_hr_notes_ids << hr_note.id
           end
         end
         
@@ -216,6 +208,7 @@ debugger
 
 
       def self.rg_note_to_hr_note(contact_map, rg_note,hr_note)
+        # Highrise assumes that the author of the note is the currently authenticated user, we don't have to specify author_id
         hr_note.subject_id = contact_map.hr_party_id
         hr_note.subject_type = 'Party'
         # it is not necessary to specify if it is a Person or a Company (they can't have id collision),
