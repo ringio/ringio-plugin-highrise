@@ -3,7 +3,7 @@ class CreateRingMaps < ActiveRecord::Migration
     create_table :ring_maps do |t|
       t.integer :contact_map_id
       t.integer :rg_ring_id
-      t.integer :hr_note_id
+      t.integer :hr_ring_note_id
 
       t.timestamps
     end

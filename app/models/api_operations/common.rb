@@ -67,11 +67,12 @@ module ApiOperations
     # run a complete synchronization event between Ringio and Highrise
     def self.complete_synchronization
 
+      # TODO: handle optional fields for all resources in Ringio and in Highrise
       Account.all.each do |account|
         ApiOperations::Contacts.synchronize_account account
 
         ApiOperations::Notes.synchronize_account account
-debugger
+
         ApiOperations::Rings.synchronize_account account
       end
   

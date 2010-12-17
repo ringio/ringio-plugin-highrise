@@ -41,8 +41,7 @@ module ApiOperations
           # synchronize only contacts of users already mapped for this account
           if (um = UserMap.find_by_account_id_and_rg_user_id(account.id,rg_contact.owner_id))
             if (um_index = user_feeds.index{|uf| uf[0] == um})
-              user_feed = user_feeds[um_index]
-              user_feed[1] << rg_contact
+              user_feeds[um_index][1] << rg_contact
             else
               user_feeds << [um,[rg_contact]]
             end

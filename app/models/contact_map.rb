@@ -25,10 +25,10 @@ class ContactMap < ActiveRecord::Base
   end
   
   def hr_notes
-    # get only the Highrise notes that belong this contact
+    # get only the Highrise notes that belong this contact (reject notes corresponding to rings)
     case self.hr_party_type
-      when 'Person' then Highrise::Note.find_all_across_pages(:from => '/people/' + self.hr_party_id + '/notes.xml')
-      when 'Company' then Highrise::Note.find_all_across_pages(:from => '/companies/' + self.hr_party_id + '/notes.xml')
+      when 'Person' then Highrise::Note.find_all_across_pages(:from => '/people/' + self.hr_party_id + '/notes.xml').reject{|n| n.body[0,28] == 'RING - DO NOT CHANGE OR DELETE THIS NOTE'}
+      when 'Company' then Highrise::Note.find_all_across_pages(:from => '/companies/' + self.hr_party_id + '/notes.xml').reject{|n| n.body[0,28] == 'RING - DO NOT CHANGE OR DELETE THIS NOTE'}
       else raise 'Unknown party type'
     end
     # TODO: give support to visibility
@@ -37,8 +37,9 @@ class ContactMap < ActiveRecord::Base
   def hr_updated_note_recordings
     # get only the Highrise recordings for notes for the current contact and
     # filter to keep those that were created_at or updated at after the last synchronization datetime
+    # and reject the notes corresponding to rings
     Highrise::Recording.find_all_across_pages_since(self.user_map.account.hr_notes_last_synchronized_at).reject do |r|
-      (r.type != 'Note') || (r.subject_type != 'Party') || (r.subject_id.to_i != self.hr_party_id)
+      (r.type != 'Note') || (r.subject_type != 'Party') || (r.subject_id.to_i != self.hr_party_id) || (r.body[0,28] == 'RING - DO NOT CHANGE OR DELETE THIS NOTE')
     end
   end
   

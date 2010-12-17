@@ -40,9 +40,9 @@ module ApiOperations
         account_rg_feed.updated.inject([]) do |user_feeds,rg_note_id|
           rg_note = RingioAPI::Note.find rg_note_id
 
-          # synchronize only notes of users already mapped for this account
+          # synchronize only notes created by users already mapped for this account
           if (um = UserMap.find_by_account_id_and_rg_user_id(account.id,rg_note.author_id))
-            # synchronize only notes of contacts already mapped for this account
+            # synchronize only notes created for contacts already mapped for this account
             if (cm = ContactMap.find_by_rg_contact_id(rg_note.contact_id)) && (cm.user_map.account == account)
               if (uf_index = user_feeds.index{|uf| uf[0] == um})
                 if (cf_index = user_feeds[uf_index][1].index{|cf| cf[0] == cm})
@@ -62,7 +62,7 @@ module ApiOperations
       end
 
 
-      def self.synchronize_contact(user_map, contact_rg_feed, rg_deleted_notes_ids)
+      def self.synchronize_contact(author_user_map, contact_rg_feed, rg_deleted_notes_ids)
 
         contact_map = contact_rg_feed[0]
 
@@ -77,7 +77,7 @@ module ApiOperations
         
         self.apply_changes_rg_to_hr(contact_map,contact_rg_feed[1],rg_deleted_notes_ids)
 
-        self.apply_changes_hr_to_rg(user_map,contact_map,hr_updated_note_recordings,hr_deleted_notes_ids)        
+        self.apply_changes_hr_to_rg(author_user_map,contact_map,hr_updated_note_recordings,hr_deleted_notes_ids)        
 
       end
 
@@ -107,11 +107,11 @@ module ApiOperations
       end
 
 
-      def self.apply_changes_hr_to_rg(user_map, contact_map, hr_updated_note_recordings, hr_deleted_notes_ids)
+      def self.apply_changes_hr_to_rg(author_user_map, contact_map, hr_updated_note_recordings, hr_deleted_notes_ids)
 
         hr_updated_note_recordings.each do |hr_note|
           rg_note = self.prepare_rg_note(contact_map,hr_note)
-          self.hr_note_to_rg_note(user_map,contact_map,hr_note,rg_note)
+          self.hr_note_to_rg_note(author_user_map,contact_map,hr_note,rg_note)
   
           # if the Ringio note is saved properly and it didn't exist before, create a new note map
           new_rg_note = rg_note.new?
@@ -145,8 +145,8 @@ module ApiOperations
       end
 
 
-      def self.hr_note_to_rg_note(user_map, contact_map, hr_note, rg_note)
-        rg_note.author_id = user_map.rg_user_id
+      def self.hr_note_to_rg_note(author_user_map, contact_map, hr_note, rg_note)
+        rg_note.author_id = author_user_map.rg_user_id
         rg_note.contact_id = contact_map.rg_contact_id
         rg_note.body =  hr_note.body  
       end
@@ -208,7 +208,7 @@ module ApiOperations
 
 
       def self.rg_note_to_hr_note(contact_map, rg_note,hr_note)
-        # Highrise assumes that the author of the note is the currently authenticated user, we don't have to specify author_id
+        # Highrise assumes that the author of the note is the currently authenticated user, we don't have to specify the author_id
         hr_note.subject_id = contact_map.hr_party_id
         hr_note.subject_type = 'Party'
         # it is not necessary to specify if it is a Person or a Company (they can't have id collision),

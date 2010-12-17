@@ -46,7 +46,7 @@ ActiveRecord::Schema.define(:version => 20101213164155) do
   create_table "ring_maps", :force => true do |t|
     t.integer  "contact_map_id"
     t.integer  "rg_ring_id"
-    t.integer  "hr_note_id"
+    t.integer  "hr_ring_note_id"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
