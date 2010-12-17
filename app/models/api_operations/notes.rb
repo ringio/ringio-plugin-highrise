@@ -13,7 +13,13 @@ module ApiOperations
       user_rg_feeds.each do |user_feed|
         ApiOperations::Common.set_hr_base(user_feed[0])
         user_feed[1].each do |contact_feed|
-          self.synchronize_contact(user_feed[0],contact_feed,rg_deleted_notes_ids)
+          begin
+            self.synchronize_contact(user_feed[0],contact_feed,rg_deleted_notes_ids)
+          rescue Exception => e
+            error_message_header = "\nProblem synchronizing the notes created by this user map:\n" + user_feed[0].inspect + "\n" +
+                                   "for this contact map:\n" + contact_feed[0].inspect + "\n  " + e.inspect + "\n"
+            Rails.logger.error e.backtrace.inject(error_message_header){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
+          end
         end
         ApiOperations::Common.empty_hr_base
       end

@@ -38,5 +38,6 @@ module RingioPluginHighrise
 
     # Configure sensitive parameters which will be filtered from the log file.
     config.filter_parameters += [:password]
+    config.filter_parameters << :hr_user_token
   end
 end

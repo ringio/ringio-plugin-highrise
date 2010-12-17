@@ -12,7 +12,12 @@ module ApiOperations
       # synchronize each contact whose rings have changed
       contact_rg_feeds.each do |contact_feed|
         ApiOperations::Common.set_hr_base(contact_feed[0].user_map)
-        self.synchronize_contact(contact_feed)
+        begin
+          self.synchronize_contact(contact_feed)
+        rescue Exception => e
+          error_message_header = "\nProblem synchronizing the rings created for this contact map:\n" + contact_feed[0].inspect + "\n  " + e.inspect + "\n"
+          Rails.logger.error e.backtrace.inject(error_message_header){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
+        end
         ApiOperations::Common.empty_hr_base
       end
       

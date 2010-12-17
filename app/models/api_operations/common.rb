@@ -66,14 +66,18 @@ module ApiOperations
   
     # run a complete synchronization event between Ringio and Highrise
     def self.complete_synchronization
-
-      # TODO: handle optional fields for all resources in Ringio and in Highrise
-      Account.all.each do |account|
-        ApiOperations::Contacts.synchronize_account account
-
-        ApiOperations::Notes.synchronize_account account
-
-        ApiOperations::Rings.synchronize_account account
+      begin
+        # TODO: handle optional fields for all resources in Ringio and in Highrise
+        Account.all.each do |account|
+          ApiOperations::Contacts.synchronize_account account
+  
+          ApiOperations::Notes.synchronize_account account
+  
+          ApiOperations::Rings.synchronize_account account
+        end
+      rescue Exception => e
+        error_message_header = "\nProblem during a synchronization event:\n  " + e.inspect + "\n"
+        Rails.logger.error e.backtrace.inject(error_message_header){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
       end
   
       return

@@ -12,7 +12,12 @@ module ApiOperations
       # synchronize each user whose contacts have changed
       user_rg_feeds.each do |rg_feed|
         ApiOperations::Common.set_hr_base rg_feed[0]
-        self.synchronize_user(rg_feed,rg_deleted_contact_ids)
+        begin
+          self.synchronize_user(rg_feed,rg_deleted_contact_ids)
+        rescue Exception => e
+          error_message_header = "\nProblem synchronizing the contacts of this user map:\n" + rg_feed[0].inspect + "\n  " + e.inspect + "\n"
+          Rails.logger.error e.backtrace.inject(error_message_header){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
+        end
         ApiOperations::Common.empty_hr_base
       end
 
