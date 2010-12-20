@@ -3,7 +3,7 @@ module ApiOperations
   module Rings
 
     def self.synchronize_account(account)
-
+debugger
       # get the feed of changed rings per contact of this Ringio account from Ringio,
       # we will not check for deleted rings, because they cannot be deleted
       account_rg_feed = account.rg_rings_feed

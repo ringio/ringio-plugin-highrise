@@ -16,18 +16,6 @@
 	    https://www.<%= f.text_field :hr_subdomain %>.highrisehq.com
 	</div>
 
-	<h4><%= t('account.existing_data') %></h4>
-	<div class="sectionContent">
-    <div class="fieldGroup checkboxPanel">
-      <%= f.radio_button(:sync_only_new_data,true) %>
-		  <%= f.label :sync_only_new_data, t('account.sync_only_new_data_true') %>
-		</div>
-		<div class="fieldGroup checkboxPanel">
-      <%= f.radio_button(:sync_only_new_data,false) %>
-		  <%= f.label :sync_only_new_data, t('account.sync_only_new_data_false') %>
-		</div>
-  </div>
-	
   <div id="savePlugin" class="actions">
     <%= f.submit t('account.submit'), :class => 'button' %>
   </div>

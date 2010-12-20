@@ -6,8 +6,6 @@ class Account < ActiveRecord::Base
   validates_uniqueness_of :rg_account_id
   validates_uniqueness_of :hr_subdomain, :allow_blank => true
     
-  # TODO: add support for the "Sync only new data" option
-  
   def rg_contacts_feed
     # TODO: give support to shared contacts (group to Client in Ringio)
     feed = RingioAPI::Feed.find(

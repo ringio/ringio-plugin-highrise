@@ -8,20 +8,27 @@ module ApiOperations
       account_rg_feed = account.rg_notes_feed
       user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
       rg_deleted_notes_ids = account_rg_feed.deleted
-
-      # synchronize each user whose notes (note.author_id = user) have changed
-      user_rg_feeds.each do |user_feed|
+debugger
+      # synchronize every user of this account
+      UserMap.find_all_by_account_id(account.id).each do |um|
         ApiOperations::Common.set_hr_base(user_feed[0])
+        
+        rg_feed = (rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[rg_f_index] : nil
+        
+        ApiOperations::Common.empty_hr_base
+      end
+      user_rg_feeds.each do |user_feed|
+        
         user_feed[1].each do |contact_feed|
           begin
             self.synchronize_contact(user_feed[0],contact_feed,rg_deleted_notes_ids)
           rescue Exception => e
-            error_message_header = "\nProblem synchronizing the notes created by this user map:\n" + user_feed[0].inspect + "\n" +
+            error_message_header = "\nProblem synchronizing the notes created by the user map with id = " + um.id.to_s + "\n" +
                                    "for this contact map:\n" + contact_feed[0].inspect + "\n  " + e.inspect + "\n"
             Rails.logger.error e.backtrace.inject(error_message_header){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
           end
         end
-        ApiOperations::Common.empty_hr_base
+        
       end
       
       # update timestamps: we must set the timestamp AFTER the changes we made in the synchronization, or
@@ -75,9 +82,10 @@ module ApiOperations
         hr_updated_note_recordings = contact_map.hr_updated_note_recordings
         # TODO: get true feeds of deleted notes (currently Highrise does not offer it)
         hr_notes = contact_map.hr_notes
+
         # get the deleted notes (those that don't appear anymore in the total)
         hr_deleted_notes_ids = contact_map.note_maps.reject{|nm| hr_notes.index{|hr_n| hr_n.id == nm.hr_note_id}}.map{|nm| nm.hr_note_id} 
- 
+
         # give priority to Highrise: discard changes in Ringio to notes that have been changed in Highrise
         self.purge_notes(hr_updated_note_recordings,hr_deleted_notes_ids,contact_rg_feed[1],rg_deleted_notes_ids)
         
