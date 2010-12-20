@@ -8,27 +8,27 @@ module ApiOperations
       account_rg_feed = account.rg_notes_feed
       user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
       rg_deleted_notes_ids = account_rg_feed.deleted
-debugger
-      # synchronize every user of this account
+
+      # synchronize the notes created by every user of this account
       UserMap.find_all_by_account_id(account.id).each do |um|
-        ApiOperations::Common.set_hr_base(user_feed[0])
+        ApiOperations::Common.set_hr_base um
         
-        rg_feed = (rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[rg_f_index] : nil
-        
-        ApiOperations::Common.empty_hr_base
-      end
-      user_rg_feeds.each do |user_feed|
-        
-        user_feed[1].each do |contact_feed|
+        # we have to check all contacts, not only the ones owned by this user,
+        # because users can create notes for contacts that are not owned by them
+        ContactMap.all.each do |cm|
+          user_rg_feed = (u_rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[u_rg_f_index] : nil
+          contact_rg_feed = user_rg_feed.present? ? ((c_rg_f_index = user_rg_feed[1].index{|contact_rg_feed| contact_rg_feed[0] == cm})? user_rg_feed[1][c_rg_f_index] : nil) : nil
+
           begin
-            self.synchronize_contact(user_feed[0],contact_feed,rg_deleted_notes_ids)
+            self.synchronize_contact(um,cm,contact_rg_feed,rg_deleted_notes_ids)
           rescue Exception => e
             error_message_header = "\nProblem synchronizing the notes created by the user map with id = " + um.id.to_s + "\n" +
-                                   "for this contact map:\n" + contact_feed[0].inspect + "\n  " + e.inspect + "\n"
+                                   "for the contact map with id = " + cm.id.to_s + "\n  " + e.inspect + "\n"
             Rails.logger.error e.backtrace.inject(error_message_header){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
-          end
+          end          
         end
         
+        ApiOperations::Common.empty_hr_base
       end
       
       # update timestamps: we must set the timestamp AFTER the changes we made in the synchronization, or
@@ -75,9 +75,7 @@ debugger
       end
 
 
-      def self.synchronize_contact(author_user_map, contact_rg_feed, rg_deleted_notes_ids)
-
-        contact_map = contact_rg_feed[0]
+      def self.synchronize_contact(author_user_map, contact_map, contact_rg_feed, rg_deleted_notes_ids)
 
         hr_updated_note_recordings = contact_map.hr_updated_note_recordings
         # TODO: get true feeds of deleted notes (currently Highrise does not offer it)
@@ -87,36 +85,38 @@ debugger
         hr_deleted_notes_ids = contact_map.note_maps.reject{|nm| hr_notes.index{|hr_n| hr_n.id == nm.hr_note_id}}.map{|nm| nm.hr_note_id} 
 
         # give priority to Highrise: discard changes in Ringio to notes that have been changed in Highrise
-        self.purge_notes(hr_updated_note_recordings,hr_deleted_notes_ids,contact_rg_feed[1],rg_deleted_notes_ids)
-        
-        self.apply_changes_rg_to_hr(contact_map,contact_rg_feed[1],rg_deleted_notes_ids)
+        self.purge_notes(hr_updated_note_recordings,hr_deleted_notes_ids,contact_rg_feed,rg_deleted_notes_ids)
+
+        self.apply_changes_rg_to_hr(author_user_map,contact_map,contact_rg_feed,rg_deleted_notes_ids)
 
         self.apply_changes_hr_to_rg(author_user_map,contact_map,hr_updated_note_recordings,hr_deleted_notes_ids)        
 
       end
 
 
-      def self.purge_notes(hr_updated_note_recordings, hr_deleted_notes_ids, rg_updated_notes, rg_deleted_notes_ids)
+      def self.purge_notes(hr_updated_note_recordings, hr_deleted_notes_ids, contact_rg_feed, rg_deleted_notes_ids)
   
         # delete duplicated changes for Highrise updated notes
         hr_updated_note_recordings.each do |r|
           if (nm = NoteMap.find_by_hr_note_id(r.id))
-            self.delete_rg_duplicated_changes(nm.rg_note_id,rg_updated_notes,rg_deleted_notes_ids)
+            self.delete_rg_duplicated_changes(nm.rg_note_id,contact_rg_feed,rg_deleted_notes_ids)
           end
         end
         
         # delete duplicated changes for Highrise deleted notes
         hr_deleted_notes_ids.each do |n_id|
           if (nm = NoteMap.find_by_hr_note_id(n_id))
-            self.delete_rg_duplicated_changes(nm.rg_note_id,rg_updated_notes,rg_deleted_notes_ids)
+            self.delete_rg_duplicated_changes(nm.rg_note_id,contact_rg_feed,rg_deleted_notes_ids)
           end
         end
 
       end
 
 
-      def self.delete_rg_duplicated_changes(rg_note_id, rg_updated_notes, rg_deleted_notes_ids)
-        rg_updated_notes.delete_if{|n| n.id == rg_note_id}
+      def self.delete_rg_duplicated_changes(rg_note_id, contact_rg_feed, rg_deleted_notes_ids)
+        if contact_rg_feed
+          contact_rg_feed[1].delete_if{|n| n.id == rg_note_id}
+        end
         rg_deleted_notes_ids.delete_if{|n_id| n_id == rg_note_id}      
       end
 
@@ -130,14 +130,14 @@ debugger
           # if the Ringio note is saved properly and it didn't exist before, create a new note map
           new_rg_note = rg_note.new?
           if rg_note.save! && new_rg_note
-            new_nm = NoteMap.new(:contact_map_id => contact_map.id, :rg_note_id => rg_note.id, :hr_note_id => hr_note.id)
+            new_nm = NoteMap.new(:contact_map_id => contact_map.id, :author_user_map_id => author_user_map.id, :rg_note_id => rg_note.id, :hr_note_id => hr_note.id)
             new_nm.save!
           end
         end
         
         hr_deleted_notes_ids.each do |n_id|
-          # if the note was already mapped to Ringio, delete it there
-          if (nm = NoteMap.find_by_hr_note_id(n_id))
+          # if the note was already mapped to Ringio for this author user map, delete it there
+          if (nm = NoteMap.find_by_author_user_map_id_and_hr_note_id(author_user_map.id,n_id))
             nm.rg_resource_note.destroy
             nm.destroy
           end
@@ -166,33 +166,35 @@ debugger
       end
 
 
-      def self.apply_changes_rg_to_hr(contact_map, rg_updated_notes, rg_deleted_notes_ids)
+      def self.apply_changes_rg_to_hr(author_user_map,contact_map, contact_rg_feed, rg_deleted_notes_ids)
 
-        rg_updated_notes.each do |rg_note|
-          # if the note was already mapped to Highrise, update it there
-          if (nm = NoteMap.find_by_rg_note_id(rg_note.id))
-            hr_note = nm.hr_resource_note
-            self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
-          else
-          # if the note is new, create it in Highrise and map it
-            hr_note = Highrise::Note.new
-            self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
-          end
-          
-          # if the Highrise note is saved properly and it didn't exist before, create a new note map
-          new_hr_note = hr_note.new?
-          unless new_hr_note
-            hr_note = self.remove_subject_name(hr_note)
-          end
-          if hr_note.save! && new_hr_note
-            new_nm = NoteMap.new(:contact_map_id => contact_map.id, :rg_note_id => rg_note.id, :hr_note_id => hr_note.id)
-            new_nm.save!
+        if contact_rg_feed
+          contact_rg_feed[1].each do |rg_note|
+            # if the note was already mapped to Highrise, update it there
+            if (nm = NoteMap.find_by_rg_note_id(rg_note.id))
+              hr_note = nm.hr_resource_note
+              self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
+            else
+            # if the note is new, create it in Highrise and map it
+              hr_note = Highrise::Note.new
+              self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
+            end
+            
+            # if the Highrise note is saved properly and it didn't exist before, create a new note map
+            new_hr_note = hr_note.new?
+            unless new_hr_note
+              hr_note = self.remove_subject_name(hr_note)
+            end
+            if hr_note.save! && new_hr_note
+              new_nm = NoteMap.new(:contact_map_id => contact_map.id, :author_user_map_id => author_user_map.id, :rg_note_id => rg_note.id, :hr_note_id => hr_note.id)
+              new_nm.save!
+            end
           end
         end
         
         rg_deleted_notes_ids.each do |dn_id|
-          # if the note was already mapped to Highrise, delete it there
-          if (nm = NoteMap.find_by_rg_note_id(dn_id))
+          # if the note was already mapped to Highrise for this author user map, delete it there
+          if (nm = NoteMap.find_by_author_user_map_id_and_rg_note_id(author_user_map.id,dn_id))
             hr_note = nm.hr_resource_note
             hr_note.destroy
             nm.destroy

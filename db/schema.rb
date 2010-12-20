@@ -36,6 +36,7 @@ ActiveRecord::Schema.define(:version => 20101213164155) do
 
   create_table "note_maps", :force => true do |t|
     t.integer  "contact_map_id"
+    t.integer  "author_user_map_id"
     t.integer  "rg_note_id"
     t.integer  "hr_note_id"
     t.datetime "created_at"

@@ -3,7 +3,7 @@ module ApiOperations
   module Rings
 
     def self.synchronize_account(account)
-debugger
+
       # get the feed of changed rings per contact of this Ringio account from Ringio,
       # we will not check for deleted rings, because they cannot be deleted
       account_rg_feed = account.rg_rings_feed
@@ -15,7 +15,7 @@ debugger
         begin
           self.synchronize_contact(contact_feed)
         rescue Exception => e
-          error_message_header = "\nProblem synchronizing the rings created for this contact map:\n" + contact_feed[0].inspect + "\n  " + e.inspect + "\n"
+          error_message_header = "\nProblem synchronizing the rings created for the contact map with id = " + contact_feed[0].id.to_s + "\n  " + e.inspect + "\n"
           Rails.logger.error e.backtrace.inject(error_message_header){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
         end
         ApiOperations::Common.empty_hr_base

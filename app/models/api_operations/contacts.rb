@@ -9,13 +9,13 @@ module ApiOperations
       user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
       rg_deleted_contact_ids = account_rg_feed.deleted
       
-      # synchronize every user of this account
+      # synchronize the contacts owned by every user of this account
       UserMap.find_all_by_account_id(account.id).each do |um|
         ApiOperations::Common.set_hr_base um
-        rg_feed = (rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[rg_f_index] : nil
+        user_rg_feed = (rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[rg_f_index] : nil
 
         begin
-          self.synchronize_user(um,rg_feed,rg_deleted_contact_ids)
+          self.synchronize_user(um,user_rg_feed,rg_deleted_contact_ids)
         rescue Exception => e
           error_message_header = "\nProblem synchronizing the contacts of the user map with id = " + um.id.to_s + "\n  " + e.inspect + "\n"
           Rails.logger.error e.backtrace.inject(error_message_header){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
@@ -67,12 +67,10 @@ module ApiOperations
         hr_updated_companies = hr_parties_feed[1]
         hr_party_deletions = hr_parties_feed[2]
 
-        if user_rg_feed
-          # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
-          self.purge_contacts(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed,rg_deleted_contacts_ids)
+        # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
+        self.purge_contacts(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed,rg_deleted_contacts_ids)
 
-          self.apply_changes_rg_to_hr(user_map,user_rg_feed,rg_deleted_contacts_ids)
-        end
+        self.apply_changes_rg_to_hr(user_map,user_rg_feed,rg_deleted_contacts_ids)
 
         self.apply_changes_hr_to_rg(user_map,hr_updated_people,hr_updated_companies,hr_party_deletions)
       end
@@ -83,8 +81,8 @@ module ApiOperations
         self.process_updated_parties(user_map, hr_updated_companies)
   
         hr_party_deletions.each do |p_deletion|
-          # if the party was already mapped to Ringio, delete it there
-          if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(p_deletion.id,p_deletion.type))
+          # if the party was already mapped to Ringio for this user map, delete it there
+          if (cm = ContactMap.find_by_user_map_id_and_hr_party_id_and_hr_party_type(user_map.id,p_deletion.id,p_deletion.type))
             cm.rg_resource_contact.destroy
             cm.destroy
           end
