@@ -2,9 +2,13 @@ class Account < ActiveRecord::Base
 
   has_many :user_maps, :dependent => :destroy
   
-  validates_presence_of :rg_account_id
-  validates_uniqueness_of :rg_account_id
+  validates_presence_of :rg_account_id, :rg_account_id_hash
+  validates_uniqueness_of :rg_account_id, :rg_account_id_hash
   validates_uniqueness_of :hr_subdomain, :allow_blank => true
+  
+  before_validation do |ac|
+    ac.rg_account_id_hash = ApiOperations::Hashing.digest(ac.rg_account_id.to_s + RingioAPI::Base.user.to_s)
+  end
     
   def rg_contacts_feed
     # TODO: give support to shared contacts (group to Client in Ringio)

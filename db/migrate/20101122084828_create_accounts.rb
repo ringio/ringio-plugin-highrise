@@ -2,6 +2,7 @@ class CreateAccounts < ActiveRecord::Migration
   def self.up
     create_table :accounts do |t|
       t.integer :rg_account_id
+      t.string :rg_account_id_hash
       t.string :hr_subdomain
       t.integer :rg_contacts_last_timestamp, :default => 1
       t.integer :rg_notes_last_timestamp, :default => 1

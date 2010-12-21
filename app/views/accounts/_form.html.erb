@@ -1,4 +1,4 @@
-<%= form_for(@account) do |f| %>
+<%= form_for(@account, :url => account_path(@account, :rg_account_id_hash => params[:rg_account_id_hash])) do |f| %>
   <% if @account.errors.any? %>
     <div id="error_explanation">
       <h2><%= pluralize(@account.errors.count, "error") + t('account.prohibited_saving') %>:</h2>

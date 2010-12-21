@@ -1,6 +1,6 @@
 <div id="newRecordTable" class="hidden tableRecord">
 	<%= render 'user_maps/heads' %>
-  <%= form_for([@account,@new_user_map]) do |f| %>
+  <%= form_for([@account,@new_user_map], :url => account_user_maps_path(@account, :rg_account_id_hash => params[:rg_account_id_hash])) do |f| %>
     <% if @new_user_map.errors.any? %>
       <div id="error_explanation">
         <h2><%= pluralize(@new_user_map.errors.count, "error") + t('user_map.prohibited_saving') %>:</h2>

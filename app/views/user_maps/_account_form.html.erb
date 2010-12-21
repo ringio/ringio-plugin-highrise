@@ -1,5 +1,5 @@
 <div id="user_map_edit_<%= user_map.id.to_s %>" class="tableRecord">
-	<%= form_for([account,user_map], html = {:class => 'edit_user_map'}) do |f| %>
+	<%= form_for([account,user_map], :url => account_user_map_path(account, user_map, :rg_account_id_hash => params[:rg_account_id_hash]), :html => {:class => 'edit_user_map'}) do |f| %>
 	  <% if user_map.errors.any? %>
 	    <div id="error_explanation">
 	      <h2><%= pluralize(user_map.errors.count, "error") + t('user_map.prohibited_saving') %>:</h2>
@@ -26,5 +26,5 @@
     </span>
 
   <% end %>
-  &nbsp;| <%= button_to t('delete'), [@account,user_map], :method => :delete %>
+  &nbsp;| <%= button_to t('delete'), account_user_map_path(@account, user_map, :rg_account_id_hash => params[:rg_account_id_hash]), :method => :delete %>
 </div>
