@@ -8,7 +8,7 @@ module ApiOperations
       # we will not check for deleted rings, because they cannot be deleted
       account_rg_feed = account.rg_rings_feed
       contact_rg_feeds = self.fetch_contact_rg_feeds(account_rg_feed,account)
-      
+
       # synchronize each contact whose rings have changed
       contact_rg_feeds.each do |contact_feed|
         ApiOperations::Common.set_hr_base(contact_feed[0].user_map)
@@ -43,9 +43,9 @@ module ApiOperations
         account_rg_feed.updated.inject([]) do |contact_feeds,rg_ring_id|
           rg_ring = RingioAPI::Ring.find rg_ring_id
           
-          if rg_ring.from_type = 'contact'
+          if rg_ring.from_type == 'contact'
             process_rg_ring(rg_ring.from_id,contact_feeds,rg_ring,account)
-          elsif rg_ring.to_type = 'contact'
+          elsif rg_ring.to_type == 'contact'
             process_rg_ring(rg_ring.to_id,contact_feeds,rg_ring,account)
           end
 
@@ -68,6 +68,7 @@ module ApiOperations
 
 
       def self.synchronize_contact(contact_rg_feed)
+
         # we will only check for updated ring notes in Ringio, as they should not be changed in Highrise
         contact_map = contact_rg_feed[0]
         rg_updated_rings = contact_rg_feed[1]
@@ -135,16 +136,16 @@ module ApiOperations
           else
             raise 'Unknown Ring To type'
         end
-        
+
         hr_ring_note.body = "RING - DO NOT CHANGE OR DELETE THIS NOTE\n" +
-                            "From: " + rg_ring.from.type + " " + from.name + " " + rg_ring.callerid + "\n" +
-                            "To: " + rg_ring.to.type + " " + to.name + " " + rg_ring.called_number + "\n" +
+                            "From: " + rg_ring.from_type + " " + from.name + " " + rg_ring.callerid + "\n" +
+                            "To: " + rg_ring.to_type + " " + to.name + " " + rg_ring.called_number + "\n" +
                             "Start Time: " + rg_ring.start_time + "\n" +
-                            "Duration:  " + rg_ring.duration + "\n" +
+                            "Duration:  " + rg_ring.duration.to_s + "\n" +
                             "Outcome:  " + rg_ring.outcome + "\n" +
-                            "Voicemail:  " + rg_ring.voicemail + "\n" +
+                            "Voicemail:  " + (rg_ring.attributes['voicemail'].present? ? rg_ring.voicemail : '') + "\n" +
                             "Kind:  " + rg_ring.kind + "\n" +
-                            "Department:  " + rg_ring.department + "\n"                            
+                            "Department:  " + (rg_ring.attributes['department'].present? ? rg_ring.department : '') + "\n"                            
       end
 
   end
