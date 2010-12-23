@@ -49,16 +49,20 @@ module ApiOperations
     end
    
     def self.hr_current_timestamp(user_map)
-      ApiOperations::Common.set_hr_base_push user_map
+      timestamp = nil
 
-      # TODO: find how to get this faster: from the HTTP header Date from the last Highrise response (ActiveResource does not give access to it)
-      # create a fake contact, set timestamp to the created_at in the response and then destroy that fake contact
-      timestamp_person = Highrise::Person.new(:first_name => 'Ringio Check')
-      timestamp_person.save
-      timestamp = timestamp_person.created_at
-      timestamp_person.destroy
-
-      ApiOperations::Common.set_hr_base_pop
+      if user_map
+        ApiOperations::Common.set_hr_base_push user_map
+  
+        # TODO: find how to get this faster: from the HTTP header Date from the last Highrise response (ActiveResource does not give access to it)
+        # create a fake contact, set timestamp to the created_at in the response and then destroy that fake contact
+        timestamp_person = Highrise::Person.new(:first_name => 'Ringio Check')
+        timestamp_person.save
+        timestamp = timestamp_person.created_at
+        timestamp_person.destroy
+  
+        ApiOperations::Common.set_hr_base_pop
+      end
 
       timestamp
     end
@@ -68,11 +72,13 @@ module ApiOperations
     def self.complete_synchronization
       # TODO: handle optional fields for all resources in Ringio and in Highrise
       Account.all.each do |account|
-        ApiOperations::Contacts.synchronize_account account
-
-        ApiOperations::Notes.synchronize_account account
-
-        ApiOperations::Rings.synchronize_account account
+        if account.hr_subdomain.present?
+          ApiOperations::Contacts.synchronize_account account
+  
+          ApiOperations::Notes.synchronize_account account
+  
+          ApiOperations::Rings.synchronize_account account
+        end
       end
   
       return
