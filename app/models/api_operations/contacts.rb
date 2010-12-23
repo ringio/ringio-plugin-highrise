@@ -15,8 +15,7 @@ module ApiOperations
         ApiOperations::Common.log(:error,e,"\nProblem fetching the changed contacts of the account with id = " + account.id.to_s)
       end
     
-
-      self.synchronize_users(account,user_rg_feeds,rg_deleted_contact_ids)
+      self.synchronize_users(account,user_rg_feeds,rg_deleted_contact_ids) if user_rg_feeds && rg_deleted_contact_ids
 
       self.update_timestamps account
 
@@ -63,7 +62,7 @@ module ApiOperations
       # [0] => user map
       # [1] => updated Ringio contacts for this user map
       def self.fetch_user_rg_feeds(account_rg_feed, account)
-        result = account_rg_feed.updated.inject([]) do |user_feeds,rg_contact_id|
+        account_rg_feed.updated.inject([]) do |user_feeds,rg_contact_id|
           rg_contact = RingioAPI::Contact.find rg_contact_id
 
           # synchronize only contacts of users already mapped for this account
@@ -77,8 +76,6 @@ module ApiOperations
 
           user_feeds
         end
-        
-        result.nil? ? [] : result
       end
 
 

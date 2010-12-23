@@ -15,7 +15,7 @@ module ApiOperations
         ApiOperations::Common.log(:error,e,"\nProblem fetching the changed rings of the account with id = " + account.id.to_s)
       end
 
-      self.synchronize_contacts contact_rg_feeds
+      self.synchronize_contacts contact_rg_feeds if contact_rg_feeds
       
       self.update_timestamps account
 
@@ -60,7 +60,7 @@ module ApiOperations
       # [1] => updated Ringio rings for this contact map
       # we will choose the author of the ring event note in Highrise as the owner of the contact 
       def self.fetch_contact_rg_feeds(account_rg_feed, account)
-        result = account_rg_feed.updated.inject([]) do |contact_feeds,rg_ring_id|
+        account_rg_feed.updated.inject([]) do |contact_feeds,rg_ring_id|
           rg_ring = RingioAPI::Ring.find rg_ring_id
           
           if rg_ring.from_type == 'contact'
@@ -71,8 +71,6 @@ module ApiOperations
 
           contact_feeds
         end
-
-        result.nil? ? [] : result
       end
 
 
