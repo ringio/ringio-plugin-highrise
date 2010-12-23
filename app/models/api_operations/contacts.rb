@@ -63,7 +63,7 @@ module ApiOperations
       # [0] => user map
       # [1] => updated Ringio contacts for this user map
       def self.fetch_user_rg_feeds(account_rg_feed, account)
-        account_rg_feed.updated.inject([]) do |user_feeds,rg_contact_id|
+        result = account_rg_feed.updated.inject([]) do |user_feeds,rg_contact_id|
           rg_contact = RingioAPI::Contact.find rg_contact_id
 
           # synchronize only contacts of users already mapped for this account
@@ -77,6 +77,8 @@ module ApiOperations
 
           user_feeds
         end
+        
+        result.nil? ? [] : result
       end
 
 

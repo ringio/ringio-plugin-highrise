@@ -71,7 +71,7 @@ module ApiOperations
       # [1][i][0] => contact map i
       # [1][i][1] => updated Ringio notes for contact map i and author user map
       def self.fetch_user_rg_feeds(account_rg_feed, account)
-        account_rg_feed.updated.inject([]) do |user_feeds,rg_note_id|
+        result = account_rg_feed.updated.inject([]) do |user_feeds,rg_note_id|
           rg_note = RingioAPI::Note.find rg_note_id
 
           # synchronize only notes created by users already mapped for this account
@@ -92,6 +92,8 @@ module ApiOperations
 
           user_feeds
         end
+        
+        result.nil? ? [] : result
       end
 
 

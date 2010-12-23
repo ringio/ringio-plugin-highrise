@@ -60,8 +60,7 @@ module ApiOperations
       # [1] => updated Ringio rings for this contact map
       # we will choose the author of the ring event note in Highrise as the owner of the contact 
       def self.fetch_contact_rg_feeds(account_rg_feed, account)
-
-        account_rg_feed.updated.inject([]) do |contact_feeds,rg_ring_id|
+        result = account_rg_feed.updated.inject([]) do |contact_feeds,rg_ring_id|
           rg_ring = RingioAPI::Ring.find rg_ring_id
           
           if rg_ring.from_type == 'contact'
@@ -72,7 +71,8 @@ module ApiOperations
 
           contact_feeds
         end
-        
+
+        result.nil? ? [] : result
       end
 
 
