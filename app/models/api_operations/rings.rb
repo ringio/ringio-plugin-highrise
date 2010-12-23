@@ -3,36 +3,57 @@ module ApiOperations
   module Rings
 
     def self.synchronize_account(account)
+      ApiOperations::Common.log(:debug,nil,"Started the synchronization of the rings of the account with id = " + account.id.to_s)
 
-      # get the feed of changed rings per contact of this Ringio account from Ringio,
-      # we will not check for deleted rings, because they cannot be deleted
-      account_rg_feed = account.rg_rings_feed
-      contact_rg_feeds = self.fetch_contact_rg_feeds(account_rg_feed,account)
-
-      # synchronize each contact whose rings have changed
-      contact_rg_feeds.each do |contact_feed|
-        ApiOperations::Common.set_hr_base(contact_feed[0].user_map)
-        begin
-          self.synchronize_contact(contact_feed)
-        rescue Exception => e
-          error_message_header = "\nProblem synchronizing the rings created for the contact map with id = " + contact_feed[0].id.to_s + "\n  " + e.inspect + "\n"
-          Rails.logger.error e.backtrace.inject(error_message_header){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
-        end
-        ApiOperations::Common.empty_hr_base
+      begin
+        # get the feed of changed rings per contact of this Ringio account from Ringio,
+        # we will not check for deleted rings, because they cannot be deleted
+        ApiOperations::Common.log(:debug,nil,"Getting the changed rings of the account with id = " + account.id.to_s)
+        account_rg_feed = account.rg_rings_feed
+        contact_rg_feeds = self.fetch_contact_rg_feeds(account_rg_feed,account)
+      rescue Exception => e
+        ApiOperations::Common.log(:error,e,"\nProblem fetching the changed rings of the account with id = " + account.id.to_s)
       end
-      
-      # update timestamps: we must set the timestamp AFTER the changes we made in the synchronization, or
-      # we would update those changes again and again in every synchronization (and, to keep it simple, we ignore
-      # the changes that other agents may have caused for this account just when we were synchronizing)
-      # TODO: ignore only our changes but not the changes made by other agents
-      account.rg_rings_last_timestamp = account.rg_rings_feed.timestamp
-      account.hr_ring_notes_last_synchronized_at = ApiOperations::Common.hr_current_timestamp(account.user_maps.first)
-      account.save
 
+      self.synchronize_contacts contact_rg_feeds
+      
+      self.update_timestamps account
+
+      ApiOperations::Common.log(:debug,nil,"Finished the synchronization of the rings of the account with id = " + account.id.to_s)
     end
 
 
     private
+
+
+      def self.update_timestamps(account)
+        begin
+          # update timestamps: we must set the timestamp AFTER the changes we made in the synchronization, or
+          # we would update those changes again and again in every synchronization (and, to keep it simple, we ignore
+          # the changes that other agents may have caused for this account just when we were synchronizing)
+          # TODO: ignore only our changes but not the changes made by other agents
+          account.rg_rings_last_timestamp = account.rg_rings_feed.timestamp
+          account.hr_ring_notes_last_synchronized_at = ApiOperations::Common.hr_current_timestamp(account.user_maps.first)
+          account.save
+        rescue Exception => e
+          ApiOperations::Common.log(:error,e,"\nProblem updating the ring synchronization timestamps of the account with id = " + account.id.to_s)
+        end      
+      end
+
+      
+      def self.synchronize_contacts(contact_rg_feeds)
+        # synchronize each contact whose rings have changed
+        contact_rg_feeds.each do |contact_feed|
+          begin
+            ApiOperations::Common.set_hr_base(contact_feed[0].user_map)
+            self.synchronize_contact(contact_feed)
+            ApiOperations::Common.empty_hr_base
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"\nProblem synchronizing the rings created for the contact map with id = " + contact_feed[0].id.to_s)
+          end
+        end      
+      end
+      
       
       # returns an array with each element containing information for each contact map:
       # [0] => contact map
@@ -69,11 +90,14 @@ module ApiOperations
 
       def self.synchronize_contact(contact_rg_feed)
 
-        # we will only check for updated ring notes in Ringio, as they should not be changed in Highrise
+        # we will only check for updated rings in Ringio, as they should not be changed in Highrise
         contact_map = contact_rg_feed[0]
         rg_updated_rings = contact_rg_feed[1]
         
+        # we will only check for updated rings, as they cannot be deleted
         rg_updated_rings.each do |rg_ring|
+          ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the ring with Ringio id = " + rg_ring.id.to_s)
+          
           # if the ring was already mapped to Highrise, update it there
           if (rm = RingMap.find_by_rg_ring_id(rg_ring.id))
             hr_ring_note = rm.hr_resource_ring_note
@@ -93,6 +117,8 @@ module ApiOperations
             new_rm = RingMap.new(:contact_map_id => contact_map.id, :rg_ring_id => rg_ring.id, :hr_ring_note_id => hr_ring_note.id)
             new_rm.save!
           end
+          
+          ApiOperations::Common.log(:debug,nil,"Finished applying update from Ringio to Highrise of the ring with Ringio id = " + rg_ring.id.to_s)
         end
       end
 

@@ -66,21 +66,26 @@ module ApiOperations
   
     # run a complete synchronization event between Ringio and Highrise
     def self.complete_synchronization
-      begin
-        # TODO: handle optional fields for all resources in Ringio and in Highrise
-        Account.all.each do |account|
-          ApiOperations::Contacts.synchronize_account account
-  
-          ApiOperations::Notes.synchronize_account account
-  
-          ApiOperations::Rings.synchronize_account account
-        end
-      rescue Exception => e
-        error_message_header = "\nProblem during a synchronization event:\n  " + e.inspect + "\n"
-        Rails.logger.error e.backtrace.inject(error_message_header){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
+      # TODO: handle optional fields for all resources in Ringio and in Highrise
+      Account.all.each do |account|
+        ApiOperations::Contacts.synchronize_account account
+
+        ApiOperations::Notes.synchronize_account account
+
+        ApiOperations::Rings.synchronize_account account
       end
   
       return
+    end
+    
+    def self.log(level,exception,message)
+      timestamp = '[' + Time.now.to_s + ']' 
+      case level
+        when :debug then Rails.logger.debug timestamp + ' ' + message + "\n"
+        when :info then Rails.logger.info timestamp + ' ' + message + "\n"
+        when :error then Rails.logger.error timestamp + ' ' + message + "\n  " + exception.inspect + "\n" + exception.backtrace.inject(message){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
+        else raise 'Unknown log error level'
+      end
     end
 
 

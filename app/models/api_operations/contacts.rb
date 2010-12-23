@@ -3,46 +3,66 @@ module ApiOperations
   module Contacts
 
     def self.synchronize_account(account)
-
-      # get the feed of changed contacts per user of this Ringio account from Ringio
-      account_rg_feed = account.rg_contacts_feed
-      user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
-      rg_deleted_contact_ids = account_rg_feed.deleted
+      ApiOperations::Common.log(:debug,nil,"Started the synchronization of the contacts of the account with id = " + account.id.to_s)
       
-      # synchronize the contacts owned by every user of this account
-      UserMap.find_all_by_account_id(account.id).each do |um|
-        ApiOperations::Common.set_hr_base um
-        user_rg_feed = (rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[rg_f_index] : nil
-
-        begin
-          self.synchronize_user(um,user_rg_feed,rg_deleted_contact_ids)
-        rescue Exception => e
-          error_message_header = "\nProblem synchronizing the contacts of the user map with id = " + um.id.to_s + "\n  " + e.inspect + "\n"
-          Rails.logger.error e.backtrace.inject(error_message_header){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
-        end
-
-        ApiOperations::Common.empty_hr_base
+      begin
+        # get the feed of changed contacts per user of this Ringio account from Ringio
+        ApiOperations::Common.log(:debug,nil,"Getting the changed contacts of the account with id = " + account.id.to_s)
+        account_rg_feed = account.rg_contacts_feed
+        user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
+        rg_deleted_contact_ids = account_rg_feed.deleted
+      rescue Exception => e
+        ApiOperations::Common.log(:error,e,"\nProblem fetching the changed contacts of the account with id = " + account.id.to_s)
       end
+    
 
-      # update timestamps: we must set the timestamp AFTER the changes we made in the synchronization, or
-      # we would update those changes again and again in every synchronization (and, to keep it simple, we ignore
-      # the changes that other agents may have caused for this account just when we were synchronizing)
-      # TODO: ignore only our changes but not the changes made by other agents
-      account.rg_contacts_last_timestamp = account.rg_contacts_feed.timestamp
-      account.hr_parties_last_synchronized_at = ApiOperations::Common.hr_current_timestamp(account.user_maps.first)
-      account.save
-      
+      self.synchronize_users(account,user_rg_feeds,rg_deleted_contact_ids)
+
+      self.update_timestamps account
+
+      ApiOperations::Common.log(:debug,nil,"Finished the synchronization of the contacts of the account with id = " + account.id.to_s)
     end
 
 
     private
 
 
+      def self.synchronize_users(account, user_rg_feeds, rg_deleted_contact_ids)
+        # synchronize the contacts owned by every user of this account
+        UserMap.find_all_by_account_id(account.id).each do |um|
+          begin
+            ApiOperations::Common.set_hr_base um
+            user_rg_feed = (rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[rg_f_index] : nil
+  
+            self.synchronize_user(um,user_rg_feed,rg_deleted_contact_ids)
+  
+            ApiOperations::Common.empty_hr_base
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"\nProblem synchronizing the contacts of the user map with id = " + um.id.to_s)
+          end
+        end              
+      end
+
+
+      def self.update_timestamps(account)
+        begin
+          # update timestamps: we must set the timestamp AFTER the changes we made in the synchronization, or
+          # we would update those changes again and again in every synchronization (and, to keep it simple, we ignore
+          # the changes that other agents may have caused for this account just when we were synchronizing)
+          # TODO: ignore only our changes but not the changes made by other agents
+          account.rg_contacts_last_timestamp = account.rg_contacts_feed.timestamp
+          account.hr_parties_last_synchronized_at = ApiOperations::Common.hr_current_timestamp(account.user_maps.first)
+          account.save
+        rescue Exception => e
+          ApiOperations::Common.log(:error,e,"\nProblem updating the contact synchronization timestamps of the account with id = " + account.id.to_s)
+        end        
+      end
+
+
       # returns an array with each element containing information for each user map:
       # [0] => user map
       # [1] => updated Ringio contacts for this user map
       def self.fetch_user_rg_feeds(account_rg_feed, account)
-
         account_rg_feed.updated.inject([]) do |user_feeds,rg_contact_id|
           rg_contact = RingioAPI::Contact.find rg_contact_id
 
@@ -57,7 +77,6 @@ module ApiOperations
 
           user_feeds
         end
-        
       end
 
 
@@ -70,29 +89,37 @@ module ApiOperations
         # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
         self.purge_contacts(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed,rg_deleted_contacts_ids)
 
-        self.apply_changes_rg_to_hr(user_map,user_rg_feed,rg_deleted_contacts_ids)
+        # apply changes from Ringio to Highrise
+        self.update_rg_to_hr(user_map,user_rg_feed)
+        self.delete_rg_to_hr(user_map,rg_deleted_contacts_ids)
 
-        self.apply_changes_hr_to_rg(user_map,hr_updated_people,hr_updated_companies,hr_party_deletions)
+        # apply changes from Highrise to Ringio
+        self.update_hr_to_rg(user_map,hr_updated_people)
+        self.update_hr_to_rg(user_map,hr_updated_companies)
+        self.delete_hr_to_rg(user_map,hr_party_deletions)
       end
   
   
-      def self.apply_changes_hr_to_rg(user_map, hr_updated_people, hr_updated_companies, hr_party_deletions)
-        self.process_updated_parties(user_map, hr_updated_people)
-        self.process_updated_parties(user_map, hr_updated_companies)
-  
+      def self.delete_hr_to_rg(user_map, hr_party_deletions)
         hr_party_deletions.each do |p_deletion|
+          ApiOperations::Common.log(:debug,nil,"Started applying deletion from Highrise to Ringio of the party with Highrise id = " + p_deletion.id.to_s)
+          
           # if the party was already mapped to Ringio for this user map, delete it there
           if (cm = ContactMap.find_by_user_map_id_and_hr_party_id_and_hr_party_type(user_map.id,p_deletion.id,p_deletion.type))
             cm.rg_resource_contact.destroy
             cm.destroy
           end
           # otherwise, don't do anything, because that Highrise party has not been created yet in Ringio
+
+          ApiOperations::Common.log(:debug,nil,"Finished applying deletion from Highrise to Ringio of the party with Highrise id = " + p_deletion.id.to_s)
         end
       end
   
   
-      def self.process_updated_parties(user_map, hr_updated_parties)
+      def self.update_hr_to_rg(user_map, hr_updated_parties)
         hr_updated_parties.each do |hr_party|
+          ApiOperations::Common.log(:debug,nil,"Started applying update from Highrise to Ringio of the party with Highrise id = " + hr_party.id.to_s)
+          
           rg_contact = self.prepare_rg_contact(user_map,hr_party)
           self.hr_party_to_rg_contact(hr_party,rg_contact)
   
@@ -108,6 +135,8 @@ module ApiOperations
             end
             new_cm.save!
           end
+          
+          ApiOperations::Common.log(:debug,nil,"Finished applying update from Highrise to Ringio of the party with Highrise id = " + hr_party.id.to_s)
         end
       end
   
@@ -279,9 +308,11 @@ module ApiOperations
       end
   
   
-      def self.apply_changes_rg_to_hr(user_map, user_rg_feed, rg_deleted_contacts_ids)
+      def self.update_rg_to_hr(user_map, user_rg_feed)
         if user_rg_feed
           user_rg_feed[1].each do |rg_contact|
+            ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
+
             # if the contact was already mapped to Highrise, update it there
             if (cm = ContactMap.find_by_rg_contact_id(rg_contact.id))
               hr_party = cm.hr_resource_party
@@ -304,10 +335,17 @@ module ApiOperations
               end
               new_cm.save!
             end
+            
+            ApiOperations::Common.log(:debug,nil,"Finished applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
           end
         end
-        
+      end
+  
+  
+      def self.delete_rg_to_hr(user_map, rg_deleted_contacts_ids)
         rg_deleted_contacts_ids.each do |dc_id|
+          ApiOperations::Common.log(:debug,nil,"Started applying deletion from Ringio to Highrise of the contact with Ringio id = " + dc_id.to_s)
+
           # if the contact was already mapped to Highrise for this user, delete it there
           if (cm = ContactMap.find_by_rg_contact_id_and_user_map_id(dc_id,user_map.id))
             hr_party = cm.hr_resource_party
@@ -315,12 +353,13 @@ module ApiOperations
             cm.destroy
           end
           # otherwise, don't do anything, because that Ringio contact has not been created yet in Highrise
+
+          ApiOperations::Common.log(:debug,nil,"Finished applying deletion from Ringio to Highrise of the contact with Ringio id = " + dc_id.to_s)
         end
       end
   
   
       def self.purge_contacts(hr_updated_people, hr_updated_companies, hr_party_deletions, user_rg_feed, rg_deleted_contacts_ids)
-  
         # delete duplicated changes for Highrise updated people
         hr_updated_people.each do |person|
           if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(person.id,'Person'))
@@ -341,7 +380,6 @@ module ApiOperations
             self.delete_rg_duplicated_changes(cm.rg_contact_id,user_rg_feed,rg_deleted_contacts_ids)
           end
         end
-
       end
   
   
