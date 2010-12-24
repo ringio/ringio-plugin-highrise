@@ -2,21 +2,17 @@ module ApiOperations
 
   module Notes
 
-    def self.synchronize_account(account)
+    def self.synchronize_account(account, new_user_maps)
 debugger
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the notes of the account with id = " + account.id.to_s)
 
-      begin
-        # get the feed of changed notes per contact of this Ringio account from Ringio
-        ApiOperations::Common.log(:debug,nil,"Getting the changed notes of the account with id = " + account.id.to_s)
-        account_rg_feed = account.rg_notes_feed
-        user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
-        rg_deleted_notes_ids = account_rg_feed.deleted
-      rescue Exception => e
-        ApiOperations::Common.log(:error,e,"\nProblem fetching the changed notes of the account with id = " + account.id.to_s)
+      # run a synchronization just for each new user map
+      new_user_maps.each do |um|
+        self.synchronize_account_process(account,um)
       end
-
-      self.synchronize_contacts(account,user_rg_feeds,rg_deleted_notes_ids)
+      
+      # run a normal complete synchronization
+      self.synchronize_account_process(account,nil)
 
       self.update_timestamps account
       
@@ -25,6 +21,39 @@ debugger
 
 
     private
+
+      def self.synchronize_account_process(account, user_map)
+        if user_map
+debugger
+          begin
+            # get the feed of changed notes per contact of this Ringio account from Ringio
+            ApiOperations::Common.log(:debug,nil,"Getting the changed notes of the account with id = " + account.id.to_s)
+            account_rg_feed = account.rg_notes_feed
+            user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
+            rg_deleted_notes_ids = account_rg_feed.deleted
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"\nProblem fetching the changed notes of the account with id = " + account.id.to_s)
+          end
+          
+          begin
+            self.synchronize_contacts(true,account,user_rg_feeds,rg_deleted_notes_ids)
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"\nProblem synchronizing the contacts of the user map with id = " + um.id.to_s)
+          end
+        else
+          begin
+            # get the feed of changed notes per contact of this Ringio account from Ringio
+            ApiOperations::Common.log(:debug,nil,"Getting the changed notes of the account with id = " + account.id.to_s)
+            account_rg_feed = account.rg_notes_feed
+            user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
+            rg_deleted_notes_ids = account_rg_feed.deleted
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"\nProblem fetching the changed notes of the account with id = " + account.id.to_s)
+          end
+    
+          self.synchronize_contacts(account,user_rg_feeds,rg_deleted_notes_ids)
+        end
+      end
     
 
       def self.update_timestamps(account)

@@ -2,7 +2,7 @@ module ApiOperations
 
   module Contacts
 
-    def self.synchronize_account(account,new_user_maps)
+    def self.synchronize_account(account, new_user_maps)
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the contacts of the account with id = " + account.id.to_s)
       
       # run a synchronization just for each new user map
@@ -32,8 +32,12 @@ module ApiOperations
           rescue Exception => e
             ApiOperations::Common.log(:error,e,"\nProblem fetching the contacts of the new user map with id = " + user_map.id.to_s + " and account with id = " + account.id.to_s)
           end
-          
-          self.synchronize_user(true,user_map,user_rg_feed,rg_deleted_contact_ids)
+
+          begin
+            self.synchronize_user(true,user_map,user_rg_feed,rg_deleted_contact_ids)
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"\nProblem synchronizing the contacts of the user map with id = " + um.id.to_s)
+          end
         else
           begin
             # get the feed of changed contacts per user of this Ringio account from Ringio
