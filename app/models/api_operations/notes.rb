@@ -15,7 +15,7 @@ module ApiOperations
         ApiOperations::Common.log(:error,e,"\nProblem fetching the changed notes of the account with id = " + account.id.to_s)
       end
 
-      self.synchronize_contacts(account,user_rg_feeds,rg_deleted_notes_ids) if user_rg_feeds && rg_deleted_notes_ids
+      self.synchronize_contacts(account,user_rg_feeds,rg_deleted_notes_ids)
 
       self.update_timestamps account
       
@@ -42,27 +42,31 @@ module ApiOperations
     
     
       def self.synchronize_contacts(account, user_rg_feeds, rg_deleted_notes_ids)
-        # synchronize the notes created by every user of this account
-        UserMap.find_all_by_account_id(account.id).each do |um|
-          begin
-            ApiOperations::Common.set_hr_base um
-            
-            # we have to check all contacts, not only the ones owned by this user,
-            # because users can create notes for contacts that are not owned by them
-            ContactMap.all.each do |cm|
-              begin
-                user_rg_feed = (u_rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[u_rg_f_index] : nil
-                contact_rg_feed = user_rg_feed.present? ? ((c_rg_f_index = user_rg_feed[1].index{|contact_rg_feed| contact_rg_feed[0] == cm})? user_rg_feed[1][c_rg_f_index] : nil) : nil
-                self.synchronize_contact(um,cm,contact_rg_feed,rg_deleted_notes_ids)
-              rescue Exception => e
-                ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the user map with id = " + um.id.to_s + "\n" + "for the contact map with id = " + cm.id.to_s)
-              end          
+        begin
+          # synchronize the notes created by every user of this account
+          UserMap.find_all_by_account_id(account.id).each do |um|
+            begin
+              ApiOperations::Common.set_hr_base um
+              
+              # we have to check all contacts, not only the ones owned by this user,
+              # because users can create notes for contacts that are not owned by them
+              ContactMap.all.each do |cm|
+                begin
+                  user_rg_feed = (u_rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[u_rg_f_index] : nil
+                  contact_rg_feed = user_rg_feed.present? ? ((c_rg_f_index = user_rg_feed[1].index{|contact_rg_feed| contact_rg_feed[0] == cm})? user_rg_feed[1][c_rg_f_index] : nil) : nil
+                  self.synchronize_contact(um,cm,contact_rg_feed,rg_deleted_notes_ids)
+                rescue Exception => e
+                  ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the user map with id = " + um.id.to_s + "\n" + "for the contact map with id = " + cm.id.to_s)
+                end          
+              end
+              
+              ApiOperations::Common.empty_hr_base
+            rescue Exception => e
+              ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the user map with id = " + um.id.to_s)
             end
-            
-            ApiOperations::Common.empty_hr_base
-          rescue Exception => e
-            ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the user map with id = " + um.id.to_s)
           end
+        rescue Exception => e
+          ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes of the account with id = " + account.id.to_s)
         end
       end
       

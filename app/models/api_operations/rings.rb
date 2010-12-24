@@ -15,7 +15,7 @@ module ApiOperations
         ApiOperations::Common.log(:error,e,"\nProblem fetching the changed rings of the account with id = " + account.id.to_s)
       end
 
-      self.synchronize_contacts contact_rg_feeds if contact_rg_feeds
+      self.synchronize_contacts contact_rg_feeds
       
       self.update_timestamps account
 
@@ -42,16 +42,20 @@ module ApiOperations
 
       
       def self.synchronize_contacts(contact_rg_feeds)
-        # synchronize each contact whose rings have changed
-        contact_rg_feeds.each do |contact_feed|
-          begin
-            ApiOperations::Common.set_hr_base(contact_feed[0].user_map)
-            self.synchronize_contact(contact_feed)
-            ApiOperations::Common.empty_hr_base
-          rescue Exception => e
-            ApiOperations::Common.log(:error,e,"\nProblem synchronizing the rings created for the contact map with id = " + contact_feed[0].id.to_s)
+        begin
+          # synchronize each contact whose rings have changed
+          contact_rg_feeds.each do |contact_feed|
+            begin
+              ApiOperations::Common.set_hr_base(contact_feed[0].user_map)
+              self.synchronize_contact(contact_feed)
+              ApiOperations::Common.empty_hr_base
+            rescue Exception => e
+              ApiOperations::Common.log(:error,e,"\nProblem synchronizing the rings created for the contact map with id = " + contact_feed[0].id.to_s)
+            end
           end
-        end      
+        rescue Exception => e
+          ApiOperations::Common.log(:error,e,"\nProblem synchronizing the rings of the account with id = " + account.id.to_s)
+        end
       end
       
       

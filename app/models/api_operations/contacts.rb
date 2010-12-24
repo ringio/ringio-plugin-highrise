@@ -14,8 +14,8 @@ module ApiOperations
       rescue Exception => e
         ApiOperations::Common.log(:error,e,"\nProblem fetching the changed contacts of the account with id = " + account.id.to_s)
       end
-    
-      self.synchronize_users(account,user_rg_feeds,rg_deleted_contact_ids) if user_rg_feeds && rg_deleted_contact_ids
+
+      self.synchronize_users(account,user_rg_feeds,rg_deleted_contact_ids)
 
       self.update_timestamps account
 
@@ -27,19 +27,23 @@ module ApiOperations
 
 
       def self.synchronize_users(account, user_rg_feeds, rg_deleted_contact_ids)
-        # synchronize the contacts owned by every user of this account
-        UserMap.find_all_by_account_id(account.id).each do |um|
-          begin
-            ApiOperations::Common.set_hr_base um
-            user_rg_feed = (rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[rg_f_index] : nil
-  
-            self.synchronize_user(um,user_rg_feed,rg_deleted_contact_ids)
-  
-            ApiOperations::Common.empty_hr_base
-          rescue Exception => e
-            ApiOperations::Common.log(:error,e,"\nProblem synchronizing the contacts of the user map with id = " + um.id.to_s)
+        begin
+          # synchronize the contacts owned by every user of this account
+          UserMap.find_all_by_account_id(account.id).each do |um|
+            begin
+              ApiOperations::Common.set_hr_base um
+              user_rg_feed = (rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[rg_f_index] : nil
+    
+              self.synchronize_user(um,user_rg_feed,rg_deleted_contact_ids)
+    
+              ApiOperations::Common.empty_hr_base
+            rescue Exception => e
+              ApiOperations::Common.log(:error,e,"\nProblem synchronizing the contacts of the user map with id = " + um.id.to_s)
+            end
           end
-        end              
+        rescue Exception => e
+          ApiOperations::Common.log(:error,e,"\nProblem synchronizing the contacts of the account with id = " + account.id.to_s)
+        end
       end
 
 
