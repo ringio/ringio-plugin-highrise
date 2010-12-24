@@ -2,20 +2,16 @@ module ApiOperations
 
   module Contacts
 
-    def self.synchronize_account(account)
+    def self.synchronize_account(account,new_user_maps)
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the contacts of the account with id = " + account.id.to_s)
       
-      begin
-        # get the feed of changed contacts per user of this Ringio account from Ringio
-        ApiOperations::Common.log(:debug,nil,"Getting the changed contacts of the account with id = " + account.id.to_s)
-        account_rg_feed = account.rg_contacts_feed
-        user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
-        rg_deleted_contact_ids = account_rg_feed.deleted
-      rescue Exception => e
-        ApiOperations::Common.log(:error,e,"\nProblem fetching the changed contacts of the account with id = " + account.id.to_s)
+      # run a synchronization just for each new user map
+      new_user_maps.each do |um|
+        self.synchronize_account_process(account,um)
       end
-
-      self.synchronize_users(account,user_rg_feeds,rg_deleted_contact_ids)
+      
+      # run a normal complete synchronization
+      self.synchronize_account_process(account,nil)
 
       self.update_timestamps account
 
@@ -25,18 +21,42 @@ module ApiOperations
 
     private
 
+      def self.synchronize_account_process(account, user_map)
+        if user_map
+          begin
+            # get the feed of all contacts for this new user of this Ringio account from Ringio
+            ApiOperations::Common.log(:debug,nil,"Getting the contacts of the new user map with id = " + user_map.id.to_s + " and account with id = " + account.id.to_s)
+            account_rg_feed = user_map.all_rg_contacts_feed
+            user_rg_feed = self.fetch_individual_user_rg_feed(user_map,account_rg_feed)
+            rg_deleted_contact_ids = account_rg_feed.deleted
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"\nProblem fetching the contacts of the new user map with id = " + user_map.id.to_s + " and account with id = " + account.id.to_s)
+          end
+          
+          self.synchronize_user(true,user_map,user_rg_feed,rg_deleted_contact_ids)
+        else
+          begin
+            # get the feed of changed contacts per user of this Ringio account from Ringio
+            ApiOperations::Common.log(:debug,nil,"Getting the changed contacts of the account with id = " + account.id.to_s)
+            account_rg_feed = account.rg_contacts_feed
+            user_rg_feeds = self.fetch_user_rg_feeds(account_rg_feed,account)
+            rg_deleted_contact_ids = account_rg_feed.deleted
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"\nProblem fetching the changed contacts of the account with id = " + account.id.to_s)
+          end
+          
+          self.synchronize_users(account,user_rg_feeds,rg_deleted_contact_ids)
+        end
+      end
+
 
       def self.synchronize_users(account, user_rg_feeds, rg_deleted_contact_ids)
         begin
           # synchronize the contacts owned by every user of this account
           UserMap.find_all_by_account_id(account.id).each do |um|
             begin
-              ApiOperations::Common.set_hr_base um
               user_rg_feed = (rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[rg_f_index] : nil
-    
-              self.synchronize_user(um,user_rg_feed,rg_deleted_contact_ids)
-    
-              ApiOperations::Common.empty_hr_base
+              self.synchronize_user(false,um,user_rg_feed,rg_deleted_contact_ids)
             rescue Exception => e
               ApiOperations::Common.log(:error,e,"\nProblem synchronizing the contacts of the user map with id = " + um.id.to_s)
             end
@@ -81,10 +101,28 @@ module ApiOperations
           user_feeds
         end
       end
+      
+      # behaves like self.fetch_user_rg_feeds but just for one user map
+      def self.fetch_individual_user_rg_feed(user_map, account_rg_feed)
+        updated_rg_contacts = account_rg_feed.updated.inject([]) do |u_rg_contacts,rg_contact_id|
+          rg_contact = RingioAPI::Contact.find rg_contact_id
+
+          # synchronize only contacts that belong to this user map
+          if user_map.rg_user_id == rg_contact.owner_id
+            u_rg_contacts << rg_contact
+          end
+
+          u_rg_contacts
+        end
+        
+        [user_map, updated_rg_contacts]
+      end
 
 
-      def self.synchronize_user(user_map, user_rg_feed, rg_deleted_contacts_ids)
-        hr_parties_feed = user_map.hr_parties_feed
+      def self.synchronize_user(individual, user_map, user_rg_feed, rg_deleted_contacts_ids)
+        ApiOperations::Common.set_hr_base user_map
+
+        hr_parties_feed = user_map.hr_parties_feed individual
         hr_updated_people = hr_parties_feed[0]
         hr_updated_companies = hr_parties_feed[1]
         hr_party_deletions = hr_parties_feed[2]
@@ -100,6 +138,8 @@ module ApiOperations
         self.update_hr_to_rg(user_map,hr_updated_people)
         self.update_hr_to_rg(user_map,hr_updated_companies)
         self.delete_hr_to_rg(user_map,hr_party_deletions)
+        
+        ApiOperations::Common.empty_hr_base
       end
   
   

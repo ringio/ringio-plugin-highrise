@@ -2,7 +2,9 @@ module ApiOperations
 
   module Common
 
-
+    INITIAL_DATETIME = (Date.parse('1900-01-01')).to_time
+    INITIAL_MS_DATETIME = 1
+    
     def self.mails_for_select(rg_account_id)
       mails = []
       (RingioAPI::Feed.find(:one, :from => RingioAPI::Feed.prefix + "feeds/accounts/" + rg_account_id.to_s + "/users" )).updated.each do |rg_user_id|
@@ -73,11 +75,21 @@ module ApiOperations
       # TODO: handle optional fields for all resources in Ringio and in Highrise
       Account.all.each do |account|
         if account.hr_subdomain.present?
-          ApiOperations::Contacts.synchronize_account account
-  
-          ApiOperations::Notes.synchronize_account account
-  
-          ApiOperations::Rings.synchronize_account account
+          if account.not_synchronized_yet
+            self.synchronize_account(account,[])
+            account.not_synchronized_yet = false
+            account.save
+          else
+            new_user_maps = account.user_maps.inject([]) do |total,um|
+              if um.not_synchronized_yet
+                total << um
+                um.not_synchronized_yet = false
+                um.save
+              end
+              total
+            end
+            self.synchronize_account(account,new_user_maps)
+          end
         end
       end
   
@@ -97,21 +109,29 @@ module ApiOperations
 
     private
     
-    def self.set_hr_base_basic(user_map)
-      if user_map
-        Highrise::Base.site = 'https://' + user_map.account.hr_subdomain + '.highrisehq.com' 
-        Highrise::Base.user = user_map.hr_user_token
-        ApiOperations::Session.current_user_map = user_map
-      else
-        self.empty_hr_base_basic
+      def self.synchronize_account(account, new_user_maps)
+        ApiOperations::Contacts.synchronize_account(account,new_user_maps)
+  
+        ApiOperations::Notes.synchronize_account(account,new_user_maps)
+  
+        ApiOperations::Rings.synchronize_account(account,new_user_maps)
       end
-    end
-    
-    def self.empty_hr_base_basic
-      Highrise::Base.site = ''
-      Highrise::Base.user = ''
-      ApiOperations::Session.current_user_map = nil
-    end
+      
+      def self.set_hr_base_basic(user_map)
+        if user_map
+          Highrise::Base.site = 'https://' + user_map.account.hr_subdomain + '.highrisehq.com' 
+          Highrise::Base.user = user_map.hr_user_token
+          ApiOperations::Session.current_user_map = user_map
+        else
+          self.empty_hr_base_basic
+        end
+      end
+      
+      def self.empty_hr_base_basic
+        Highrise::Base.site = ''
+        Highrise::Base.user = ''
+        ApiOperations::Session.current_user_map = nil
+      end
     
   end
   

@@ -3,6 +3,7 @@ module ApiOperations
   module Rings
 
     def self.synchronize_account(account)
+debugger
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the rings of the account with id = " + account.id.to_s)
 
       begin

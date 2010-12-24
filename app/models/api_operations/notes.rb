@@ -3,6 +3,7 @@ module ApiOperations
   module Notes
 
     def self.synchronize_account(account)
+debugger
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the notes of the account with id = " + account.id.to_s)
 
       begin
