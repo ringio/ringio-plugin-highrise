@@ -42,7 +42,7 @@ module ApiOperations
             end
           end
         rescue Exception => e
-          ApiOperations::Common.log(:error,e,"\nProblem synchronizing the contacts of the account with id = " + account.id.to_s)
+          ApiOperations::Common.log(:error,e,"\nProblem synchronizing the contacts")
         end
       end
 

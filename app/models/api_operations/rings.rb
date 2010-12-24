@@ -54,7 +54,7 @@ module ApiOperations
             end
           end
         rescue Exception => e
-          ApiOperations::Common.log(:error,e,"\nProblem synchronizing the rings of the account with id = " + account.id.to_s)
+          ApiOperations::Common.log(:error,e,"\nProblem synchronizing the rings")
         end
       end
       
