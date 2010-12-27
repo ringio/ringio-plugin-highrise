@@ -183,7 +183,7 @@ module ApiOperations
         hr_deleted_notes_ids = individual ? [] : contact_map.note_maps.reject{|nm| hr_notes.index{|hr_n| hr_n.id == nm.hr_note_id}}.map{|nm| nm.hr_note_id}
 
         # give priority to Highrise: discard changes in Ringio to notes that have been changed in Highrise
-        self.purge_notes(hr_updated_note_recordings,hr_deleted_notes_ids,contact_rg_feed,rg_deleted_notes_ids)
+        self.purge_duplicated_changes(hr_updated_note_recordings,hr_deleted_notes_ids,contact_rg_feed,rg_deleted_notes_ids)
 
         # apply changes from Ringio to Highrise
         self.update_rg_to_hr(author_user_map,contact_map,contact_rg_feed)
@@ -195,19 +195,23 @@ module ApiOperations
       end
 
 
-      def self.purge_notes(hr_updated_note_recordings, hr_deleted_notes_ids, contact_rg_feed, rg_deleted_notes_ids)
-        # delete duplicated changes for Highrise updated notes
-        hr_updated_note_recordings.each do |r|
-          if (nm = NoteMap.find_by_hr_note_id(r.id))
-            self.delete_rg_duplicated_changes(nm.rg_note_id,contact_rg_feed,rg_deleted_notes_ids)
+      def self.purge_duplicated_changes(hr_updated_note_recordings, hr_deleted_notes_ids, contact_rg_feed, rg_deleted_notes_ids)
+        begin
+          # delete duplicated changes for Highrise updated notes
+          hr_updated_note_recordings.each do |r|
+            if (nm = NoteMap.find_by_hr_note_id(r.id))
+              self.delete_rg_duplicated_changes(nm.rg_note_id,contact_rg_feed,rg_deleted_notes_ids)
+            end
           end
-        end
-        
-        # delete duplicated changes for Highrise deleted notes
-        hr_deleted_notes_ids.each do |n_id|
-          if (nm = NoteMap.find_by_hr_note_id(n_id))
-            self.delete_rg_duplicated_changes(nm.rg_note_id,contact_rg_feed,rg_deleted_notes_ids)
+          
+          # delete duplicated changes for Highrise deleted notes
+          hr_deleted_notes_ids.each do |n_id|
+            if (nm = NoteMap.find_by_hr_note_id(n_id))
+              self.delete_rg_duplicated_changes(nm.rg_note_id,contact_rg_feed,rg_deleted_notes_ids)
+            end
           end
+        rescue Exception => e
+          ApiOperations::Common.log(:error,e,"\nProblem purging the duplicated changes of the notes")
         end
       end
 
@@ -222,35 +226,43 @@ module ApiOperations
 
       def self.update_hr_to_rg(author_user_map, contact_map, hr_updated_note_recordings)
         hr_updated_note_recordings.each do |hr_note|
-          ApiOperations::Common.log(:debug,nil,"Started applying update from Highrise to Ringio of the note with Highrise id = " + hr_note.id.to_s)
-
-          rg_note = self.prepare_rg_note(contact_map,hr_note)
-          self.hr_note_to_rg_note(author_user_map,contact_map,hr_note,rg_note)
+          begin
+            ApiOperations::Common.log(:debug,nil,"Started applying update from Highrise to Ringio of the note with Highrise id = " + hr_note.id.to_s)
   
-          # if the Ringio note is saved properly and it didn't exist before, create a new note map
-          new_rg_note = rg_note.new?
-          if rg_note.save! && new_rg_note
-            new_nm = NoteMap.new(:contact_map_id => contact_map.id, :author_user_map_id => author_user_map.id, :rg_note_id => rg_note.id, :hr_note_id => hr_note.id)
-            new_nm.save!
+            rg_note = self.prepare_rg_note(contact_map,hr_note)
+            self.hr_note_to_rg_note(author_user_map,contact_map,hr_note,rg_note)
+    
+            # if the Ringio note is saved properly and it didn't exist before, create a new note map
+            new_rg_note = rg_note.new?
+            if rg_note.save! && new_rg_note
+              new_nm = NoteMap.new(:contact_map_id => contact_map.id, :author_user_map_id => author_user_map.id, :rg_note_id => rg_note.id, :hr_note_id => hr_note.id)
+              new_nm.save!
+            end
+  
+            ApiOperations::Common.log(:debug,nil,"Finished applying update from Highrise to Ringio of the note with Highrise id = " + hr_note.id.to_s)
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"Problem applying update from Highrise to Ringio of the note with Highrise id = " + hr_note.id.to_s)
           end
-
-          ApiOperations::Common.log(:debug,nil,"Finished applying update from Highrise to Ringio of the note with Highrise id = " + hr_note.id.to_s)
         end
       end
 
 
       def self.delete_hr_to_rg(author_user_map, hr_deleted_notes_ids)
         hr_deleted_notes_ids.each do |n_id|
-          ApiOperations::Common.log(:debug,nil,"Started applying deletion from Highrise to Ringio of the note with Highrise id = " + n_id.to_s)
-          
-          # if the note was already mapped to Ringio for this author user map, delete it there
-          if (nm = NoteMap.find_by_author_user_map_id_and_hr_note_id(author_user_map.id,n_id))
-            nm.rg_resource_note.destroy
-            nm.destroy
+          begin
+            ApiOperations::Common.log(:debug,nil,"Started applying deletion from Highrise to Ringio of the note with Highrise id = " + n_id.to_s)
+            
+            # if the note was already mapped to Ringio for this author user map, delete it there
+            if (nm = NoteMap.find_by_author_user_map_id_and_hr_note_id(author_user_map.id,n_id))
+              nm.rg_resource_note.destroy
+              nm.destroy
+            end
+            # otherwise, don't do anything, because that Highrise party has not been created yet in Ringio
+            
+            ApiOperations::Common.log(:debug,nil,"Finished applying deletion from Highrise to Ringio of the note with Highrise id = " + n_id.to_s)
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"Problem applying deletion from Highrise to Ringio of the note with Highrise id = " + n_id.to_s)
           end
-          # otherwise, don't do anything, because that Highrise party has not been created yet in Ringio
-          
-          ApiOperations::Common.log(:debug,nil,"Finished applying deletion from Highrise to Ringio of the note with Highrise id = " + n_id.to_s)
         end        
       end
 
@@ -277,29 +289,33 @@ module ApiOperations
       def self.update_rg_to_hr(author_user_map, contact_map, contact_rg_feed)
         if contact_rg_feed
           contact_rg_feed[1].each do |rg_note|
-            ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the note with Ringio id = " + rg_note.id.to_s)
-
-            # if the note was already mapped to Highrise, update it there
-            if (nm = NoteMap.find_by_rg_note_id(rg_note.id))
-              hr_note = nm.hr_resource_note
-              self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
-            else
-            # if the note is new, create it in Highrise and map it
-              hr_note = Highrise::Note.new
-              self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
+            begin
+              ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the note with Ringio id = " + rg_note.id.to_s)
+  
+              # if the note was already mapped to Highrise, update it there
+              if (nm = NoteMap.find_by_rg_note_id(rg_note.id))
+                hr_note = nm.hr_resource_note
+                self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
+              else
+              # if the note is new, create it in Highrise and map it
+                hr_note = Highrise::Note.new
+                self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
+              end
+              
+              # if the Highrise note is saved properly and it didn't exist before, create a new note map
+              new_hr_note = hr_note.new?
+              unless new_hr_note
+                hr_note = self.remove_subject_name(hr_note)
+              end
+              if hr_note.save! && new_hr_note
+                new_nm = NoteMap.new(:contact_map_id => contact_map.id, :author_user_map_id => author_user_map.id, :rg_note_id => rg_note.id, :hr_note_id => hr_note.id)
+                new_nm.save!
+              end
+  
+              ApiOperations::Common.log(:debug,nil,"Finished applying update from Ringio to Highrise of the note with Ringio id = " + rg_note.id.to_s)
+            rescue Exception => e
+              ApiOperations::Common.log(:error,e,"Problem applying update from Ringio to Highrise of the note with Ringio id = " + rg_note.id.to_s)
             end
-            
-            # if the Highrise note is saved properly and it didn't exist before, create a new note map
-            new_hr_note = hr_note.new?
-            unless new_hr_note
-              hr_note = self.remove_subject_name(hr_note)
-            end
-            if hr_note.save! && new_hr_note
-              new_nm = NoteMap.new(:contact_map_id => contact_map.id, :author_user_map_id => author_user_map.id, :rg_note_id => rg_note.id, :hr_note_id => hr_note.id)
-              new_nm.save!
-            end
-
-            ApiOperations::Common.log(:debug,nil,"Finished applying update from Ringio to Highrise of the note with Ringio id = " + rg_note.id.to_s)            
           end
         end        
       end
@@ -307,17 +323,21 @@ module ApiOperations
 
       def self.delete_rg_to_hr(author_user_map, rg_deleted_notes_ids)
         rg_deleted_notes_ids.each do |dn_id|
-          ApiOperations::Common.log(:debug,nil,"Started applying deletion from Ringio to Highrise of the note with Ringio id = " + dn_id.to_s)
-
-          # if the note was already mapped to Highrise for this author user map, delete it there
-          if (nm = NoteMap.find_by_author_user_map_id_and_rg_note_id(author_user_map.id,dn_id))
-            hr_note = nm.hr_resource_note
-            hr_note.destroy
-            nm.destroy
+          begin
+            ApiOperations::Common.log(:debug,nil,"Started applying deletion from Ringio to Highrise of the note with Ringio id = " + dn_id.to_s)
+  
+            # if the note was already mapped to Highrise for this author user map, delete it there
+            if (nm = NoteMap.find_by_author_user_map_id_and_rg_note_id(author_user_map.id,dn_id))
+              hr_note = nm.hr_resource_note
+              hr_note.destroy
+              nm.destroy
+            end
+            # otherwise, don't do anything, because that Ringio contact has not been created yet in Highrise
+  
+            ApiOperations::Common.log(:debug,nil,"Finished applying deletion from Ringio to Highrise of the note with Ringio id = " + dn_id.to_s)
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"Problem applying deletion from Ringio to Highrise of the note with Ringio id = " + dn_id.to_s)
           end
-          # otherwise, don't do anything, because that Ringio contact has not been created yet in Highrise
-
-          ApiOperations::Common.log(:debug,nil,"Finished applying deletion from Ringio to Highrise of the note with Ringio id = " + dn_id.to_s)
         end
       end
 
