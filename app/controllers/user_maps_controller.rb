@@ -13,7 +13,7 @@ class UserMapsController < ApplicationController
         if request.xhr?
           @new_user_map = UserMap.new
           @new_user_map.account = @account
-          @user_maps = UserMap.all
+          @user_maps = UserMap.find_all_by_account_id @account.id
           format.html { render :partial => "block_for_ajax" }        
         else
           format.html { head :created }
@@ -21,7 +21,7 @@ class UserMapsController < ApplicationController
         end
       else
         if request.xhr?
-          @user_maps = UserMap.all
+          @user_maps = UserMap.find_all_by_account_id @account.id
           format.html { render :partial => "block_for_ajax" }
         else
           format.html { head :unprocessable_entity }
@@ -39,7 +39,7 @@ class UserMapsController < ApplicationController
     respond_to do |format|
       if @user_map.update_attributes params[:user_map]
         if request.xhr?
-          @user_maps = UserMap.all
+          @user_maps = UserMap.find_all_by_account_id @account.id
           format.html { render :partial => "account_form", :locals => {:account => @account, :user_map => @user_map} }        
         else
           format.html { head :ok }
@@ -47,7 +47,7 @@ class UserMapsController < ApplicationController
         end
       else
         if request.xhr?
-          @user_maps = UserMap.all
+          @user_maps = UserMap.find_all_by_account_id @account.id
           format.html { render :partial => "account_form", :locals => {:account => @account, :user_map => @user_map} }        
         else
           format.html { head :unprocessable_entity }
@@ -66,7 +66,7 @@ class UserMapsController < ApplicationController
     
     respond_to do |format|
       if request.xhr?
-        @user_maps = UserMap.all
+        @user_maps = UserMap.find_all_by_account_id @account.id
         format.html { render :partial => "block_for_ajax" }
       else
         format.html { head :ok }

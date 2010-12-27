@@ -249,12 +249,13 @@ module ApiOperations
         if rg_contact.new?
           rg_contact.data = Array.new
         else
-          # make sure that the corresponding data is empty (though Ringio API does not allow deletion of data) in the Ringio contact
+          # make sure that the corresponding data is empty in the Ringio contact.
           # (the corresponding data is the data that would have been synchronized from Ringio to Highrise if it existed)
+          # Ringio API does not allow direct deletion of data, it assumes deletion if data is missing.
           rg_contact.data.each do |cd|
             case cd.type
-              when 'email' then cd = nil
-              when 'telephone' then cd = nil
+              when 'email' then rg_contact.data.delete cd
+              when 'telephone' then rg_contact.data.delete cd
             end
           end
         end
