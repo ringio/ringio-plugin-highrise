@@ -110,6 +110,7 @@ module ApiOperations
     private
     
       def self.synchronize_account(account, new_user_maps)
+        # we synchronize in reverse order of resource dependency: first contacts, then notes and then rings
         ApiOperations::Contacts.synchronize_account(account,new_user_maps)
   
         ApiOperations::Notes.synchronize_account(account,new_user_maps)

@@ -23,7 +23,7 @@ class ContactMap < ActiveRecord::Base
   def rg_resource_contact
     RingioAPI::Contact.find self.rg_contact_id
   end
-  
+
   def hr_notes
     # get only the Highrise notes that belong this contact (reject notes corresponding to rings)
     case self.hr_party_type
@@ -34,11 +34,13 @@ class ContactMap < ActiveRecord::Base
     # TODO: give support to visibility
   end
 
-  def hr_updated_note_recordings
+  def hr_updated_note_recordings(individual)
+    timestamp = individual ? ApiOperations::Common::INITIAL_DATETIME : self.user_map.account.hr_notes_last_synchronized_at
+    
     # get only the Highrise recordings for notes for the current contact and
     # filter to keep those that were created_at or updated at after the last synchronization datetime
     # and reject the notes corresponding to rings
-    Highrise::Recording.find_all_across_pages_since(self.user_map.account.hr_notes_last_synchronized_at).reject do |r|
+    Highrise::Recording.find_all_across_pages_since(timestamp).reject do |r|
       (r.type != 'Note') || (r.subject_type != 'Party') || (r.subject_id.to_i != self.hr_party_id) || (r.body[0,40] == 'RING - DO NOT CHANGE OR DELETE THIS NOTE')
     end
   end

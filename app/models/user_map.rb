@@ -65,6 +65,16 @@ class UserMap < ActiveRecord::Base
     )
   end
 
+  def all_rg_notes_feed
+    # TODO: give support to shared contacts (group to Client in Ringio)
+    account_feed = RingioAPI::Feed.find(
+      :one,
+      :from => RingioAPI::Feed.prefix + "feeds/accounts/" + self.rg_account_id.to_s + "/notes"
+    )
+    
+    
+  end
+
   private
     def hr_resource_user
       ApiOperations::Common.set_hr_base_push self
