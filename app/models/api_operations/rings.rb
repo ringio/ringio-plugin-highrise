@@ -2,22 +2,18 @@ module ApiOperations
 
   module Rings
 
-    def self.synchronize_account(account)
+    def self.synchronize_account(account, new_user_maps)
 debugger
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the rings of the account with id = " + account.id.to_s)
 
-      begin
-        # get the feed of changed rings per contact of this Ringio account from Ringio,
-        # we will not check for deleted rings, because they cannot be deleted
-        ApiOperations::Common.log(:debug,nil,"Getting the changed rings of the account with id = " + account.id.to_s)
-        account_rg_feed = account.rg_rings_feed
-        contact_rg_feeds = self.fetch_contact_rg_feeds(account_rg_feed,account)
-      rescue Exception => e
-        ApiOperations::Common.log(:error,e,"\nProblem fetching the changed rings of the account with id = " + account.id.to_s)
+      # run a synchronization just for each new user map
+      new_user_maps.each do |um|
+        self.synchronize_account_process(account,um)
       end
 
-      self.synchronize_contacts contact_rg_feeds
-      
+      # run a normal complete synchronization
+      self.synchronize_account_process(account,nil)
+
       self.update_timestamps account
 
       ApiOperations::Common.log(:debug,nil,"Finished the synchronization of the rings of the account with id = " + account.id.to_s)
@@ -25,6 +21,32 @@ debugger
 
 
     private
+
+
+      def self.synchronize_account_process(account, user_map)
+        # if there is a new user map
+        if user_map
+          begin
+            # get the feed of changed rings per contact of this new user map from Ringio,
+            # we will not check for deleted rings, because they cannot be deleted
+            ApiOperations::Common.log(:debug,nil,"Getting the changed rings for the new user map with id = " + user_map.id.to_s + " of the account with id = " + account.id.to_s)
+            contact_rg_feeds = self.fetch_contact_rg_feeds(user_map,account.rg_rings_feed,account)
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"\nProblem fetching the changed rings for the new user map with id = " + user_map.id.to_s + " of the account with id = " + account.id.to_s)
+          end
+        else
+          begin
+            # get the feed of changed rings per contact of this Ringio account from Ringio,
+            # we will not check for deleted rings, because they cannot be deleted
+            ApiOperations::Common.log(:debug,nil,"Getting the changed rings of the account with id = " + account.id.to_s)
+            contact_rg_feeds = self.fetch_contact_rg_feeds(nil,account.rg_rings_feed,account)
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"\nProblem fetching the changed rings of the account with id = " + account.id.to_s)
+          end
+        end
+        
+        self.synchronize_contacts contact_rg_feeds
+      end
 
 
       def self.update_timestamps(account)
@@ -64,14 +86,14 @@ debugger
       # [0] => contact map
       # [1] => updated Ringio rings for this contact map
       # we will choose the author of the ring event note in Highrise as the owner of the contact 
-      def self.fetch_contact_rg_feeds(account_rg_feed, account)
+      def self.fetch_contact_rg_feeds(user_map,account_rg_feed, account)
         account_rg_feed.updated.inject([]) do |contact_feeds,rg_ring_id|
           rg_ring = RingioAPI::Ring.find rg_ring_id
           
           if rg_ring.from_type == 'contact'
-            process_rg_ring(rg_ring.from_id,contact_feeds,rg_ring,account)
+            self.process_rg_ring_new_user_map(user_map,rg_ring.from_id,contact_feeds,rg_ring,account)
           elsif rg_ring.to_type == 'contact'
-            process_rg_ring(rg_ring.to_id,contact_feeds,rg_ring,account)
+            self.process_rg_ring_new_user_map(user_map,rg_ring.to_id,contact_feeds,rg_ring,account)
           end
 
           contact_feeds
@@ -79,14 +101,25 @@ debugger
       end
 
 
-      def self.process_rg_ring(rg_contact_id, contact_feeds, rg_ring, account)
+      def self.process_rg_ring_new_user_map(user_map, rg_contact_id, contact_feeds, rg_ring, account)
         # synchronize only notes of contacts already mapped for this account
-        if (cm = ContactMap.find_by_rg_contact_id(rg_contact_id)) && (cm.user_map.account == account)
-          if (cf_index = contact_feeds.index{|cf| cf[0] == cm})
-            contact_feeds[cf_index][1] << rg_ring
-          else
-            contact_feeds << [cm,[rg_ring]]
+        if user_map
+          if (cm = ContactMap.find_by_user_map_id_and_rg_contact_id(user_map.id,rg_contact_id))
+            self.process_rg_ring(cm,contact_feeds,rg_ring)
           end
+        else
+          if (cm = ContactMap.find_by_rg_contact_id(rg_contact_id)) && (cm.user_map.account == account)
+            self.process_rg_ring(cm,contact_feeds,rg_ring)
+          end
+        end
+      end
+
+      
+      def self.process_rg_ring(contact_map, contact_feeds, rg_ring)
+        if (cf_index = contact_feeds.index{|cf| cf[0] == contact_map})
+          contact_feeds[cf_index][1] << rg_ring
+        else
+          contact_feeds << [contact_map,[rg_ring]]
         end
       end
 

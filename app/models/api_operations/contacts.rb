@@ -25,7 +25,7 @@ module ApiOperations
         # if there is a new user map
         if user_map
           begin
-            # get the feed of all contacts for this new user of this Ringio account from Ringio
+            # get the feed of all contacts for this new user map of this Ringio account from Ringio
             ApiOperations::Common.log(:debug,nil,"Getting the contacts of the new user map with id = " + user_map.id.to_s + " and account with id = " + account.id.to_s)
             user_rg_feed = self.fetch_individual_user_rg_feed user_map
             # as it is the first synchronization for this user map, we are not interested in deleted contacts

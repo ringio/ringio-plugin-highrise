@@ -3,7 +3,6 @@ module ApiOperations
   module Notes
 
     def self.synchronize_account(account, new_user_maps)
-debugger
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the notes of the account with id = " + account.id.to_s)
 
       # run a synchronization just for each new user map
@@ -26,7 +25,7 @@ debugger
         # if there is a new user map
         if user_map
           begin
-            # get the feed of changed notes per contact of this Ringio account from Ringio
+            # get the feed of changed notes per contact of this new user map from Ringio
             ApiOperations::Common.log(:debug,nil,"Getting the changed notes for the new user map with id = " + user_map.id.to_s + " of the account with id = " + account.id.to_s)
             user_rg_feed = self.fetch_individual_user_rg_feed user_map
             # as it is the first synchronization for this user map, we are not interested in deleted notes
@@ -131,8 +130,8 @@ debugger
 
           # synchronize only notes created by this user
           if user_map.rg_user_id == rg_note.author_id
-            # synchronize only notes created for contacts already mapped for this user map
-            if (cm = ContactMap.find_by_user_map_id_and_rg_contact_id(user_map.id,rg_note.contact_id))
+            # synchronize only notes created for contacts already mapped for this account
+            if (cm = ContactMap.find_by_rg_contact_id(rg_note.contact_id)) && (cm.user_map.account == user_map.account)
               if (cf_index = user_feed[1].index{|cf| cf[0] == cm})
                 user_feed[1][cf_index][1] << rg_note
               else
