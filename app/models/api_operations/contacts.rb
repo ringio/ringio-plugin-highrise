@@ -486,12 +486,15 @@ module ApiOperations
               self.set_anonymous_person_in_hr(hr_party)
             end
             hr_party.title = rg_contact.title ? rg_contact.title : ''
-            begin
-              company = Highrise::Company.find(:all, :from => :search, :params => { :term => rg_contact.business }).first
-              comp = company ? (company.name.present? ? company : nil) : nil
-            rescue ActiveResource::ResourceNotFound
+            comp_id = nil
+            if rg_contact.business.present?
+              begin
+                int c_index = (coincidence_companies = Highrise::Company.find(:all, :from => :search, :params => { :term => rg_contact.business })).index{|c| c.name == rg_contact.business}
+                comp_id = c_index ? coincidence_companies[c_index].id : nil 
+              rescue ActiveResource::ResourceNotFound
+              end
             end
-            hr_party.company_id = comp ? comp.id : nil
+            hr_party.company_id = comp_id
           when Highrise::Company
             hr_party.name = rg_contact.name ? rg_contact.name : 'Anonymous Ringio Contact'
           else
