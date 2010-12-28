@@ -135,14 +135,18 @@ module ApiOperations
         # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
         self.purge_duplicated_changes(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed,rg_deleted_contacts_ids)
 
+        ApiOperations::Common.log(:debug,nil,"Started applying contact changes from Ringio to Highrise for the user map with id = " + user_map.id.to_s)
         # apply changes from Ringio to Highrise
         self.update_rg_to_hr(user_map,user_rg_feed)
         self.delete_rg_to_hr(user_map,rg_deleted_contacts_ids) unless individual
+        ApiOperations::Common.log(:debug,nil,"Finished applying contact changes from Ringio to Highrise for the user map with id = " + user_map.id.to_s)
 
+        ApiOperations::Common.log(:debug,nil,"Started applying contact changes from Highrise to Ringio for the user map with id = " + user_map.id.to_s)
         # apply changes from Highrise to Ringio
         self.update_hr_to_rg(user_map,hr_updated_people)
         self.update_hr_to_rg(user_map,hr_updated_companies)
         self.delete_hr_to_rg(user_map,hr_party_deletions) unless individual
+        ApiOperations::Common.log(:debug,nil,"Finished applying contact changes from Highrise to Ringio for the user map with id = " + user_map.id.to_s)
         
         ApiOperations::Common.empty_hr_base
       end
@@ -483,7 +487,8 @@ module ApiOperations
             end
             hr_party.title = rg_contact.title ? rg_contact.title : ''
             begin
-              comp = Highrise::Company.find_by_name(rg_contact.business)
+              company = Highrise::Company.find(:all, :from => :search, :params => { :term => rg_contact.business }).first
+              comp = company ? (company.name.present? ? company : nil) : nil
             rescue ActiveResource::ResourceNotFound
             end
             hr_party.company_id = comp ? comp.id : nil

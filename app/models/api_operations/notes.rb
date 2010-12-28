@@ -185,13 +185,17 @@ module ApiOperations
         # give priority to Highrise: discard changes in Ringio to notes that have been changed in Highrise
         self.purge_duplicated_changes(hr_updated_note_recordings,hr_deleted_notes_ids,contact_rg_feed,rg_deleted_notes_ids)
 
+        ApiOperations::Common.log(:debug,nil,"Started applying note changes from Ringio to Highrise for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
         # apply changes from Ringio to Highrise
         self.update_rg_to_hr(author_user_map,contact_map,contact_rg_feed)
         self.delete_rg_to_hr(author_user_map,rg_deleted_notes_ids) unless individual
+        ApiOperations::Common.log(:debug,nil,"Finished applying note changes from Ringio to Highrise for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
         
+        ApiOperations::Common.log(:debug,nil,"Started applying note changes from Highrise to Ringio for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
         # apply changes from Highrise to Ringio
         self.update_hr_to_rg(author_user_map,contact_map,hr_updated_note_recordings)
         self.delete_hr_to_rg(author_user_map,hr_deleted_notes_ids) unless individual
+        ApiOperations::Common.log(:debug,nil,"Finished applying note changes from Highrise to Ringio for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
       end
 
 

@@ -129,6 +129,8 @@ module ApiOperations
         contact_map = contact_rg_feed[0]
         rg_updated_rings = contact_rg_feed[1]
         
+        ApiOperations::Common.log(:debug,nil,"Started applying ring changes from Ringio to Highrise for the contact map with id = " + contact_map.id.to_s)
+        
         # we will only check for updated rings, as they cannot be deleted
         rg_updated_rings.each do |rg_ring|
           begin
@@ -159,6 +161,8 @@ module ApiOperations
             ApiOperations::Common.log(:error,e,"Problem applying update from Ringio to Highrise of the ring with Ringio id = " + rg_ring.id.to_s)
           end
         end
+        
+        ApiOperations::Common.log(:debug,nil,"Finished applying ring changes from Ringio to Highrise for the contact map with id = " + contact_map.id.to_s)
       end
 
 

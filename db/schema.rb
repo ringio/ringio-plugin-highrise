@@ -22,6 +22,7 @@ ActiveRecord::Schema.define(:version => 20101213164155) do
     t.datetime "hr_parties_last_synchronized_at",    :default => '1900-01-01 00:14:44'
     t.datetime "hr_notes_last_synchronized_at",      :default => '1900-01-01 00:14:44'
     t.datetime "hr_ring_notes_last_synchronized_at", :default => '1900-01-01 00:14:44'
+    t.boolean  "not_synchronized_yet",               :default => true
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -57,7 +58,8 @@ ActiveRecord::Schema.define(:version => 20101213164155) do
     t.integer  "hr_user_id"
     t.integer  "rg_user_id"
     t.string   "hr_user_token"
-    t.boolean  "master_user",   :default => false
+    t.boolean  "master_user",          :default => false
+    t.boolean  "not_synchronized_yet", :default => true
     t.datetime "created_at"
     t.datetime "updated_at"
   end
