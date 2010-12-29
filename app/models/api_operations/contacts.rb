@@ -2,7 +2,7 @@ module ApiOperations
 
   module Contacts
 
-    def self.synchronize_account(account, new_user_maps)
+    def self.synchronize_account(account, new_user_maps, account_not_synchronized_yet)
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the contacts of the account with id = " + account.id.to_s)
       
       # run a synchronization just for each new user map
@@ -11,7 +11,7 @@ module ApiOperations
       end
       
       # run a normal complete synchronization
-      self.synchronize_account_process(account,nil)
+      self.synchronize_account_process(account,nil) unless account_not_synchronized_yet
 
       self.update_timestamps account
 
@@ -24,9 +24,10 @@ module ApiOperations
       def self.synchronize_account_process(account, user_map)
         # if there is a new user map
         if user_map
+          ApiOperations::Common.log(:debug,nil,"Started contact synchronization of the new user map with id = " + user_map.id.to_s + " and account with id = " + account.id.to_s)
+
           begin
             # get the feed of all contacts for this new user map of this Ringio account from Ringio
-            ApiOperations::Common.log(:debug,nil,"Getting the contacts of the new user map with id = " + user_map.id.to_s + " and account with id = " + account.id.to_s)
             user_rg_feed = self.fetch_individual_user_rg_feed user_map
             # as it is the first synchronization for this user map, we are not interested in deleted contacts
             rg_deleted_contact_ids = []
@@ -39,6 +40,8 @@ module ApiOperations
           rescue Exception => e
             ApiOperations::Common.log(:error,e,"\nProblem synchronizing the contacts of the new user map with id = " + um.id.to_s)
           end
+          
+          ApiOperations::Common.log(:debug,nil,"Finished contact synchronization of the new user map with id = " + user_map.id.to_s + " and account with id = " + account.id.to_s)
         else
           begin
             # get the feed of changed contacts per user of this Ringio account from Ringio
@@ -125,30 +128,32 @@ module ApiOperations
 
 
       def self.synchronize_user(individual, user_map, user_rg_feed, rg_deleted_contacts_ids)
-        ApiOperations::Common.set_hr_base user_map
-
-        hr_parties_feed = user_map.hr_parties_feed individual
-        hr_updated_people = hr_parties_feed[0]
-        hr_updated_companies = hr_parties_feed[1]
-        hr_party_deletions = individual ? [] : hr_parties_feed[2]
-
-        # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
-        self.purge_duplicated_changes(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed,rg_deleted_contacts_ids)
-
-        ApiOperations::Common.log(:debug,nil,"Started applying contact changes from Ringio to Highrise for the user map with id = " + user_map.id.to_s)
-        # apply changes from Ringio to Highrise
-        self.update_rg_to_hr(user_map,user_rg_feed)
-        self.delete_rg_to_hr(user_map,rg_deleted_contacts_ids) unless individual
-        ApiOperations::Common.log(:debug,nil,"Finished applying contact changes from Ringio to Highrise for the user map with id = " + user_map.id.to_s)
-
-        ApiOperations::Common.log(:debug,nil,"Started applying contact changes from Highrise to Ringio for the user map with id = " + user_map.id.to_s)
-        # apply changes from Highrise to Ringio
-        self.update_hr_to_rg(user_map,hr_updated_people)
-        self.update_hr_to_rg(user_map,hr_updated_companies)
-        self.delete_hr_to_rg(user_map,hr_party_deletions) unless individual
-        ApiOperations::Common.log(:debug,nil,"Finished applying contact changes from Highrise to Ringio for the user map with id = " + user_map.id.to_s)
-        
-        ApiOperations::Common.empty_hr_base
+        if user_rg_feed.present? || rg_deleted_contacts_ids.present?
+          ApiOperations::Common.set_hr_base user_map
+  
+          hr_parties_feed = user_map.hr_parties_feed individual
+          hr_updated_people = hr_parties_feed[0]
+          hr_updated_companies = hr_parties_feed[1]
+          hr_party_deletions = individual ? [] : hr_parties_feed[2]
+  
+          # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
+          self.purge_duplicated_changes(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed,rg_deleted_contacts_ids)
+  
+          ApiOperations::Common.log(:debug,nil,"Started applying contact changes from Ringio to Highrise for the user map with id = " + user_map.id.to_s)
+          # apply changes from Ringio to Highrise
+          self.update_rg_to_hr(user_map,user_rg_feed)
+          self.delete_rg_to_hr(user_map,rg_deleted_contacts_ids) unless individual
+          ApiOperations::Common.log(:debug,nil,"Finished applying contact changes from Ringio to Highrise for the user map with id = " + user_map.id.to_s)
+  
+          ApiOperations::Common.log(:debug,nil,"Started applying contact changes from Highrise to Ringio for the user map with id = " + user_map.id.to_s)
+          # apply changes from Highrise to Ringio
+          self.update_hr_to_rg(user_map,hr_updated_people)
+          self.update_hr_to_rg(user_map,hr_updated_companies)
+          self.delete_hr_to_rg(user_map,hr_party_deletions) unless individual
+          ApiOperations::Common.log(:debug,nil,"Finished applying contact changes from Highrise to Ringio for the user map with id = " + user_map.id.to_s)
+          
+          ApiOperations::Common.empty_hr_base
+        end
       end
   
   
@@ -375,18 +380,20 @@ module ApiOperations
             ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
 
             begin
+              new_hr_party = nil
               # if the contact was already mapped to Highrise, update it there
               if (cm = ContactMap.find_by_rg_contact_id(rg_contact.id))
                 hr_party = cm.hr_resource_party
                 self.rg_contact_to_hr_party(rg_contact,hr_party)
+                new_hr_party = false
               else
               # if the contact is new, create it in Highrise (always as a Person, Ringio GUI does not allow creating a Company) and map it
                 hr_party = Highrise::Person.new
                 self.rg_contact_to_hr_party(rg_contact,hr_party)
+                new_hr_party = true
               end
               
               # if the Highrise party is saved properly and it didn't exist before, create a new contact map
-              new_hr_party = hr_party.new?
               if hr_party.save! && new_hr_party
                 new_cm = ContactMap.new(:user_map_id => user_map.id, :rg_contact_id => rg_contact.id, :hr_party_id => hr_party.id)
                 new_cm.hr_party_type = case hr_party
@@ -489,7 +496,7 @@ module ApiOperations
             comp_id = nil
             if rg_contact.business.present?
               begin
-                int c_index = (coincidence_companies = Highrise::Company.find(:all, :from => :search, :params => { :term => rg_contact.business })).index{|c| c.name == rg_contact.business}
+                c_index = (coincidence_companies = Highrise::Company.find(:all, :from => :search, :params => { :term => rg_contact.business })).index{|c| c.name == rg_contact.business}
                 comp_id = c_index ? coincidence_companies[c_index].id : nil 
               rescue ActiveResource::ResourceNotFound
               end
@@ -503,9 +510,9 @@ module ApiOperations
     
         # clean the contact data structure of the updated Highrise contact
         if hr_party.new?
-          hr_party.contact_data = Highrise::Person::ContactData.new
-          hr_party.contact_data.email_addresses = Array.new
-          hr_party.contact_data.phone_numbers = Array.new
+          # save so that the server creates the contact data structure
+          # (we cannot create ourselves the Highrise::Person::ContactData because it is not in the Highrise gem)
+          hr_party.save
         else
           # make sure that the corresponding data is empty (or deleted) in the Highrise contact
           # (the corresponding data is the data that would have been synchronized from Highrise to Ringio if it existed)

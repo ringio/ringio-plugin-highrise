@@ -2,7 +2,7 @@ module ApiOperations
 
   module Common
 
-    INITIAL_DATETIME = (Date.parse('1900-01-01')).to_time
+    INITIAL_DATETIME = (DateTime.parse('1900-01-01 00:00:01')).to_time
     INITIAL_MS_DATETIME = 1
     
     def self.mails_for_select(rg_account_id)
@@ -75,21 +75,15 @@ module ApiOperations
       # TODO: handle optional fields for all resources in Ringio and in Highrise
       Account.all.each do |account|
         if account.hr_subdomain.present?
-          if account.not_synchronized_yet
-            self.synchronize_account(account,[])
-            account.not_synchronized_yet = false
-            account.save
-          else
-            new_user_maps = account.user_maps.inject([]) do |total,um|
-              if um.not_synchronized_yet
-                total << um
-                um.not_synchronized_yet = false
-                um.save
-              end
-              total
+          new_user_maps = account.user_maps.inject([]) do |total,um|
+            if um.not_synchronized_yet
+              total << um
+              um.not_synchronized_yet = false
+              um.save
             end
-            self.synchronize_account(account,new_user_maps)
+            total
           end
+          self.synchronize_account(account,new_user_maps,account.not_synchronized_yet)
         end
       end
   
@@ -109,13 +103,13 @@ module ApiOperations
 
     private
     
-      def self.synchronize_account(account, new_user_maps)
+      def self.synchronize_account(account, new_user_maps, account_not_synchronized_yet)
         # we synchronize in reverse order of resource dependency: first contacts, then notes and then rings
-        ApiOperations::Contacts.synchronize_account(account,new_user_maps)
+        ApiOperations::Contacts.synchronize_account(account,new_user_maps, account_not_synchronized_yet)
   
-        ApiOperations::Notes.synchronize_account(account,new_user_maps)
+        ApiOperations::Notes.synchronize_account(account,new_user_maps, account_not_synchronized_yet)
   
-        ApiOperations::Rings.synchronize_account(account,new_user_maps)
+        ApiOperations::Rings.synchronize_account(account,new_user_maps, account_not_synchronized_yet)
       end
       
       def self.set_hr_base_basic(user_map)
