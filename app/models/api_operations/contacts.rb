@@ -128,32 +128,32 @@ module ApiOperations
 
 
       def self.synchronize_user(is_new_user, user_map, user_rg_feed, rg_deleted_contacts_ids)
-          ApiOperations::Common.set_hr_base user_map
-  
-          hr_parties_feed = user_map.hr_parties_feed is_new_user
-          hr_updated_people = hr_parties_feed[0]
-          hr_updated_companies = hr_parties_feed[1]
-          hr_party_deletions = is_new_user ? [] : hr_parties_feed[2]
+        ApiOperations::Common.set_hr_base user_map
 
-          if user_rg_feed.present? || rg_deleted_contacts_ids.present? || hr_updated_people.present? || hr_updated_companies.present? || hr_party_deletions.present?
-            # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
-            self.purge_duplicated_changes(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed,rg_deleted_contacts_ids)
-    
-            ApiOperations::Common.log(:debug,nil,"Started applying contact changes from Ringio to Highrise for the user map with id = " + user_map.id.to_s)
-            # apply changes from Ringio to Highrise
-            self.update_rg_to_hr(user_map,user_rg_feed)
-            self.delete_rg_to_hr(user_map,rg_deleted_contacts_ids) unless is_new_user
-            ApiOperations::Common.log(:debug,nil,"Finished applying contact changes from Ringio to Highrise for the user map with id = " + user_map.id.to_s)
-    
-            ApiOperations::Common.log(:debug,nil,"Started applying contact changes from Highrise to Ringio for the user map with id = " + user_map.id.to_s)
-            # apply changes from Highrise to Ringio
-            self.update_hr_to_rg(user_map,hr_updated_people)
-            self.update_hr_to_rg(user_map,hr_updated_companies)
-            self.delete_hr_to_rg(user_map,hr_party_deletions) unless is_new_user
-            ApiOperations::Common.log(:debug,nil,"Finished applying contact changes from Highrise to Ringio for the user map with id = " + user_map.id.to_s)
-            
-            ApiOperations::Common.empty_hr_base
-          end
+        hr_parties_feed = user_map.hr_parties_feed is_new_user
+        hr_updated_people = hr_parties_feed[0]
+        hr_updated_companies = hr_parties_feed[1]
+        hr_party_deletions = is_new_user ? [] : hr_parties_feed[2]
+
+        if user_rg_feed.present? || rg_deleted_contacts_ids.present? || hr_updated_people.present? || hr_updated_companies.present? || hr_party_deletions.present?
+          # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
+          self.purge_duplicated_changes(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed,rg_deleted_contacts_ids)
+  
+          ApiOperations::Common.log(:debug,nil,"Started applying contact changes from Ringio to Highrise for the user map with id = " + user_map.id.to_s)
+          # apply changes from Ringio to Highrise
+          self.update_rg_to_hr(user_map,user_rg_feed)
+          self.delete_rg_to_hr(user_map,rg_deleted_contacts_ids) unless is_new_user
+          ApiOperations::Common.log(:debug,nil,"Finished applying contact changes from Ringio to Highrise for the user map with id = " + user_map.id.to_s)
+  
+          ApiOperations::Common.log(:debug,nil,"Started applying contact changes from Highrise to Ringio for the user map with id = " + user_map.id.to_s)
+          # apply changes from Highrise to Ringio
+          self.update_hr_to_rg(user_map,hr_updated_people)
+          self.update_hr_to_rg(user_map,hr_updated_companies)
+          self.delete_hr_to_rg(user_map,hr_party_deletions) unless is_new_user
+          ApiOperations::Common.log(:debug,nil,"Finished applying contact changes from Highrise to Ringio for the user map with id = " + user_map.id.to_s)
+          
+          ApiOperations::Common.empty_hr_base
+        end
       end
   
   

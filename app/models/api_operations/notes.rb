@@ -182,15 +182,15 @@ module ApiOperations
 
 
       def self.synchronize_contact(is_new_user,author_user_map, contact_map, contact_rg_feed, rg_deleted_notes_ids)
-          hr_updated_note_recordings = contact_map.hr_updated_note_recordings is_new_user
-          # TODO: get true feeds of deleted notes (currently Highrise does not offer it)
-          hr_notes = contact_map.hr_notes
+        hr_updated_note_recordings = contact_map.hr_updated_note_recordings is_new_user
+        # TODO: get true feeds of deleted notes (currently Highrise does not offer it)
+        hr_notes = contact_map.hr_notes
 
-          # get the deleted notes (those that don't appear anymore in the current set)
-          hr_deleted_notes_ids = is_new_user ? [] : contact_map.note_maps.reject{|nm| hr_notes.index{|hr_n| hr_n.id == nm.hr_note_id}}.map{|nm| nm.hr_note_id}
+        # get the deleted notes (those that don't appear anymore in the current set)
+        hr_deleted_notes_ids = is_new_user ? [] : contact_map.note_maps.reject{|nm| hr_notes.index{|hr_n| hr_n.id == nm.hr_note_id}}.map{|nm| nm.hr_note_id}
 
-          # empty the variable for the current set to make sure it is not used
-          hr_notes = nil
+        # empty the variable for the current set to make sure it is not used
+        hr_notes = nil
 
         if contact_rg_feed.present? || rg_deleted_notes_ids.present? || hr_updated_note_recordings.present? || hr_deleted_notes_ids.present?
           # give priority to Highrise: discard changes in Ringio to notes that have been changed in Highrise
