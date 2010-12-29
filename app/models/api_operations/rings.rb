@@ -30,7 +30,8 @@ module ApiOperations
           begin
             # get the feed of changed rings per contact of this new user map from Ringio,
             # we will not check for deleted rings, because they cannot be deleted
-            contact_rg_feeds = self.fetch_contact_rg_feeds(user_map,account.rg_rings_feed,account)
+            account_rg_feed = account.all_rg_rings_feed
+            contact_rg_feeds = self.fetch_contact_rg_feeds(user_map,account_rg_feed,account)
           rescue Exception => e
             ApiOperations::Common.log(:error,e,"\nProblem fetching the changed rings for the new user map with id = " + user_map.id.to_s + " of the account with id = " + account.id.to_s)
           end
@@ -40,8 +41,9 @@ module ApiOperations
           begin
             # get the feed of changed rings per contact of this Ringio account from Ringio,
             # we will not check for deleted rings, because they cannot be deleted
+            account_rg_feed = account.rg_rings_feed
             ApiOperations::Common.log(:debug,nil,"Getting the changed rings of the account with id = " + account.id.to_s)
-            contact_rg_feeds = self.fetch_contact_rg_feeds(nil,account.rg_rings_feed,account)
+            contact_rg_feeds = self.fetch_contact_rg_feeds(nil,account_rg_feed,account)
           rescue Exception => e
             ApiOperations::Common.log(:error,e,"\nProblem fetching the changed rings of the account with id = " + account.id.to_s)
           end

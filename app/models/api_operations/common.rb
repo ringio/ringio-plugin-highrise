@@ -84,6 +84,7 @@ module ApiOperations
             total
           end
           self.synchronize_account(account,new_user_maps,account.not_synchronized_yet)
+          account.not_synchronized_yet = false if account.not_synchronized_yet
         end
       end
   
@@ -91,12 +92,13 @@ module ApiOperations
     end
     
     def self.log(level,exception,message)
-      timestamp = '[' + Time.now.to_s + ']' 
+      timestamp = '[' + Time.now.to_s + ']'
+      base_message = timestamp + ' [' + level.to_s.upcase + '] ' + message + "\n"
       case level
-        when :debug then Rails.logger.debug timestamp + ' ' + message + "\n"
-        when :info then Rails.logger.info timestamp + ' ' + message + "\n"
-        when :error then Rails.logger.error timestamp + ' ' + message + "\n  " + exception.inspect + "\n" + exception.backtrace.inject(message){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
-        else raise 'Unknown log error level'
+        when :debug then Rails.logger.debug base_message
+        when :info then Rails.logger.info base_message
+        when :error then Rails.logger.error base_message + "  " + exception.inspect + "\n" + exception.backtrace.inject(message){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
+        else raise 'Unhandled log level'
       end
     end
 

@@ -34,14 +34,14 @@ class ContactMap < ActiveRecord::Base
     # TODO: give support to visibility
   end
 
-  def hr_updated_note_recordings(individual)
-    timestamp = individual ? ApiOperations::Common::INITIAL_DATETIME : self.user_map.account.hr_notes_last_synchronized_at
+  def hr_updated_note_recordings(is_new_user)
+    timestamp = is_new_user ? ApiOperations::Common::INITIAL_DATETIME : self.user_map.account.hr_notes_last_synchronized_at
     
     # get only the Highrise recordings for notes for the current contact and
     # filter to keep those that were created_at or updated at after the last synchronization datetime
     # and reject the notes corresponding to rings
     Highrise::Recording.find_all_across_pages_since(timestamp).reject do |r|
-      (r.type != 'Note') || (r.subject_type != 'Party') || (r.subject_id.to_i != self.hr_party_id) || (r.body[0,40] == 'RING - DO NOT CHANGE OR DELETE THIS NOTE')
+      (r.type != 'Note') || (r.subject_type != 'Party') || (r.subject_id != self.hr_party_id) || (r.body[0,40] == 'RING - DO NOT CHANGE OR DELETE THIS NOTE')
     end
   end
   

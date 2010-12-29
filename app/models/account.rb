@@ -18,6 +18,14 @@ class Account < ActiveRecord::Base
       :params => { :since => self.rg_contacts_last_timestamp }
     )
   end
+
+  def all_rg_notes_feed
+    # TODO: give support to shared contacts (group to Client in Ringio)
+    feed = RingioAPI::Feed.find(
+      :one,
+      :from => RingioAPI::Feed.prefix + "feeds/accounts/" + self.rg_account_id.to_s + "/notes"
+    )
+  end
   
   def rg_notes_feed
     # TODO: give support to shared contacts (group to Client in Ringio)
@@ -28,6 +36,14 @@ class Account < ActiveRecord::Base
     )
   end
   
+  def all_rg_rings_feed
+    # TODO: give support to shared contacts (group to Client in Ringio)
+    feed = RingioAPI::Feed.find(
+      :one,
+      :from => RingioAPI::Feed.prefix + "feeds/accounts/" + self.rg_account_id.to_s + "/rings"
+    )
+  end
+
   def rg_rings_feed
     # TODO: give support to shared contacts (group to Client in Ringio)
     feed = RingioAPI::Feed.find(
