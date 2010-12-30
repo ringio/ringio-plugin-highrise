@@ -182,6 +182,8 @@ module ApiOperations
 
 
       def self.synchronize_contact(is_new_user,author_user_map, contact_map, contact_rg_feed, rg_deleted_notes_ids)
+        ApiOperations::Common.log(:debug,nil,"Started applying note changes for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
+
         hr_updated_note_recordings = contact_map.hr_updated_note_recordings is_new_user
         # TODO: get true feeds of deleted notes (currently Highrise does not offer it)
         hr_notes = contact_map.hr_notes
@@ -196,18 +198,16 @@ module ApiOperations
           # give priority to Highrise: discard changes in Ringio to notes that have been changed in Highrise
           self.purge_duplicated_changes(hr_updated_note_recordings,hr_deleted_notes_ids,contact_rg_feed,rg_deleted_notes_ids)
   
-          ApiOperations::Common.log(:debug,nil,"Started applying note changes from Ringio to Highrise for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
           # apply changes from Ringio to Highrise
           self.update_rg_to_hr(author_user_map,contact_map,contact_rg_feed)
           self.delete_rg_to_hr(author_user_map,rg_deleted_notes_ids) unless is_new_user
-          ApiOperations::Common.log(:debug,nil,"Finished applying note changes from Ringio to Highrise for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
-          
-          ApiOperations::Common.log(:debug,nil,"Started applying note changes from Highrise to Ringio for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
+
           # apply changes from Highrise to Ringio
           self.update_hr_to_rg(author_user_map,contact_map,hr_updated_note_recordings)
           self.delete_hr_to_rg(author_user_map,hr_deleted_notes_ids) unless is_new_user
-          ApiOperations::Common.log(:debug,nil,"Finished applying note changes from Highrise to Ringio for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
         end
+
+        ApiOperations::Common.log(:debug,nil,"Finished applying note changes for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
       end
 
 
@@ -303,37 +303,35 @@ module ApiOperations
 
 
       def self.update_rg_to_hr(author_user_map, contact_map, contact_rg_feed)
-        if contact_rg_feed
-          contact_rg_feed[1].each do |rg_note|
-            begin
-              ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the note with Ringio id = " + rg_note.id.to_s)
-  
-              # if the note was already mapped to Highrise, update it there
-              if (nm = NoteMap.find_by_rg_note_id(rg_note.id))
-                hr_note = nm.hr_resource_note
-                self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
-              else
-              # if the note is new, create it in Highrise and map it
-                hr_note = Highrise::Note.new
-                self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
-              end
-              
-              # if the Highrise note is saved properly and it didn't exist before, create a new note map
-              new_hr_note = hr_note.new?
-              unless new_hr_note
-                hr_note = self.remove_subject_name(hr_note)
-              end
-              if hr_note.save! && new_hr_note
-                new_nm = NoteMap.new(:contact_map_id => contact_map.id, :author_user_map_id => author_user_map.id, :rg_note_id => rg_note.id, :hr_note_id => hr_note.id)
-                new_nm.save!
-              end
-  
-              ApiOperations::Common.log(:debug,nil,"Finished applying update from Ringio to Highrise of the note with Ringio id = " + rg_note.id.to_s)
-            rescue Exception => e
-              ApiOperations::Common.log(:error,e,"Problem applying update from Ringio to Highrise of the note with Ringio id = " + rg_note.id.to_s)
+        contact_rg_feed[1].each do |rg_note|
+          begin
+            ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the note with Ringio id = " + rg_note.id.to_s)
+
+            # if the note was already mapped to Highrise, update it there
+            if (nm = NoteMap.find_by_rg_note_id(rg_note.id))
+              hr_note = nm.hr_resource_note
+              self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
+            else
+            # if the note is new, create it in Highrise and map it
+              hr_note = Highrise::Note.new
+              self.rg_note_to_hr_note(contact_map,rg_note,hr_note)
             end
+            
+            # if the Highrise note is saved properly and it didn't exist before, create a new note map
+            new_hr_note = hr_note.new?
+            unless new_hr_note
+              hr_note = self.remove_subject_name(hr_note)
+            end
+            if hr_note.save! && new_hr_note
+              new_nm = NoteMap.new(:contact_map_id => contact_map.id, :author_user_map_id => author_user_map.id, :rg_note_id => rg_note.id, :hr_note_id => hr_note.id)
+              new_nm.save!
+            end
+
+            ApiOperations::Common.log(:debug,nil,"Finished applying update from Ringio to Highrise of the note with Ringio id = " + rg_note.id.to_s)
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"Problem applying update from Ringio to Highrise of the note with Ringio id = " + rg_note.id.to_s)
           end
-        end        
+        end
       end
 
 

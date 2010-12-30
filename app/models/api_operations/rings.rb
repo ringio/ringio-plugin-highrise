@@ -129,46 +129,43 @@ module ApiOperations
 
 
       def self.synchronize_contact(contact_rg_feed)
-        if contact_rg_feed.present?
-          # we will only check for updated rings in Ringio, as they should not be changed in Highrise
-          contact_map = contact_rg_feed[0]
-          rg_updated_rings = contact_rg_feed[1]
-          
-          ApiOperations::Common.log(:debug,nil,"Started applying ring changes from Ringio to Highrise for the contact map with id = " + contact_map.id.to_s)
-          
-          # we will only check for updated rings, as they cannot be deleted
-          rg_updated_rings.each do |rg_ring|
-            begin
-              ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the ring with Ringio id = " + rg_ring.id.to_s)
-              
-              # if the ring was already mapped to Highrise, update it there
-              if (rm = RingMap.find_by_rg_ring_id(rg_ring.id))
-                hr_ring_note = rm.hr_resource_ring_note
-                self.rg_ring_to_hr_ring_note(contact_map,rg_ring,hr_ring_note)
-              else
-              # if the note is new, create it in Highrise and map it
-                hr_ring_note = Highrise::Note.new
-                self.rg_ring_to_hr_ring_note(contact_map,rg_ring,hr_ring_note)
-              end
-              
-              # if the Highrise note is saved properly and it didn't exist before, create a new ring map
-              new_hr_ring_note = hr_ring_note.new?
-              unless new_hr_ring_note
-                hr_ring_note = self.remove_subject_name(hr_ring_note)
-              end
-              if hr_ring_note.save! && new_hr_ring_note
-                new_rm = RingMap.new(:contact_map_id => contact_map.id, :rg_ring_id => rg_ring.id, :hr_ring_note_id => hr_ring_note.id)
-                new_rm.save!
-              end
-              
-              ApiOperations::Common.log(:debug,nil,"Finished applying update from Ringio to Highrise of the ring with Ringio id = " + rg_ring.id.to_s)
-            rescue Exception => e
-              ApiOperations::Common.log(:error,e,"Problem applying update from Ringio to Highrise of the ring with Ringio id = " + rg_ring.id.to_s)
+        # we will only check for changed rings in Ringio, as they should not be changed in Highrise
+        contact_map = contact_rg_feed[0]
+        ApiOperations::Common.log(:debug,nil,"Started applying ring changes for the contact map with id = " + contact_map.id.to_s)
+        rg_updated_rings = contact_rg_feed[1]
+        
+        # we will only check for updated rings, as they cannot be deleted
+        rg_updated_rings.each do |rg_ring|
+          begin
+            ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the ring with Ringio id = " + rg_ring.id.to_s)
+            
+            # if the ring was already mapped to Highrise, update it there
+            if (rm = RingMap.find_by_rg_ring_id(rg_ring.id))
+              hr_ring_note = rm.hr_resource_ring_note
+              self.rg_ring_to_hr_ring_note(contact_map,rg_ring,hr_ring_note)
+            else
+            # if the note is new, create it in Highrise and map it
+              hr_ring_note = Highrise::Note.new
+              self.rg_ring_to_hr_ring_note(contact_map,rg_ring,hr_ring_note)
             end
+            
+            # if the Highrise note is saved properly and it didn't exist before, create a new ring map
+            new_hr_ring_note = hr_ring_note.new?
+            unless new_hr_ring_note
+              hr_ring_note = self.remove_subject_name(hr_ring_note)
+            end
+            if hr_ring_note.save! && new_hr_ring_note
+              new_rm = RingMap.new(:contact_map_id => contact_map.id, :rg_ring_id => rg_ring.id, :hr_ring_note_id => hr_ring_note.id)
+              new_rm.save!
+            end
+            
+            ApiOperations::Common.log(:debug,nil,"Finished applying update from Ringio to Highrise of the ring with Ringio id = " + rg_ring.id.to_s)
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"Problem applying update from Ringio to Highrise of the ring with Ringio id = " + rg_ring.id.to_s)
           end
         end
         
-        ApiOperations::Common.log(:debug,nil,"Finished applying ring changes from Ringio to Highrise for the contact map with id = " + contact_map.id.to_s)
+        ApiOperations::Common.log(:debug,nil,"Finished applying ring changes for the contact map with id = " + contact_map.id.to_s)
       end
 
 

@@ -128,6 +128,7 @@ module ApiOperations
 
 
       def self.synchronize_user(is_new_user, user_map, user_rg_feed, rg_deleted_contacts_ids)
+        ApiOperations::Common.log(:debug,nil,"Started applying contact changes for the user map with id = " + user_map.id.to_s)
         ApiOperations::Common.set_hr_base user_map
 
         hr_parties_feed = user_map.hr_parties_feed is_new_user
@@ -139,21 +140,18 @@ module ApiOperations
           # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
           self.purge_duplicated_changes(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed,rg_deleted_contacts_ids)
   
-          ApiOperations::Common.log(:debug,nil,"Started applying contact changes from Ringio to Highrise for the user map with id = " + user_map.id.to_s)
           # apply changes from Ringio to Highrise
           self.update_rg_to_hr(user_map,user_rg_feed)
           self.delete_rg_to_hr(user_map,rg_deleted_contacts_ids) unless is_new_user
-          ApiOperations::Common.log(:debug,nil,"Finished applying contact changes from Ringio to Highrise for the user map with id = " + user_map.id.to_s)
-  
-          ApiOperations::Common.log(:debug,nil,"Started applying contact changes from Highrise to Ringio for the user map with id = " + user_map.id.to_s)
+
           # apply changes from Highrise to Ringio
           self.update_hr_to_rg(user_map,hr_updated_people)
           self.update_hr_to_rg(user_map,hr_updated_companies)
           self.delete_hr_to_rg(user_map,hr_party_deletions) unless is_new_user
-          ApiOperations::Common.log(:debug,nil,"Finished applying contact changes from Highrise to Ringio for the user map with id = " + user_map.id.to_s)
-          
-          ApiOperations::Common.empty_hr_base
         end
+
+        ApiOperations::Common.empty_hr_base
+        ApiOperations::Common.log(:debug,nil,"Finished applying contact changes for the user map with id = " + user_map.id.to_s)
       end
   
   
@@ -375,40 +373,38 @@ module ApiOperations
   
   
       def self.update_rg_to_hr(user_map, user_rg_feed)
-        if user_rg_feed
-          user_rg_feed[1].each do |rg_contact|
-            ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
+        user_rg_feed[1].each do |rg_contact|
+          ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
 
-            begin
-              new_hr_party = nil
-              # if the contact was already mapped to Highrise, update it there
-              if (cm = ContactMap.find_by_rg_contact_id(rg_contact.id))
-                hr_party = cm.hr_resource_party
-                self.rg_contact_to_hr_party(rg_contact,hr_party)
-                new_hr_party = false
-              else
-              # if the contact is new, create it in Highrise (always as a Person, Ringio GUI does not allow creating a Company) and map it
-                hr_party = Highrise::Person.new
-                self.rg_contact_to_hr_party(rg_contact,hr_party)
-                new_hr_party = true
-              end
-              
-              # if the Highrise party is saved properly and it didn't exist before, create a new contact map
-              if hr_party.save! && new_hr_party
-                new_cm = ContactMap.new(:user_map_id => user_map.id, :rg_contact_id => rg_contact.id, :hr_party_id => hr_party.id)
-                new_cm.hr_party_type = case hr_party
-                  when Highrise::Person then 'Person'
-                  when Highrise::Company then 'Company'
-                  else
-                    raise 'Unknown Party type'
-                end
-                new_cm.save!
-              end
-
-              ApiOperations::Common.log(:debug,nil,"Finished applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
-            rescue Exception => e
-              ApiOperations::Common.log(:error,e,"Problem applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
+          begin
+            new_hr_party = nil
+            # if the contact was already mapped to Highrise, update it there
+            if (cm = ContactMap.find_by_rg_contact_id(rg_contact.id))
+              hr_party = cm.hr_resource_party
+              self.rg_contact_to_hr_party(rg_contact,hr_party)
+              new_hr_party = false
+            else
+            # if the contact is new, create it in Highrise (always as a Person, Ringio GUI does not allow creating a Company) and map it
+              hr_party = Highrise::Person.new
+              self.rg_contact_to_hr_party(rg_contact,hr_party)
+              new_hr_party = true
             end
+            
+            # if the Highrise party is saved properly and it didn't exist before, create a new contact map
+            if hr_party.save! && new_hr_party
+              new_cm = ContactMap.new(:user_map_id => user_map.id, :rg_contact_id => rg_contact.id, :hr_party_id => hr_party.id)
+              new_cm.hr_party_type = case hr_party
+                when Highrise::Person then 'Person'
+                when Highrise::Company then 'Company'
+                else
+                  raise 'Unknown Party type'
+              end
+              new_cm.save!
+            end
+
+            ApiOperations::Common.log(:debug,nil,"Finished applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
+          rescue Exception => e
+            ApiOperations::Common.log(:error,e,"Problem applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
           end
         end
       end
