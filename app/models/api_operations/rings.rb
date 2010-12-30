@@ -35,8 +35,6 @@ module ApiOperations
           rescue Exception => e
             ApiOperations::Common.log(:error,e,"\nProblem fetching the changed rings for the new user map with id = " + user_map.id.to_s + " of the account with id = " + account.id.to_s)
           end
-
-          ApiOperations::Common.log(:debug,nil,"Finished ring synchronization for the new user map with id = " + user_map.id.to_s + " of the account with id = " + account.id.to_s)
         else
           begin
             # get the feed of changed rings per contact of this Ringio account from Ringio,
@@ -50,6 +48,10 @@ module ApiOperations
         end
         
         self.synchronize_contacts contact_rg_feeds
+        
+        if user_map
+          ApiOperations::Common.log(:debug,nil,"Finished ring synchronization for the new user map with id = " + user_map.id.to_s + " of the account with id = " + account.id.to_s)
+        end
       end
 
 
