@@ -68,10 +68,10 @@ module ApiOperations
           user_map.account.user_maps.each do |um|
             um.contact_maps.each do |cm|
               begin
-                contact_rg_feed = (c_rg_f_index = user_rg_feed[1].index{|contact_rg_feed| contact_rg_feed[0] == cm})? user_rg_feed[1][c_rg_f_index] : nil
+                contact_rg_feed = (c_rg_f_index = user_rg_feed[1].index{|contact_rg_feed| contact_rg_feed[0] == cm})? user_rg_feed[1][c_rg_f_index] : [cm,[]]
                 self.synchronize_contact(true,user_map,cm,contact_rg_feed,[])
               rescue Exception => e
-                ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the new user map with id = " + user_map.id.to_s + "\n" + "for the contact map with id = " + cm.id.to_s)
+                ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the new user map with id = " + user_map.id.to_s + " for the contact map with id = " + cm.id.to_s)
               end
             end
           end
@@ -111,10 +111,10 @@ module ApiOperations
                 aux_um.contact_maps.each do |cm|
                   begin
                     user_rg_feed = (u_rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[u_rg_f_index] : nil
-                    contact_rg_feed = user_rg_feed.present? ? ((c_rg_f_index = user_rg_feed[1].index{|contact_rg_feed| contact_rg_feed[0] == cm})? user_rg_feed[1][c_rg_f_index] : nil) : nil
+                    contact_rg_feed = user_rg_feed.present? ? ((c_rg_f_index = user_rg_feed[1].index{|contact_rg_feed| contact_rg_feed[0] == cm})? user_rg_feed[1][c_rg_f_index] : [cm,[]]) : [cm,[]]
                     self.synchronize_contact(false,um,cm,contact_rg_feed,rg_deleted_notes_ids)
                   rescue Exception => e
-                    ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the user map with id = " + um.id.to_s + "\n" + "for the contact map with id = " + cm.id.to_s)
+                    ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the user map with id = " + um.id.to_s + " for the contact map with id = " + cm.id.to_s)
                   end
                 end
               end
@@ -191,7 +191,7 @@ module ApiOperations
         # get the deleted notes (those that don't appear anymore in the current set)
         hr_deleted_notes_ids = is_new_user ? [] : contact_map.note_maps.reject{|nm| hr_notes.index{|hr_n| hr_n.id == nm.hr_note_id}}.map{|nm| nm.hr_note_id}
 
-        # empty the variable for the current set to make sure it is not used
+        # empty the variable for the current set to make sure it is not used, as the feed is more efficient
         hr_notes = nil
 
         if contact_rg_feed.present? || rg_deleted_notes_ids.present? || hr_updated_note_recordings.present? || hr_deleted_notes_ids.present?
