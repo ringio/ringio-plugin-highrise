@@ -115,6 +115,7 @@ module ApiOperations
                     contact_feed = user_feed.present? ? ((c_f_index = user_feed[1].index{|contact_feed| contact_feed[0] == cm})? user_feed[1][c_f_index] : [cm,[],[]]) : [cm,[],[]]
                     contact_rg_feed = [contact_feed[0],contact_feed[1]]
                     hr_updated_note_recordings = contact_feed[2]
+
                     self.synchronize_contact(false,um,cm,contact_rg_feed,rg_deleted_notes_ids,hr_updated_note_recordings)
                   rescue Exception => e
                     ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the user map with id = " + um.id.to_s + " for the contact map with id = " + cm.id.to_s)
@@ -179,7 +180,7 @@ module ApiOperations
       # [1][i][2] => updated Highrise notes for contact map i and author user map
       def self.fetch_user_feeds(account_rg_feed, account)
         # get updated notes from Ringio
-        account_rg_feed.updated.inject([]) do |user_feeds,rg_note_id|
+        user_feeds = account_rg_feed.updated.inject([]) do |user_feeds,rg_note_id|
           rg_note = RingioAPI::Note.find rg_note_id
 
           # synchronize only notes created by users already mapped for this account
@@ -200,11 +201,11 @@ module ApiOperations
 
           user_feeds
         end
-        
+
         # get updated notes from Highrise
         account.user_maps.each do |um|
           ApiOperations::Common.set_hr_base um
-          user_feed = um.hr_updated_note_recordings(false).inject(user_feed) do |user_feed,hr_note_recording|
+          user_feeds = um.hr_updated_note_recordings(false).inject(user_feeds) do |user_feeds,hr_note_recording|
             # synchronize only notes created for contacts already mapped for this account
             # it is not necessary to specify if it is a Person or a Company (they can't have id collision),
             # and Highrise does not offer the distinction in the recording
@@ -224,6 +225,8 @@ module ApiOperations
           end
           ApiOperations::Common.empty_hr_base
         end
+        
+        user_feeds
       end
 
 
@@ -242,7 +245,7 @@ module ApiOperations
         if contact_rg_feed.present? || rg_deleted_notes_ids.present? || hr_updated_note_recordings.present? || hr_deleted_notes_ids.present?
           # give priority to Highrise: discard changes in Ringio to notes that have been changed in Highrise
           self.purge_duplicated_changes(hr_updated_note_recordings,hr_deleted_notes_ids,contact_rg_feed,rg_deleted_notes_ids)
-  
+
           # apply changes from Ringio to Highrise
           self.update_rg_to_hr(author_user_map,contact_map,contact_rg_feed)
           self.delete_rg_to_hr(author_user_map,rg_deleted_notes_ids) unless is_new_user

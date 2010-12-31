@@ -84,7 +84,11 @@ module ApiOperations
             total
           end
           self.synchronize_account(account,new_user_maps,account.not_synchronized_yet)
-          account.not_synchronized_yet = false if account.not_synchronized_yet
+
+          if account.not_synchronized_yet
+            account.not_synchronized_yet = false
+            account.save
+          end
         end
       end
   

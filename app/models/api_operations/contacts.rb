@@ -9,7 +9,7 @@ module ApiOperations
       new_user_maps.each do |um|
         self.synchronize_account_process(account,um)
       end
-      
+
       # run a normal complete synchronization
       self.synchronize_account_process(account,nil) unless account_not_synchronized_yet
 
@@ -52,7 +52,6 @@ module ApiOperations
           rescue Exception => e
             ApiOperations::Common.log(:error,e,"\nProblem fetching the changed contacts of the account with id = " + account.id.to_s)
           end
-          
           self.synchronize_users(account,user_rg_feeds,rg_deleted_contact_ids)
         end
       end
@@ -282,7 +281,7 @@ module ApiOperations
             end
             cd.type = 'email'
           end
-  
+debugger
           # set the phone numbers
           hr_party.contact_data.phone_numbers.each do |pn|
             rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
