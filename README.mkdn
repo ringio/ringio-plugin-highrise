@@ -29,6 +29,23 @@ Remember to run this in the root of ringio-plugin-highrise:
 
 Rails 3, ringioAPI, highrise
 
+### Only for developers: test environment
+
+In order to make the rspec tests work (for example, by running 'rake spec' in the root directory), you will need to create the file /lib/api_operations/testing_info.rb
+
+    module ApiOperations
+
+      module TestingInfo
+
+        HIGHRISE_SUBDOMAIN = 'your_highrise_testing_subdomain'
+        HIGHRISE_TOKEN = 'your_highrise_testing_user_token'
+        RINGIO_ACCOUNT_ID = number of the ringio testing account id
+        RINGIO_USER_ID = number of the ringio testing user id  
+    
+      end
+  
+    end
+
     
 ## License
 

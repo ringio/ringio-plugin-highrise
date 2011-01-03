@@ -265,7 +265,7 @@ module ApiOperations
             end
           end
         end
-debugger
+
         # TODO: refactor to move repeated structures to a method
         if hr_party.contact_data.present?
           # set the email addresses
