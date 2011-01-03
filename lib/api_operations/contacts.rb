@@ -265,7 +265,7 @@ module ApiOperations
             end
           end
         end
-
+debugger
         # TODO: refactor to move repeated structures to a method
         if hr_party.contact_data.present?
           # set the email addresses
@@ -281,7 +281,7 @@ module ApiOperations
             end
             cd.type = 'email'
           end
-debugger
+
           # set the phone numbers
           hr_party.contact_data.phone_numbers.each do |pn|
             rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
@@ -376,21 +376,11 @@ debugger
           ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
 
           begin
-            new_hr_party = nil
-            # if the contact was already mapped to Highrise, update it there
-            if (cm = ContactMap.find_by_rg_contact_id(rg_contact.id))
-              hr_party = cm.hr_resource_party
-              self.rg_contact_to_hr_party(rg_contact,hr_party)
-              new_hr_party = false
-            else
-            # if the contact is new, create it in Highrise (always as a Person, Ringio GUI does not allow creating a Company) and map it
-              hr_party = Highrise::Person.new
-              self.rg_contact_to_hr_party(rg_contact,hr_party)
-              new_hr_party = true
-            end
-            
+            is_new_hr_party = nil
+            hr_party = self.prepare_hr_party(rg_contact,is_new_hr_party)
+
             # if the Highrise party is saved properly and it didn't exist before, create a new contact map
-            if hr_party.save! && new_hr_party
+            if hr_party.save! && is_new_hr_party
               new_cm = ContactMap.new(:user_map_id => user_map.id, :rg_contact_id => rg_contact.id, :hr_party_id => hr_party.id)
               new_cm.hr_party_type = case hr_party
                 when Highrise::Person then 'Person'
@@ -406,6 +396,22 @@ debugger
             ApiOperations::Common.log(:error,e,"Problem applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
           end
         end
+      end
+
+
+      def self.prepare_hr_party(rg_contact, is_new_hr_party)
+        # if the contact was already mapped to Highrise, update it there
+        if (cm = ContactMap.find_by_rg_contact_id(rg_contact.id))
+          hr_party = cm.hr_resource_party
+          self.rg_contact_to_hr_party(rg_contact,hr_party)
+          is_new_hr_party = false
+        else
+        # if the contact is new, create it in Highrise (always as a Person, Ringio GUI does not allow creating a Company) and map it
+          hr_party = Highrise::Person.new
+          self.rg_contact_to_hr_party(rg_contact,hr_party)
+          is_new_hr_party = true
+        end
+        hr_party
       end
   
   
@@ -473,7 +479,7 @@ debugger
       
         
       def self.rg_contact_to_hr_party(rg_contact, hr_party)
-
+        # the author of the Highrise party is set by Highrise as the current authenticated user
         case hr_party
           when Highrise::Person
             if rg_contact.name.present?

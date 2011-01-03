@@ -108,7 +108,8 @@ module ApiOperations
 
 
     private
-    
+
+
       def self.synchronize_account(account, new_user_maps, account_not_synchronized_yet)
         # we synchronize in reverse order of resource dependency: first contacts, then notes and then rings
         ApiOperations::Contacts.synchronize_account(account,new_user_maps, account_not_synchronized_yet)
@@ -117,7 +118,8 @@ module ApiOperations
   
         ApiOperations::Rings.synchronize_account(account,new_user_maps, account_not_synchronized_yet)
       end
-      
+
+
       def self.set_hr_base_basic(user_map)
         if user_map
           Highrise::Base.site = 'https://' + user_map.account.hr_subdomain + '.highrisehq.com' 
@@ -127,6 +129,7 @@ module ApiOperations
           self.empty_hr_base_basic
         end
       end
+
       
       def self.empty_hr_base_basic
         Highrise::Base.site = ''
