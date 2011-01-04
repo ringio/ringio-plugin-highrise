@@ -12,7 +12,9 @@ describe ApiOperations::Common do
 
   it "should only update timestamps when synchronizing an empty account" do
     ApiOperations::Common.complete_synchronization
-debugger
+    @account.reload
+    @user_map.reload
+
     # check there are no contact maps
     assert_equal 0, @user_map.contact_maps.count
     # check there are no note maps

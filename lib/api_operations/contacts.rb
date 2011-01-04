@@ -376,8 +376,9 @@ module ApiOperations
           ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
 
           begin
-            is_new_hr_party = nil
-            hr_party = self.prepare_hr_party(rg_contact,is_new_hr_party)
+            preparation = self.prepare_hr_party rg_contact
+            hr_party = preparation[0]
+            is_new_hr_party = preparation[1]
 
             # if the Highrise party is saved properly and it didn't exist before, create a new contact map
             if hr_party.save! && is_new_hr_party
@@ -399,7 +400,7 @@ module ApiOperations
       end
 
 
-      def self.prepare_hr_party(rg_contact, is_new_hr_party)
+      def self.prepare_hr_party(rg_contact)
         # if the contact was already mapped to Highrise, update it there
         if (cm = ContactMap.find_by_rg_contact_id(rg_contact.id))
           hr_party = cm.hr_resource_party
@@ -411,7 +412,8 @@ module ApiOperations
           self.rg_contact_to_hr_party(rg_contact,hr_party)
           is_new_hr_party = true
         end
-        hr_party
+
+        [hr_party,is_new_hr_party]
       end
   
   
