@@ -2,7 +2,7 @@ module ApiOperations
 
   module Rings
 
-    def self.synchronize_account(account, new_user_maps, account_not_synchronized_yet)
+    def self.synchronize_account(account, new_user_maps)
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the rings of the account with id = " + account.id.to_s)
 
       # run a synchronization just for each new user map
@@ -11,7 +11,7 @@ module ApiOperations
       end
 
       # run a normal complete synchronization
-      self.synchronize_account_process(account,nil) unless account_not_synchronized_yet
+      self.synchronize_account_process(account,nil) unless account.not_synchronized_yet
 
       self.update_timestamps account
 

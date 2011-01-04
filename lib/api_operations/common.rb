@@ -2,8 +2,10 @@ module ApiOperations
 
   module Common
 
+
     INITIAL_DATETIME = (DateTime.parse('1900-01-01 00:00:01')).to_time
     INITIAL_MS_DATETIME = 1
+
     
     def self.mails_for_select(rg_account_id)
       mails = []
@@ -13,48 +15,24 @@ module ApiOperations
       mails
     end
 
+
     def self.set_hr_base(user_map)
-      if ApiOperations::Session.locked
-        raise 'Highrise Base is currently locked, run ApiOperations::Common.set_hr_base_pop first'        
-      else
-        self.set_hr_base_basic user_map
-      end
+      Highrise::Base.site = 'https://' + user_map.account.hr_subdomain + '.highrisehq.com' 
+      Highrise::Base.user = user_map.hr_user_token
     end
 
+
     def self.empty_hr_base
-      if ApiOperations::Session.locked
-        raise 'Highrise Base is currently locked, run ApiOperations::Common.set_hr_base_pop first'        
-      else
-        self.empty_hr_base_basic
-      end
+      Highrise::Base.site = ''
+      Highrise::Base.user = ''
     end
     
-    # set Highrise Base, remembering the previous user (MUST be followed by ApiOperations::Common.set_hr_base_pop)
-    def self.set_hr_base_push(user_map)
-      if ApiOperations::Session.locked
-        raise 'Highrise Base is currently locked, run ApiOperations::Common.set_hr_base_pop first'        
-      else
-        ApiOperations::Session.locked = true
-        ApiOperations::Session.previous_user_map = ApiOperations::Session.current_user_map
-        self.set_hr_base_basic user_map
-      end
-    end
-    
-    # set Highrise Base to the previous user (MUST be preceded by ApiOperations::Common.set_hr_base_push(user_map))
-    def self.set_hr_base_pop
-      if ApiOperations::Session.locked
-        self.set_hr_base_basic(ApiOperations::Session.previous_user_map)
-        ApiOperations::Session.locked = false
-      else
-        raise 'Highrise Base is not currently locked, run ApiOperations::Common.set_hr_base_push(user_map) first'
-      end
-    end
-   
+
     def self.hr_current_timestamp(user_map)
       timestamp = nil
 
       if user_map
-        ApiOperations::Common.set_hr_base_push user_map
+        ApiOperations::Common.set_hr_base user_map
   
         # TODO: find how to get this faster: from the HTTP header Date from the last Highrise response (ActiveResource does not give access to it)
         # create a fake contact, set timestamp to the created_at in the response and then destroy that fake contact
@@ -63,7 +41,7 @@ module ApiOperations
         timestamp = timestamp_person.created_at
         timestamp_person.destroy
   
-        ApiOperations::Common.set_hr_base_pop
+        ApiOperations::Common.empty_hr_base
       end
 
       timestamp
@@ -83,7 +61,7 @@ module ApiOperations
             end
             total
           end
-          self.synchronize_account(account,new_user_maps,account.not_synchronized_yet)
+          self.synchronize_account(account,new_user_maps)
 
           if account.not_synchronized_yet
             account.not_synchronized_yet = false
@@ -94,6 +72,7 @@ module ApiOperations
   
       return
     end
+
     
     def self.log(level,exception,message)
       timestamp = '[' + Time.now.to_s + ']'
@@ -106,37 +85,31 @@ module ApiOperations
       end
     end
 
-
-    private
-
-
-      def self.synchronize_account(account, new_user_maps, account_not_synchronized_yet)
-        # we synchronize in reverse order of resource dependency: first contacts, then notes and then rings
-        ApiOperations::Contacts.synchronize_account(account,new_user_maps, account_not_synchronized_yet)
+ 
+    def self.empty_rg_contacts(user_map)
+      user_map.all_rg_contacts_feed.updated.each{|rg_c_id| (RingioAPI::Contact.find(rg_c_id)).destroy}
+    end
   
-        ApiOperations::Notes.synchronize_account(account,new_user_maps, account_not_synchronized_yet)
   
-        ApiOperations::Rings.synchronize_account(account,new_user_maps, account_not_synchronized_yet)
-      end
+    def self.empty_hr_parties(user_map)
+      ApiOperations::Common.set_hr_base user_map
+      feed = user_map.hr_parties_feed true
+      feed[0].each{|hr_person| hr_person.destroy}
+      feed[1].each{|hr_company| hr_company.destroy}
+      ApiOperations::Common.empty_hr_base    
+    end
 
-
-      def self.set_hr_base_basic(user_map)
-        if user_map
-          Highrise::Base.site = 'https://' + user_map.account.hr_subdomain + '.highrisehq.com' 
-          Highrise::Base.user = user_map.hr_user_token
-          ApiOperations::Session.current_user_map = user_map
-        else
-          self.empty_hr_base_basic
-        end
-      end
-
-      
-      def self.empty_hr_base_basic
-        Highrise::Base.site = ''
-        Highrise::Base.user = ''
-        ApiOperations::Session.current_user_map = nil
-      end
     
+    private
+    
+      def self.synchronize_account(account, new_user_maps)
+        # we synchronize in reverse order of resource dependency: first contacts, then notes and then rings
+        ApiOperations::Contacts.synchronize_account(account,new_user_maps)
+  
+        ApiOperations::Notes.synchronize_account(account,new_user_maps)
+  
+        ApiOperations::Rings.synchronize_account(account,new_user_maps)
+      end
   end
   
 end

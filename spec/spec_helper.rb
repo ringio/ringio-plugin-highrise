@@ -24,4 +24,14 @@ RSpec.configure do |config|
   # examples within a transaction, remove the following line or assign false
   # instead of true.
   config.use_transactional_fixtures = true
+  
+  config.before(:each) do
+    full_example_description = "Started #{self.example.full_description}"
+    Rails.logger.info("\n\n#{full_example_description}\n#{'-' * (full_example_description.length)}")      
+  end
+  
+  config.after(:each) do
+    full_example_description = "Finished #{self.example.full_description}"
+    Rails.logger.info("\n\n#{full_example_description}\n#{'-' * (full_example_description.length)}")      
+  end
 end

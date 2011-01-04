@@ -6,22 +6,27 @@ describe ApiOperations::Common do
     # create a user_map with no contacts
     @user_map = Factory.create(:user_map)
     @account = @user_map.account
-    
-    # empty Ringio contacts
-    # TODO: move this to a method
-    @user_map.all_rg_contacts_feed.updated.each{|rg_c_id| (RingioAPI::Contact.find(rg_c_id)).destroy}
-  
-    # empty Highrise Parties
-    # TODO: move this to a method
-    ApiOperations::Common.set_hr_base @user_map
-    feed = @user_map.hr_parties_feed true
-    feed[0].each{|hr_person| hr_person.destroy}
-    feed[1].each{|hr_company| hr_company.destroy}
-    ApiOperations::Common.empty_hr_base
+    ApiOperations::Common.empty_rg_contacts @user_map
+    ApiOperations::Common.empty_hr_parties @user_map
   end
 
   it "should only update timestamps when synchronizing an empty account" do
-    assert_equal 1, 2
+    ApiOperations::Common.complete_synchronization
+debugger
+    # check there are no contact maps
+    assert_equal 0, @user_map.contact_maps.count
+    # check there are no note maps
+    assert_equal 0, @user_map.contact_maps.inject(0){|total,cm| total + cm.note_maps.count} 
+    # check there are no ring maps
+    assert_equal 0, @user_map.contact_maps.inject(0){|total,cm| total + cm.ring_maps.count}
+    
+    # check that the timestamps have increased
+    assert @account.rg_contacts_last_timestamp > ApiOperations::Common::INITIAL_MS_DATETIME
+    assert @account.rg_notes_last_timestamp > ApiOperations::Common::INITIAL_MS_DATETIME
+    assert @account.rg_rings_last_timestamp > ApiOperations::Common::INITIAL_MS_DATETIME
+    assert @account.hr_parties_last_synchronized_at > ApiOperations::Common::INITIAL_DATETIME
+    assert @account.hr_notes_last_synchronized_at > ApiOperations::Common::INITIAL_DATETIME
+    assert @account.hr_ring_notes_last_synchronized_at > ApiOperations::Common::INITIAL_DATETIME
   end
   
   after(:each) do 
@@ -29,5 +34,5 @@ describe ApiOperations::Common do
     @user_map.destroy
     @account.destroy
   end
-  
+
 end

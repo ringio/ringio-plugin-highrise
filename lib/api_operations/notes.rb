@@ -2,7 +2,7 @@ module ApiOperations
 
   module Notes
 
-    def self.synchronize_account(account, new_user_maps, account_not_synchronized_yet)
+    def self.synchronize_account(account, new_user_maps)
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the notes of the account with id = " + account.id.to_s)
 
       # run a synchronization just for each new user map
@@ -11,7 +11,7 @@ module ApiOperations
       end
       
       # run a normal complete synchronization
-      self.synchronize_account_process(account,nil) unless account_not_synchronized_yet
+      self.synchronize_account_process(account,nil) unless account.not_synchronized_yet
 
       self.update_timestamps account
       
@@ -25,9 +25,8 @@ module ApiOperations
         # if there is a new user map
         if user_map
           ApiOperations::Common.log(:debug,nil,"Started note synchronization for the new user map with id = " + user_map.id.to_s + " of the account with id = " + account.id.to_s)
-          
+
           begin
-            ApiOperations::Common.set_hr_base user_map
             # get the feed of changed notes per contact of this new user map
             user_feed = self.fetch_individual_user_feed user_map
             # as it is the first synchronization for this user map, we are not interested in deleted notes
@@ -38,9 +37,8 @@ module ApiOperations
           
           begin
             self.synchronize_user user_feed
-            ApiOperations::Common.empty_hr_base
           rescue Exception => e
-            ApiOperations::Common.log(:error,e,"\nProblem synchronizing the contacts of the new user map with id = " + um.id.to_s)
+            ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes of the new user map with id = " + user_map.id.to_s)
           end
 
           ApiOperations::Common.log(:debug,nil,"Finished note synchronization for the new user map with id = " + user_map.id.to_s + " of the account with id = " + account.id.to_s)
@@ -63,18 +61,19 @@ module ApiOperations
       def self.synchronize_user(user_feed)
         begin
           user_map = user_feed[0]
-          
-          # we have to check all contacts in this account, not only the ones owned by this user,
-          # because users can create notes for contacts that are not owned by them
-          user_map.account.user_maps.each do |um|
-            um.contact_maps.each do |cm|
-              begin
-                contact_feed = (c_f_index = user_feed[1].index{|contact_feed| contact_feed[0] == cm})? user_feed[1][c_f_index] : [cm,[],[]]
-                contact_rg_feed = [contact_feed[0],contact_feed[1]]
-                hr_updated_note_recordings = contact_feed[2]
-                self.synchronize_contact(true,user_map,cm,contact_rg_feed,[],hr_updated_note_recordings)
-              rescue Exception => e
-                ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the new user map with id = " + user_map.id.to_s + " for the contact map with id = " + cm.id.to_s)
+          if user_map
+            # we have to check all contacts in this account, not only the ones owned by this user,
+            # because users can create notes for contacts that are not owned by them
+            user_map.account.user_maps.each do |um|
+              um.contact_maps.each do |cm|
+                begin
+                  contact_feed = (c_f_index = user_feed[1].index{|contact_feed| contact_feed[0] == cm})? user_feed[1][c_f_index] : [cm,[],[]]
+                  contact_rg_feed = [contact_feed[0],contact_feed[1]]
+                  hr_updated_note_recordings = contact_feed[2]
+                  self.synchronize_contact(true,user_map,cm,contact_rg_feed,[],hr_updated_note_recordings)
+                rescue Exception => e
+                  ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the new user map with id = " + user_map.id.to_s + " for the contact map with id = " + cm.id.to_s)
+                end
               end
             end
           end
@@ -102,10 +101,10 @@ module ApiOperations
       def self.synchronize_contacts(account, user_feeds, rg_deleted_notes_ids)
         begin
           # synchronize the notes created by every user of this account
-          UserMap.find_all_by_account_id(account.id).each do |um|
+          user_feeds.each do |uf|
+            um = uf[0]
+            next if um.account != account
             begin
-              ApiOperations::Common.set_hr_base um
-              
               # we have to check all contacts in this account, not only the ones owned by this user,
               # because users can create notes for contacts that are not owned by them
               um.account.user_maps.each do |aux_um|
@@ -115,15 +114,12 @@ module ApiOperations
                     contact_feed = user_feed.present? ? ((c_f_index = user_feed[1].index{|contact_feed| contact_feed[0] == cm})? user_feed[1][c_f_index] : [cm,[],[]]) : [cm,[],[]]
                     contact_rg_feed = [contact_feed[0],contact_feed[1]]
                     hr_updated_note_recordings = contact_feed[2]
-
                     self.synchronize_contact(false,um,cm,contact_rg_feed,rg_deleted_notes_ids,hr_updated_note_recordings)
                   rescue Exception => e
                     ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the user map with id = " + um.id.to_s + " for the contact map with id = " + cm.id.to_s)
                   end
                 end
               end
-              
-              ApiOperations::Common.empty_hr_base
             rescue Exception => e
               ApiOperations::Common.log(:error,e,"\nProblem synchronizing the notes created by the user map with id = " + um.id.to_s)
             end
@@ -156,6 +152,7 @@ module ApiOperations
         end
 
         # get updated notes from Highrise
+        ApiOperations::Common.set_hr_base user_map
         user_feed = user_map.hr_updated_note_recordings(true).inject(user_feed) do |user_feed,hr_note_recording|
           # synchronize only notes created for contacts already mapped for this account
           # it is not necessary to specify if it is a Person or a Company (they can't have id collision),
@@ -170,6 +167,7 @@ module ApiOperations
           
           user_feed
         end
+        ApiOperations::Common.empty_hr_base
       end
 
       
@@ -232,6 +230,7 @@ module ApiOperations
 
       def self.synchronize_contact(is_new_user, author_user_map, contact_map, contact_rg_feed, rg_deleted_notes_ids, hr_updated_note_recordings)
         ApiOperations::Common.log(:debug,nil,"Started applying note changes for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
+        ApiOperations::Common.set_hr_base author_user_map
 
         # TODO: get true feeds of deleted notes (currently Highrise does not offer it)
         hr_notes = contact_map.hr_notes
@@ -255,6 +254,7 @@ module ApiOperations
           self.delete_hr_to_rg(author_user_map,hr_deleted_notes_ids) unless is_new_user
         end
 
+        ApiOperations::Common.empty_hr_base
         ApiOperations::Common.log(:debug,nil,"Finished applying note changes for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
       end
 
