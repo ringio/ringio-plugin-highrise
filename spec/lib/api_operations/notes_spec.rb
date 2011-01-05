@@ -19,7 +19,7 @@ describe ApiOperations::Notes do
     rg_note = create_rg_note
     previous_nm_count = NoteMap.count
     ApiOperations::Common.complete_synchronization
-    assert_equal previous_nm_count + 1, ContactMap.count
+    assert_equal previous_nm_count + 1, NoteMap.count
 
     nm = NoteMap.find_by_author_user_map_id_and_rg_note_id(@user_map.id,rg_note.id)
     assert_not_nil nm
@@ -29,7 +29,23 @@ describe ApiOperations::Notes do
     ApiOperations::Common.empty_hr_base
     
     assert_equal rg_note.body, hr_note.body
+  end
 
+
+  it "in the initial synchronization should create a new Highrise note for a Ringio note" do
+    rg_note = create_rg_note
+    previous_nm_count = NoteMap.count
+    ApiOperations::Common.complete_synchronization
+    assert_equal previous_nm_count + 1, NoteMap.count
+
+    nm = NoteMap.find_by_author_user_map_id_and_rg_note_id(@user_map.id,rg_note.id)
+    assert_not_nil nm
+    
+    ApiOperations::Common.set_hr_base @user_map
+    hr_note = nm.hr_resource_note
+    ApiOperations::Common.empty_hr_base
+    
+    assert_equal rg_note.body, hr_note.body
   end
 
 
@@ -43,7 +59,7 @@ describe ApiOperations::Notes do
     
     previous_nm_count = NoteMap.count
     ApiOperations::Common.complete_synchronization
-    assert_equal previous_nm_count + 1, ContactMap.count
+    assert_equal previous_nm_count + 1, NoteMap.count
 
     nm = NoteMap.find_by_author_user_map_id_and_hr_note_id(@user_map.id,hr_note.id)
     assert_not_nil nm
@@ -51,19 +67,35 @@ describe ApiOperations::Notes do
     rg_note = nm.rg_resource_note
     
     assert_equal hr_note.body, rg_note.body
+  end
+  
+  
+  it "in the initial synchronization should create a new Ringio note for a Highrise note" do
+    ApiOperations::Common.set_hr_base @user_map
+    hr_note = create_hr_note
+    ApiOperations::Common.empty_hr_base
+    
+    previous_nm_count = NoteMap.count
+    ApiOperations::Common.complete_synchronization
+    assert_equal previous_nm_count + 1, NoteMap.count
 
+    nm = NoteMap.find_by_author_user_map_id_and_hr_note_id(@user_map.id,hr_note.id)
+    assert_not_nil nm
+    
+    rg_note = nm.rg_resource_note
+    
+    assert_equal hr_note.body, rg_note.body
   end
   
   
   after(:each) do 
-    # remove all the stuff created
-    @user_map.destroy
+    # remove all the stuff created: everything depends on the account for destruction
     @account.destroy
   end
   
   
   def create_rg_note
-    # we cannot use the factory for this
+    # we need this method because we cannot use the factory for this
     rg_note = RingioAPI::Note.new
     rg_note.author_id = ApiOperations::TestingInfo::RINGIO_USER_ID
     rg_note.contact_id = (Factory.create(:ringio_contact)).id
@@ -74,8 +106,8 @@ describe ApiOperations::Notes do
   
   
   def create_hr_note
-    # we cannot use the factory for this, because creating the person associated means that we need
-    # the Highrise site and user to be set before starting the spec
+    # we need this method because we cannot use the factory for this, as creating the person associated means that
+    # we need the Highrise site and user to be set before starting the spec
     hr_note = Highrise::Note.new
     hr_note.subject_id = (Factory.create(:highrise_person)).id
     hr_note.subject_type = 'Party'

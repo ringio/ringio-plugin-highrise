@@ -28,22 +28,24 @@ module ApiOperations
     end
     
 
-    def self.hr_current_timestamp(user_map)
+    def self.hr_current_timestamp account
       timestamp = nil
 
-      if user_map
-        ApiOperations::Common.set_hr_base user_map
-  
-        # TODO: find how to get this faster: from the HTTP header Date from the last Highrise response (ActiveResource does not give access to it)
-        # create a fake contact, set timestamp to the created_at in the response and then destroy that fake contact
-        timestamp_person = Highrise::Person.new(:first_name => 'Ringio Check')
-        timestamp_person.save
-        timestamp = timestamp_person.created_at
-        timestamp_person.destroy
-  
-        ApiOperations::Common.empty_hr_base
-      end
+      ApiOperations::Common.set_hr_base account.user_maps.first
 
+      # TODO: find how to get this faster: from the HTTP header Date from the last Highrise response (ActiveResource does not give access to it)
+      # create a fake contact, set timestamp to the created_at in the response and then destroy that fake contact
+      timestamp_person = Highrise::Person.new(:first_name => 'Ringio Check')
+      timestamp_person.save
+      timestamp = timestamp_person.created_at
+      timestamp_person.destroy
+
+      ApiOperations::Common.empty_hr_base          
+
+      unless timestamp
+debugger
+        ApiOperations::Common.log(:error,nil,"\nProblem getting the Highrise timestamp of the account with id = " + account.id.to_s)
+      end
       timestamp
     end
     
@@ -52,7 +54,7 @@ module ApiOperations
     def self.complete_synchronization
       # TODO: handle optional fields for all resources in Ringio and in Highrise
       Account.all.each do |account|
-        if account.hr_subdomain.present?
+        if account.hr_subdomain.present? && account.user_maps.present? && self.are_tokens_correct(account)
           new_user_maps = account.user_maps.inject([]) do |total,um|
             if um.not_synchronized_yet
               total << um
@@ -75,12 +77,17 @@ module ApiOperations
 
     
     def self.log(level,exception,message)
-      timestamp = '[' + Time.now.to_s + ']'
-      base_message = timestamp + ' [' + level.to_s.upcase + '] ' + message + "\n"
+      mark = '[' + Time.now.to_s + '] [' + level.to_s.upcase + '] '
+      no_exception_message = mark + message + "\n"
       case level
-        when :debug then Rails.logger.debug base_message
-        when :info then Rails.logger.info base_message
-        when :error then Rails.logger.error base_message + "  " + exception.inspect + "\n" + exception.backtrace.inject(message){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n" 
+        when :debug then Rails.logger.debug no_exception_message
+        when :info then Rails.logger.info no_exception_message
+        when :error
+          if exception
+            Rails.logger.error no_exception_message + "  " + exception.inspect + "\n" + exception.backtrace.inject(''){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n"
+          else
+            Rails.logger.error no_exception_message            
+          end
         else raise 'Unhandled log level'
       end
     end
@@ -102,6 +109,27 @@ module ApiOperations
     
     private
     
+      def self.are_tokens_correct(account)
+        result = nil
+        
+        account.user_maps.each do |um|
+          ApiOperations::Common.set_hr_base um
+    
+          begin
+            user_hr = Highrise::User.me
+            result = true
+          rescue ActiveResource::UnauthorizedAccess => e
+            result = false
+          end
+
+          ApiOperations::Common.empty_hr_base
+          break unless result
+        end
+        
+        result
+      end
+
+
       def self.synchronize_account(account, new_user_maps)
         # we synchronize in reverse order of resource dependency: first contacts, then notes and then rings
         ApiOperations::Contacts.synchronize_account(account,new_user_maps)

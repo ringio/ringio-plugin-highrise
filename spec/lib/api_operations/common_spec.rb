@@ -32,8 +32,7 @@ describe ApiOperations::Common do
   end
   
   after(:each) do 
-    # remove all the stuff created
-    @user_map.destroy
+    # remove all the stuff created: everything depends on the account for destruction
     @account.destroy
   end
 

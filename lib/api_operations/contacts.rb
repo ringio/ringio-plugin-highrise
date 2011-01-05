@@ -80,8 +80,10 @@ module ApiOperations
           # we would update those changes again and again in every synchronization (and, to keep it simple, we ignore
           # the changes that other agents may have caused for this account just when we were synchronizing)
           # TODO: ignore only our changes but not the changes made by other agents
+debugger
+          
           account.rg_contacts_last_timestamp = account.rg_contacts_feed.timestamp
-          account.hr_parties_last_synchronized_at = ApiOperations::Common.hr_current_timestamp(account.user_maps.first)
+          account.hr_parties_last_synchronized_at = ApiOperations::Common.hr_current_timestamp account
           account.save
         rescue Exception => e
           ApiOperations::Common.log(:error,e,"\nProblem updating the contact synchronization timestamps of the account with id = " + account.id.to_s)
@@ -358,7 +360,7 @@ module ApiOperations
         end
         
         # set the website as the URL for the Highrise party
-        url_hr_contact = Highrise::Base.site.to_s + 'parties/' + hr_party.id.to_s + '-' + rg_contact.name.downcase.gsub(' ','-')
+        url_hr_contact = Highrise::Base.site.to_s + '/parties/' + hr_party.id.to_s + '-' + rg_contact.name.downcase.gsub(' ','-')
         if d_index = rg_contact.data.index{|cd| (cd.type == 'website') && (cd.value == url_hr_contact)}
           cd = rg_contact.data[d_index]
         else

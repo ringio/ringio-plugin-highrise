@@ -62,7 +62,7 @@ module ApiOperations
           # the changes that other agents may have caused for this account just when we were synchronizing)
           # TODO: ignore only our changes but not the changes made by other agents
           account.rg_rings_last_timestamp = account.rg_rings_feed.timestamp
-          account.hr_ring_notes_last_synchronized_at = ApiOperations::Common.hr_current_timestamp(account.user_maps.first)
+          account.hr_ring_notes_last_synchronized_at = ApiOperations::Common.hr_current_timestamp account
           account.save
         rescue Exception => e
           ApiOperations::Common.log(:error,e,"\nProblem updating the ring synchronization timestamps of the account with id = " + account.id.to_s)

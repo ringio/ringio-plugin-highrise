@@ -47,7 +47,6 @@ describe ApiOperations::Contacts do
         assert false
       end
     end
- 
   end
 
 
@@ -85,7 +84,7 @@ describe ApiOperations::Contacts do
         assert_equal hr_person.contact_data.phone_numbers.first.location.downcase, datum.rel
       elsif datum.type == 'website'
         ApiOperations::Common.set_hr_base @user_map
-        url_hr_party = Highrise::Base.site.to_s + 'parties/' + hr_person.id.to_s + '-' + rg_contact.name.downcase.gsub(' ','-')
+        url_hr_party = Highrise::Base.site.to_s + '/parties/' + hr_person.id.to_s + '-' + rg_contact.name.downcase.gsub(' ','-')
         ApiOperations::Common.empty_hr_base
         assert_equal url_hr_party, datum.value
       else
@@ -93,13 +92,11 @@ describe ApiOperations::Contacts do
         assert false
       end
     end
- 
   end
   
   
   after(:each) do 
-    # remove all the stuff created
-    @user_map.destroy
+    # remove all the stuff created: everything depends on the account for destruction
     @account.destroy
   end
 
