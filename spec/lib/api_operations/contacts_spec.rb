@@ -32,7 +32,8 @@ describe ApiOperations::Contacts do
     assert_equal rg_contact.name.split(' ')[1], hr_person.last_name
     assert_equal rg_contact.title, hr_person.title
 
-    assert_equal 2, rg_contact.data.length
+    # 3 Ringio contact data: email, telephone and address (although addresses are not synchronized from Ringio to Highrise)
+    assert_equal 3, rg_contact.data.length
     assert_equal 1, hr_person.contact_data.email_addresses.length
     assert_equal 1, hr_person.contact_data.phone_numbers.length
     rg_contact.data.each do |datum|
@@ -42,7 +43,7 @@ describe ApiOperations::Contacts do
       elsif datum.type == 'telephone'
         assert_equal datum.value, hr_person.contact_data.phone_numbers.first.number
         assert_equal datum.rel, hr_person.contact_data.phone_numbers.first.location.downcase
-      else
+      elsif datum.type != 'address'
         # no other datum type was created in the factory
         assert false
       end
@@ -71,10 +72,11 @@ describe ApiOperations::Contacts do
     assert_equal hr_person.last_name, rg_contact.name.split(' ')[1]
     assert_equal hr_person.title, rg_contact.title
 
-    # 3 contact datum: Highrise URL, email and telephone
-    assert_equal 3, rg_contact.data.length
+    # 4 Ringio contact data: Highrise URL, email, telephone and address
+    assert_equal 4, rg_contact.data.length
     assert_equal 1, hr_person.contact_data.email_addresses.length
     assert_equal 1, hr_person.contact_data.phone_numbers.length
+    assert_equal 1, hr_person.contact_data.addresses.length
     rg_contact.data.each do |datum|
       if datum.type == 'email'
         assert_equal hr_person.contact_data.email_addresses.first.address, datum.value
@@ -87,6 +89,9 @@ describe ApiOperations::Contacts do
         url_hr_party = Highrise::Base.site.to_s + '/parties/' + hr_person.id.to_s + '-' + rg_contact.name.downcase.gsub(' ','-')
         ApiOperations::Common.empty_hr_base
         assert_equal url_hr_party, datum.value
+      elsif datum.type == 'address'
+        assert_equal hr_person.contact_data.addresses.first.country, datum.value
+        assert_equal hr_person.contact_data.addresses.first.location.downcase, datum.rel
       else
         # no other datum type was created in the factory
         assert false
@@ -106,6 +111,7 @@ describe ApiOperations::Contacts do
     hr_person = Factory.create(:highrise_person)
     hr_person.contact_data.email_addresses = [Highrise::Person::ContactData::EmailAddress.new(:address => 'mailhrwork@example.com', :location => 'Work')]
     hr_person.contact_data.phone_numbers = [Highrise::Person::ContactData::PhoneNumber.new(:number => '1234567890', :location => 'Home')]
+    hr_person.contact_data.addresses = [Highrise::Person::ContactData::Address.new(:country => 'United States', :location => 'Work')]
     hr_person.save
     hr_person
   end

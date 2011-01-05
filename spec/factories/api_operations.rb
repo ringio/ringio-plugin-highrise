@@ -14,7 +14,8 @@ Factory.define :ringio_contact, :class => RingioAPI::Contact do |rg_c|
   rg_c.sequence(:name){|n| "MyRgfirst#{n} AndRglast#{n}"}
   rg_c.sequence(:title){|n| "MyRgtitle#{n}"}
   rg_c.data [RingioAPI::Contact::Datum.new(:value => 'mailrgwork@example.com', :is_primary => nil, :rel => 'work', :type => 'email'),
-             RingioAPI::Contact::Datum.new(:value => '1234567890', :is_primary => nil, :rel => 'mobile', :type => 'telephone')]
+             RingioAPI::Contact::Datum.new(:value => '1234567890', :is_primary => nil, :rel => 'mobile', :type => 'telephone'),
+             RingioAPI::Contact::Datum.new(:value => 'United States', :is_primary => nil, :rel => 'work', :type => 'address')]
 end
 
 Factory.define :highrise_person, :class => Highrise::Person do |hr_p|

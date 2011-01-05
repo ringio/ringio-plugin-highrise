@@ -80,10 +80,21 @@ module ApiOperations
           # we would update those changes again and again in every synchronization (and, to keep it simple, we ignore
           # the changes that other agents may have caused for this account just when we were synchronizing)
           # TODO: ignore only our changes but not the changes made by other agents
-debugger
+
+          rg_timestamp = account.rg_contacts_feed.timestamp
+          if rg_timestamp && rg_timestamp > account.rg_contacts_last_timestamp
+            account.rg_contacts_last_timestamp = rg_timestamp
+          else
+            ApiOperations::Common.log(:error,nil,"\nProblem with the Ringio contacts timestamp of the account with id = " + account.id.to_s)
+          end
           
-          account.rg_contacts_last_timestamp = account.rg_contacts_feed.timestamp
-          account.hr_parties_last_synchronized_at = ApiOperations::Common.hr_current_timestamp account
+          hr_timestamp = ApiOperations::Common.hr_current_timestamp account
+          if hr_timestamp && hr_timestamp > account.hr_parties_last_synchronized_at
+            account.hr_parties_last_synchronized_at = hr_timestamp
+          else
+            ApiOperations::Common.log(:error,nil,"\nProblem with the Highrise parties timestamp of the account with id = " + account.id.to_s)
+          end
+          
           account.save
         rescue Exception => e
           ApiOperations::Common.log(:error,e,"\nProblem updating the contact synchronization timestamps of the account with id = " + account.id.to_s)
@@ -340,7 +351,16 @@ debugger
           
           # set the addresses
           hr_party.contact_data.addresses.each do |ad|
-            full_address = ad.street + ' ' + ad.city + ' ' + ad.state + ' ' + ad.zip + ' ' + ad.country
+            full_address = ''
+            full_address << (ad.street + ' ')  if ad.street.present? 
+            full_address << (ad.city + ' ') if ad.city.present?
+            full_address << (ad.state + ' ') if ad.state.present?
+            full_address << (ad.zip + ' ') if ad.zip.present?
+            full_address << (ad.country + ' ') if ad.country.present?
+
+            # remove the trailing white space
+            full_address = full_address[0,full_address.length - 1] if full_address.present?
+            
             if d_index = rg_contact.data.index{|cd| (cd.type == 'address') && (cd.value == full_address)}
               cd = rg_contact.data[d_index]
             else

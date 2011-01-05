@@ -89,8 +89,21 @@ module ApiOperations
           # we would update those changes again and again in every synchronization (and, to keep it simple, we ignore
           # the changes that other agents may have caused for this account just when we were synchronizing)
           # TODO: ignore only our changes but not the changes made by other agents
-          account.rg_notes_last_timestamp = account.rg_notes_feed.timestamp
-          account.hr_notes_last_synchronized_at = ApiOperations::Common.hr_current_timestamp account
+          
+          rg_timestamp = account.rg_notes_feed.timestamp
+          if rg_timestamp && rg_timestamp > account.rg_notes_last_timestamp
+            account.rg_notes_last_timestamp = rg_timestamp
+          else
+            ApiOperations::Common.log(:error,nil,"\nProblem with the Ringio notes timestamp of the account with id = " + account.id.to_s)
+          end
+          
+          hr_timestamp = ApiOperations::Common.hr_current_timestamp account
+          if hr_timestamp && hr_timestamp > account.hr_notes_last_synchronized_at
+            account.hr_notes_last_synchronized_at = hr_timestamp
+          else
+            ApiOperations::Common.log(:error,nil,"\nProblem with the Highrise notes timestamp of the account with id = " + account.id.to_s)
+          end
+          
           account.save
         rescue Exception => e
           ApiOperations::Common.log(:error,e,"\nProblem updating the note synchronization timestamps of the account with id = " + account.id.to_s)

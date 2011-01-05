@@ -42,10 +42,6 @@ module ApiOperations
 
       ApiOperations::Common.empty_hr_base          
 
-      unless timestamp
-debugger
-        ApiOperations::Common.log(:error,nil,"\nProblem getting the Highrise timestamp of the account with id = " + account.id.to_s)
-      end
       timestamp
     end
     
