@@ -224,7 +224,7 @@ module ApiOperations
             raise 'Unknown Ring To type'
         end
 
-        hr_ring_note.body = "RING - DO NOT CHANGE OR DELETE THIS NOTE\n" +
+        hr_ring_note.body = "Phone Call\n" +
                             "From: " + rg_ring.from_type + " " + from.name + " " + rg_ring.callerid + "\n" +
                             "To: " + rg_ring.to_type + " " + to.name + " " + rg_ring.called_number + "\n" +
                             "Start Time: " + rg_ring.start_time + "\n" +

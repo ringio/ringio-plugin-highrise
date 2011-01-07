@@ -72,7 +72,7 @@ class UserMap < ActiveRecord::Base
     # filter to keep those that were created at or updated at after the last synchronization datetime
     # and reject the notes corresponding to rings
     Highrise::Recording.find_all_across_pages_since(timestamp).reject do |r|
-      (r.type != 'Note') || (r.subject_type != 'Party') || (r.author_id != self.hr_user_id) || (r.body[0,40] == 'RING - DO NOT CHANGE OR DELETE THIS NOTE')
+      (r.type != 'Note') || (r.subject_type != 'Party') || (r.author_id != self.hr_user_id) || (r.body[0,10] == 'Phone Call')
     end
   end
 

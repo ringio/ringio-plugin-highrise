@@ -380,7 +380,8 @@ module ApiOperations
         end
         
         # set the website as the URL for the Highrise party
-        url_hr_contact = Highrise::Base.site.to_s + '/parties/' + hr_party.id.to_s + '-' + rg_contact.name.downcase.gsub(' ','-')
+        root_resource_part = (Highrise::Base.site.to_s[Highrise::Base.site.to_s.length - 1] == '/') ? 'parties/' : '/parties/'
+        url_hr_contact = Highrise::Base.site.to_s + root_resource_part + hr_party.id.to_s + '-' + rg_contact.name.downcase.gsub(' ','-')
         if d_index = rg_contact.data.index{|cd| (cd.type == 'website') && (cd.value == url_hr_contact)}
           cd = rg_contact.data[d_index]
         else
