@@ -254,7 +254,7 @@ module ApiOperations
             end
             rg_contact.title = hr_party.title ? hr_party.title : ''
             begin
-              comp = Highrise::Company.find(hr_party.company_id)
+              comp = hr_party.company_id ? Highrise::Company.find(hr_party.company_id) : nil
             rescue ActiveResource::ResourceNotFound
             end
             rg_contact.business = comp ? comp.name : ''
