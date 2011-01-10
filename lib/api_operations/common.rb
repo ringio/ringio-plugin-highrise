@@ -50,24 +50,15 @@ module ApiOperations
     def self.complete_synchronization
       # TODO: handle optional fields for all resources in Ringio and in Highrise
       Account.all.each do |account|
-        if account.hr_subdomain.present? && account.user_maps.present? && self.are_tokens_correct(account)
-          new_user_maps = account.user_maps.inject([]) do |total,um|
-            if um.not_synchronized_yet
-              total << um
-              um.not_synchronized_yet = false
-              um.save
-            end
-            total
-          end
-          self.synchronize_account(account,new_user_maps)
-
-          if account.not_synchronized_yet
-            account.not_synchronized_yet = false
-            account.save
-          end
-        end
+        self.synchronize_account account
       end
-  
+      return
+    end
+
+    # run a single account synchronization event between Ringio and Highrise
+    def self.single_account_synchronization(account)
+      # TODO: handle optional fields for all resources in Ringio and in Highrise
+      (account.class == Account) ? self.synchronize_account(account) : ApiOperations::Common.log(:error,e,"\nProblem during a single account synchronization for " + account.inspect)  
       return
     end
 
@@ -104,6 +95,38 @@ module ApiOperations
 
     
     private
+
+      def self.synchronize_account(account)
+        if account.hr_subdomain.present? && account.user_maps.present? && self.are_tokens_correct(account)
+          new_user_maps = account.user_maps.inject([]) do |total,um|
+            if um.not_synchronized_yet
+              total << um
+              um.not_synchronized_yet = false
+              um.save
+            end
+            total
+          end
+
+          # we synchronize in reverse order of resource dependency: first contacts, then notes and then rings
+          ApiOperations::Contacts.synchronize_account(account,new_user_maps)
+          account.reload
+          new_user_maps.each{|um| um.reload}
+          
+          ApiOperations::Notes.synchronize_account(account,new_user_maps)
+          account.reload
+          new_user_maps.each{|um| um.reload}
+          
+          ApiOperations::Rings.synchronize_account(account,new_user_maps)
+          account.reload
+          new_user_maps.each{|um| um.reload}
+          
+          if account.not_synchronized_yet
+            account.not_synchronized_yet = false
+            account.save
+          end
+        end
+      end
+    
     
       def self.are_tokens_correct(account)
         result = nil
@@ -126,14 +149,6 @@ module ApiOperations
       end
 
 
-      def self.synchronize_account(account, new_user_maps)
-        # we synchronize in reverse order of resource dependency: first contacts, then notes and then rings
-        ApiOperations::Contacts.synchronize_account(account,new_user_maps)
-  
-        ApiOperations::Notes.synchronize_account(account,new_user_maps)
-  
-        ApiOperations::Rings.synchronize_account(account,new_user_maps)
-      end
   end
   
 end
