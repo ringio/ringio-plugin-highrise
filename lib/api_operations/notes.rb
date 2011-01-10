@@ -19,6 +19,25 @@ module ApiOperations
     end
 
 
+    def self.remove_subject_name(hr_note)
+      # TODO: remove this method or find a better way to do it (answer pending in the 37signals API mailing list) 
+      Highrise::Note.new(
+        :author_id => hr_note.author_id,
+        :body => hr_note.body,
+        :collection_id => hr_note.collection_id,
+        :collection_type => hr_note.collection_type,
+        :created_at => hr_note.created_at,
+        :group_id => hr_note.group_id,
+        :id => hr_note.id,
+        :owner_id => hr_note.owner_id,
+        :subject_id => hr_note.subject_id,
+        :subject_type => hr_note.subject_type,
+        :updated_at => hr_note.updated_at,
+        :visible_to => hr_note.visible_to
+      )
+    end
+
+
     private
 
       def self.synchronize_account_process(account, user_map)
@@ -416,25 +435,6 @@ module ApiOperations
             ApiOperations::Common.log(:error,e,"Problem applying deletion from Ringio to Highrise of the note with Ringio id = " + dn_id.to_s)
           end
         end
-      end
-
-
-      def self.remove_subject_name(hr_note)
-        # TODO: remove this method or find a better way to do it (answer pending in the 37signals mailing list) 
-        Highrise::Note.new(
-          :author_id => hr_note.author_id,
-          :body => hr_note.body,
-          :collection_id => hr_note.collection_id,
-          :collection_type => hr_note.collection_type,
-          :created_at => hr_note.created_at,
-          :group_id => hr_note.group_id,
-          :id => hr_note.id,
-          :owner_id => hr_note.owner_id,
-          :subject_id => hr_note.subject_id,
-          :subject_type => hr_note.subject_type,
-          :updated_at => hr_note.updated_at,
-          :visible_to => hr_note.visible_to
-        )
       end
 
 

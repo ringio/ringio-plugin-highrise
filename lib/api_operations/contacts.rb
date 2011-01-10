@@ -191,7 +191,7 @@ module ApiOperations
         hr_updated_parties.each do |hr_party|
           begin
             ApiOperations::Common.log(:debug,nil,"Started applying update from Highrise to Ringio of the party with Highrise id = " + hr_party.id.to_s)
-            
+
             rg_contact = self.prepare_rg_contact(user_map,hr_party)
             self.hr_party_to_rg_contact(hr_party,rg_contact)
     
@@ -207,7 +207,7 @@ module ApiOperations
               end
               new_cm.save!
             end
-            
+
             ApiOperations::Common.log(:debug,nil,"Finished applying update from Highrise to Ringio of the party with Highrise id = " + hr_party.id.to_s)
           rescue Exception => e
             ApiOperations::Common.log(:error,e,"Problem applying update from Highrise to Ringio of the party with Highrise id = " + hr_party.id.to_s)

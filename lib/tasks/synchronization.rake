@@ -33,7 +33,7 @@ task :synchronize_all_debugging => :environment do
 end
 
 desc "Synchronize ONE account between Ringio and Highrise CRM - version for debugging, pass account id as argument"
-task :synchronize_one_debugging => :environment do
+task :synchronize_one_debugging, [:account_id] => [:environment] do |t,args|
   # get the previous logger configuration
   previous_level = Rails.logger.level
   previous_flushing = Rails.logger.auto_flushing
@@ -43,13 +43,13 @@ task :synchronize_one_debugging => :environment do
   Rails.logger.auto_flushing = true 
 
   # run the synchronization
-  ApiOperations::Common.log(:info,nil,"Started single synchronization event for the account with id = " + account_id)
+  ApiOperations::Common.log(:info,nil,"Started single synchronization event for the account with id = " + args.account_id)
   begin
-    ApiOperations::Common.single_account_synchronization(Account.find account_id)
+    ApiOperations::Common.single_account_synchronization(Account.find args.account_id)
   rescue Exception => e
-    ApiOperations::Common.log(:error,e,"\nProblem with the initializing of the single synchronization for the account with id = " + account_id)
+    ApiOperations::Common.log(:error,e,"\nProblem with the initializing of the single synchronization for the account with id = " + args.account_id)
   end
-  ApiOperations::Common.log(:info,nil,"Finished single synchronization event for the account with id = " + account_id + "\n")
+  ApiOperations::Common.log(:info,nil,"Finished single synchronization event for the account with id = " + args.account_id + "\n")
 
   # restore the previous logger configuration
   Rails.logger.level = previous_level
