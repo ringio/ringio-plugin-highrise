@@ -491,9 +491,9 @@ module ApiOperations
   
       def self.delete_rg_duplicated_changes(rg_contact_id, user_rg_feed, rg_deleted_contacts_ids)
         if user_rg_feed
-          user_rg_feed[1].delete_if{|c| c.id == rg_contact_id}
+          user_rg_feed[1].delete_if{|c| c.id.to_s == rg_contact_id.to_s}
         end
-        rg_deleted_contacts_ids.delete_if{|c_id| c_id == rg_contact_id}      
+        rg_deleted_contacts_ids.delete_if{|c_id| c_id.to_s == rg_contact_id.to_s}      
       end
   
       

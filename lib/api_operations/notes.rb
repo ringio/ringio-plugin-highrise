@@ -316,9 +316,9 @@ module ApiOperations
 
       def self.delete_rg_duplicated_changes(rg_note_id, contact_rg_feed, rg_deleted_notes_ids)
         if contact_rg_feed
-          contact_rg_feed[1].delete_if{|n| n.id == rg_note_id}
+          contact_rg_feed[1].delete_if{|n| n.id.to_s == rg_note_id.to_s}
         end
-        rg_deleted_notes_ids.delete_if{|n_id| n_id == rg_note_id}      
+        rg_deleted_notes_ids.delete_if{|n_id| n_id.to_s == rg_note_id.to_s}      
       end
 
 
