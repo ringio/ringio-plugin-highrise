@@ -21,7 +21,7 @@ describe ApiOperations::Contacts do
     ApiOperations::Common.complete_synchronization
     assert_equal previous_cm_count + 1, ContactMap.count
 
-    cm = ContactMap.find_by_user_map_id_and_rg_contact_id(@user_map.id,rg_contact.id)
+    cm = ContactMap.find_by_rg_contact_id(rg_contact.id)
     assert_not_nil cm
     
     ApiOperations::Common.set_hr_base @user_map
@@ -57,7 +57,7 @@ describe ApiOperations::Contacts do
     ApiOperations::Common.complete_synchronization
     assert_equal previous_cm_count + 1, ContactMap.count
 
-    cm = ContactMap.find_by_user_map_id_and_rg_contact_id(@user_map.id,rg_contact.id)
+    cm = ContactMap.find_by_rg_contact_id(rg_contact.id)
     assert_not_nil cm
     
     ApiOperations::Common.set_hr_base @user_map
@@ -103,7 +103,7 @@ describe ApiOperations::Contacts do
     
     ApiOperations::Common.complete_synchronization
     
-    cm = ContactMap.find_by_user_map_id_and_rg_contact_id(@user_map.id,rg_contact.id)
+    cm = ContactMap.find_by_rg_contact_id(rg_contact.id)
     assert_not_nil cm
     
     ApiOperations::Common.set_hr_base @user_map
@@ -144,7 +144,7 @@ describe ApiOperations::Contacts do
 
     ApiOperations::Common.complete_synchronization
     
-    cm = ContactMap.find_by_user_map_id_and_rg_contact_id(@user_map.id,rg_contact.id)
+    cm = ContactMap.find_by_rg_contact_id(rg_contact.id)
     assert_not_nil cm
     
     ApiOperations::Common.set_hr_base @user_map
@@ -180,7 +180,7 @@ describe ApiOperations::Contacts do
     ApiOperations::Common.complete_synchronization
     assert_equal previous_cm_count + 1, ContactMap.count
 
-    cm = ContactMap.find_by_user_map_id_and_hr_party_id_and_hr_party_type(@user_map.id,hr_person.id,'Person')
+    cm = ContactMap.find_by_hr_party_id_and_hr_party_type(hr_person.id,'Person')
     assert_not_nil cm
     rg_contact = cm.rg_resource_contact
     
@@ -225,7 +225,7 @@ describe ApiOperations::Contacts do
     ApiOperations::Common.complete_synchronization
     assert_equal previous_cm_count + 1, ContactMap.count
 
-    cm = ContactMap.find_by_user_map_id_and_hr_party_id_and_hr_party_type(@user_map.id,hr_person.id,'Person')
+    cm = ContactMap.find_by_hr_party_id_and_hr_party_type(hr_person.id,'Person')
     assert_not_nil cm
     rg_contact = cm.rg_resource_contact
     
@@ -282,7 +282,7 @@ describe ApiOperations::Contacts do
 
     ApiOperations::Common.complete_synchronization
 
-    cm = ContactMap.find_by_user_map_id_and_hr_party_id_and_hr_party_type(@user_map.id,hr_person.id,'Person')
+    cm = ContactMap.find_by_hr_party_id_and_hr_party_type(hr_person.id,'Person')
     assert_not_nil cm
     rg_contact = cm.rg_resource_contact
 
@@ -332,7 +332,7 @@ describe ApiOperations::Contacts do
 
     ApiOperations::Common.complete_synchronization
 
-    cm = ContactMap.find_by_user_map_id_and_hr_party_id_and_hr_party_type(@user_map.id,hr_person.id,'Person')
+    cm = ContactMap.find_by_hr_party_id_and_hr_party_type(hr_person.id,'Person')
     assert_not_nil cm
     rg_contact = cm.rg_resource_contact
     

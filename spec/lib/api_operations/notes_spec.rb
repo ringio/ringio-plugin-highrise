@@ -10,7 +10,7 @@ describe ApiOperations::Notes do
     ApiOperations::Common.empty_rg_contacts @user_map
     ApiOperations::Common.empty_hr_parties @user_map
   end
-=begin
+
 
   it "should create a new Highrise note for a new Ringio note" do
     # initial empty synchronization
@@ -21,7 +21,7 @@ describe ApiOperations::Notes do
     ApiOperations::Common.complete_synchronization
     assert_equal previous_nm_count + 1, NoteMap.count
 
-    nm = NoteMap.find_by_author_user_map_id_and_rg_note_id(@user_map.id,rg_note.id)
+    nm = NoteMap.find_by_rg_note_id(rg_note.id)
     assert_not_nil nm
     
     ApiOperations::Common.set_hr_base @user_map
@@ -32,13 +32,13 @@ describe ApiOperations::Notes do
   end
 
 
-  it "in the initial synchronization should create a new Highrise note for a Ringio note" do
+  it "in the initial synchronization should create a new Highrise note for a new Ringio note" do
     rg_note = create_rg_note
     previous_nm_count = NoteMap.count
     ApiOperations::Common.complete_synchronization
     assert_equal previous_nm_count + 1, NoteMap.count
 
-    nm = NoteMap.find_by_author_user_map_id_and_rg_note_id(@user_map.id,rg_note.id)
+    nm = NoteMap.find_by_rg_note_id(rg_note.id)
     assert_not_nil nm
     
     ApiOperations::Common.set_hr_base @user_map
@@ -65,7 +65,7 @@ describe ApiOperations::Notes do
     
     ApiOperations::Common.complete_synchronization
 
-    nm = NoteMap.find_by_author_user_map_id_and_rg_note_id(@user_map.id,rg_note.id)
+    nm = NoteMap.find_by_rg_note_id(rg_note.id)
     assert_not_nil nm
     
     ApiOperations::Common.set_hr_base @user_map
@@ -85,7 +85,7 @@ describe ApiOperations::Notes do
     ApiOperations::Common.complete_synchronization
     assert_equal previous_nm_count + 1, NoteMap.count
 
-    nm = NoteMap.find_by_author_user_map_id_and_rg_note_id(@user_map.id,rg_note.id)
+    nm = NoteMap.find_by_rg_note_id(rg_note.id)
     assert_not_nil nm
     
     ApiOperations::Common.set_hr_base @user_map
@@ -121,7 +121,7 @@ describe ApiOperations::Notes do
     ApiOperations::Common.complete_synchronization
     assert_equal previous_nm_count + 1, NoteMap.count
 
-    nm = NoteMap.find_by_author_user_map_id_and_hr_note_id(@user_map.id,hr_note.id)
+    nm = NoteMap.find_by_hr_note_id(hr_note.id)
     assert_not_nil nm
     
     rg_note = nm.rg_resource_note
@@ -130,7 +130,7 @@ describe ApiOperations::Notes do
   end
   
   
-  it "in the initial synchronization should create a new Ringio note for a Highrise note" do
+  it "in the initial synchronization should create a new Ringio note for a new Highrise note" do
     ApiOperations::Common.set_hr_base @user_map
     hr_note = create_hr_note
     ApiOperations::Common.empty_hr_base
@@ -139,7 +139,7 @@ describe ApiOperations::Notes do
     ApiOperations::Common.complete_synchronization
     assert_equal previous_nm_count + 1, NoteMap.count
 
-    nm = NoteMap.find_by_author_user_map_id_and_hr_note_id(@user_map.id,hr_note.id)
+    nm = NoteMap.find_by_hr_note_id(hr_note.id)
     assert_not_nil nm
     
     rg_note = nm.rg_resource_note
@@ -171,14 +171,14 @@ describe ApiOperations::Notes do
 
     ApiOperations::Common.complete_synchronization
 
-    nm = NoteMap.find_by_author_user_map_id_and_hr_note_id(@user_map.id,hr_note.id)
+    nm = NoteMap.find_by_hr_note_id(hr_note.id)
     assert_not_nil nm
     
     rg_note = nm.rg_resource_note
     
     assert_equal aux_hr_note.body, rg_note.body
   end
-=end
+
   
   it "should delete a Ringio note for a deleted Highrise note" do
     # initial empty synchronization
@@ -192,7 +192,7 @@ describe ApiOperations::Notes do
     ApiOperations::Common.complete_synchronization
     assert_equal previous_nm_count + 1, NoteMap.count
 
-    nm = NoteMap.find_by_author_user_map_id_and_hr_note_id(@user_map.id,hr_note.id)
+    nm = NoteMap.find_by_hr_note_id(hr_note.id)
     assert_not_nil nm
     
     rg_note = nm.rg_resource_note

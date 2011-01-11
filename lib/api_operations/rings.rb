@@ -2,6 +2,10 @@ module ApiOperations
 
   module Rings
 
+
+    HR_RING_NOTE_MARK = "Phone Call"
+
+
     def self.synchronize_account(account, new_user_maps)
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the rings of the account with id = " + account.id.to_s)
 
@@ -105,7 +109,7 @@ module ApiOperations
       # [0] => contact map
       # [1] => updated Ringio rings for this contact map
       # we will choose the author of the ring event note in Highrise as the owner of the contact 
-      def self.fetch_contact_rg_feeds(user_map,account_rg_feed, account)
+      def self.fetch_contact_rg_feeds(user_map, account_rg_feed, account)
         account_rg_feed.updated.inject([]) do |contact_feeds,rg_ring_id|
           rg_ring = RingioAPI::Ring.find rg_ring_id
           
@@ -224,7 +228,7 @@ module ApiOperations
             raise 'Unknown Ring To type'
         end
 
-        hr_ring_note.body = "Phone Call\n" +
+        hr_ring_note.body = HR_RING_NOTE_MARK + "\n" +
                             "From: " + rg_ring.from_type + " " + from.name + " " + rg_ring.callerid + "\n" +
                             "To: " + rg_ring.to_type + " " + to.name + " " + rg_ring.called_number + "\n" +
                             "Start Time: " + rg_ring.start_time + "\n" +
