@@ -112,10 +112,10 @@ module ApiOperations
       def self.fetch_contact_rg_feeds(user_map, account_rg_feed, account)
         account_rg_feed.updated.inject([]) do |contact_feeds,rg_ring_id|
           rg_ring = RingioAPI::Ring.find rg_ring_id
-          
-          if rg_ring.from_type == 'contact'
+
+          if rg_ring.attributes['from_type'].present? && rg_ring.from_type == 'contact'
             self.process_rg_ring_new_user_map(user_map,rg_ring.from_id,contact_feeds,rg_ring,account)
-          elsif rg_ring.to_type == 'contact'
+          elsif rg_ring.attributes['to_type'].present? && rg_ring.to_type == 'contact'
             self.process_rg_ring_new_user_map(user_map,rg_ring.to_id,contact_feeds,rg_ring,account)
           end
 
@@ -214,29 +214,33 @@ module ApiOperations
         # it is not necessary to specify if it is a Person or a Company (they can't have id collision),
         # and Highrise does not offer a way to specify it
           
-        from = case rg_ring.from_type
-          when 'user' then RingioAPI::User.find rg_ring.from_id
-          when 'contact' then RingioAPI::Contact.find rg_ring.from_id
-          else
-            raise 'Unknown Ring From type'
+        if rg_ring.attributes['from_type'].present?
+          from = case rg_ring.from_type
+            when 'user' then RingioAPI::User.find rg_ring.from_id
+            when 'contact' then RingioAPI::Contact.find rg_ring.from_id
+            else
+              raise 'Unknown Ring From type'
+          end
         end
         
-        to = case rg_ring.to_type
-          when 'user' then RingioAPI::User.find rg_ring.to_id
-          when 'contact' then RingioAPI::Contact.find rg_ring.to_id
-          else
-            raise 'Unknown Ring To type'
+        if rg_ring.attributes['to_type'].present?
+          to = case rg_ring.to_type
+            when 'user' then RingioAPI::User.find rg_ring.to_id
+            when 'contact' then RingioAPI::Contact.find rg_ring.to_id
+            else
+              raise 'Unknown Ring To type'
+          end
         end
 
         hr_ring_note.body = HR_RING_NOTE_MARK + "\n" +
-                            "From: " + rg_ring.from_type + " " + from.name + " " + rg_ring.callerid + "\n" +
-                            "To: " + rg_ring.to_type + " " + to.name + " " + rg_ring.called_number + "\n" +
+                            (rg_ring.attributes['from_type'].present? ? ("From: " + rg_ring.from_type + " " + from.name + " " + rg_ring.callerid + "\n") : '') +
+                            (rg_ring.attributes['to_type'].present? ? ("To: " + rg_ring.to_type + " " + to.name + " " + rg_ring.called_number + "\n") : '') +
                             "Start Time: " + rg_ring.start_time + "\n" +
                             "Duration:  " + rg_ring.duration.to_s + "\n" +
                             "Outcome:  " + rg_ring.outcome + "\n" +
-                            "Voicemail:  " + (rg_ring.attributes['voicemail'].present? ? rg_ring.voicemail : '') + "\n" +
+                            (rg_ring.attributes['voicemail'].present? ? ("Voicemail:  " + rg_ring.voicemail + "\n") : '') +
                             "Kind:  " + rg_ring.kind + "\n" +
-                            "Department:  " + (rg_ring.attributes['department'].present? ? rg_ring.department : '') + "\n"                            
+                            (rg_ring.attributes['department'].present? ? ("Department:  " + rg_ring.department + "\n") : '')                             
       end
 
   end
