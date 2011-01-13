@@ -58,7 +58,7 @@ module ApiOperations
     # run a single account synchronization event between Ringio and Highrise
     def self.single_account_synchronization(account)
       # TODO: handle optional fields for all resources in Ringio and in Highrise
-      (account.class == Account) ? self.synchronize_account(account) : ApiOperations::Common.log(:error,e,"\nProblem during a single account synchronization for " + account.inspect)  
+      (account.class == Account) ? self.synchronize_account(account) : ApiOperations::Common.log(:error,nil,"\nProblem during a single account synchronization for " + account.inspect)  
       return
     end
 
