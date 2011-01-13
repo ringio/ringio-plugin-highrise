@@ -558,23 +558,31 @@ module ApiOperations
               when 'email'
                 hr_party.contact_data.email_addresses << (ea = Highrise::Person::ContactData::EmailAddress.new)
                 ea.address = datum.value
-                ea.location = case datum.rel
-                  when 'work' then 'Work'
-                  when 'home' then 'Home'
-                  when 'other' then 'Other'
-                  else 'Other'
+                if datum.attributes['rel'].present?
+                  ea.location = case datum.rel
+                    when 'work' then 'Work'
+                    when 'home' then 'Home'
+                    when 'other' then 'Other'
+                    else 'Other'
+                  end
+                else
+                  ea.location = 'Other'
                 end
               when 'telephone'
                 hr_party.contact_data.phone_numbers << (pn = Highrise::Person::ContactData::PhoneNumber.new)
                 pn.number = datum.value
-                pn.location = case datum.rel
-                  when 'work' then 'Work'
-                  when 'mobile' then 'Mobile'
-                  when 'fax' then 'Fax'
-                  when 'pager' then 'Pager'
-                  when 'home' then 'Home'
-                  when 'other' then 'Other'
-                  else 'Other'
+                if datum.attributes['rel'].present?
+                  pn.location = case datum.rel
+                    when 'work' then 'Work'
+                    when 'mobile' then 'Mobile'
+                    when 'fax' then 'Fax'
+                    when 'pager' then 'Pager'
+                    when 'home' then 'Home'
+                    when 'other' then 'Other'
+                    else 'Other'
+                  end
+                else
+                  pn.location = 'Other' 
                 end
             end
           end
