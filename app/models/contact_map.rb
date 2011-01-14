@@ -26,11 +26,15 @@ class ContactMap < ActiveRecord::Base
 
   def hr_notes
     # get only the Highrise notes that belong this contact (reject notes corresponding to rings)
-    case self.hr_party_type
-      when 'Person' then Highrise::Note.find_all_across_pages(:from => '/people/' + self.hr_party_id.to_s + '/notes.xml').reject{|n| n.body[0,10] == ApiOperations::Rings::HR_RING_NOTE_MARK}
-      when 'Company' then Highrise::Note.find_all_across_pages(:from => '/companies/' + self.hr_party_id.to_s + '/notes.xml').reject{|n| n.body[0,10] == ApiOperations::Rings::HR_RING_NOTE_MARK}
+    notes = case self.hr_party_type
+      when 'Person'
+        Highrise::Note.find_all_across_pages(:from => '/people/' + self.hr_party_id.to_s + '/notes.xml')
+      when 'Company'
+        Highrise::Note.find_all_across_pages(:from => '/companies/' + self.hr_party_id.to_s + '/notes.xml')
       else raise 'Unknown party type'
     end
+    
+    notes.reject{|n| n.body.present? ? (n.body[0,10] == ApiOperations::Rings::HR_RING_NOTE_MARK) : false}
     # TODO: give support to visibility
   end
 
