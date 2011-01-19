@@ -276,8 +276,7 @@ module ApiOperations
         hr_notes = nil
 
         if contact_rg_feed.present? || rg_deleted_notes_ids.present? || hr_updated_note_recordings.present? || hr_deleted_notes_ids.present?
-          # give priority to Highrise: discard changes in Ringio to notes that have been changed in Highrise
-          self.purge_duplicated_changes(hr_updated_note_recordings,hr_deleted_notes_ids,contact_rg_feed,rg_deleted_notes_ids)
+          self.merge_changes(hr_updated_note_recordings,hr_deleted_notes_ids,contact_rg_feed,rg_deleted_notes_ids)
 
           # apply changes from Ringio to Highrise
           self.update_rg_to_hr(author_user_map,contact_map,contact_rg_feed)
@@ -292,33 +291,41 @@ module ApiOperations
         ApiOperations::Common.log(:debug,nil,"Finished applying note changes for the contact map with id = " + contact_map.id.to_s + " by the author user map with id = " + author_user_map.id.to_s)
       end
 
-
-      def self.purge_duplicated_changes(hr_updated_note_recordings, hr_deleted_notes_ids, contact_rg_feed, rg_deleted_notes_ids)
+      # give priority to Highrise: discard changes in Ringio to notes that have been changed in Highrise
+      # and give priority to deletions from one side over updates from the other side, wherever the deletion comes from
+      def self.merge_changes(hr_updated_note_recordings, hr_deleted_notes_ids, contact_rg_feed, rg_deleted_notes_ids)
         begin
           # delete duplicated changes for Highrise updated notes
           hr_updated_note_recordings.each do |r|
             if (nm = NoteMap.find_by_hr_note_id(r.id))
-              self.delete_rg_duplicated_changes(nm.rg_note_id,contact_rg_feed,rg_deleted_notes_ids)
+              self.delete_rg_duplicated_changes(nm.rg_note_id,contact_rg_feed)
             end
           end
           
           # delete duplicated changes for Highrise deleted notes
           hr_deleted_notes_ids.each do |n_id|
             if (nm = NoteMap.find_by_hr_note_id(n_id))
-              self.delete_rg_duplicated_changes(nm.rg_note_id,contact_rg_feed,rg_deleted_notes_ids)
+              self.delete_rg_duplicated_changes(nm.rg_note_id,contact_rg_feed)
+              rg_deleted_notes_ids.delete_if{|n_id| n_id.to_s == nm.rg_note_id.to_s}
+            end
+          end
+          
+          # delete duplicated changes for Ringio deleted notes
+          rg_deleted_notes_ids.each do |rg_n_id|
+            if (nm = NoteMap.find_by_rg_note_id(rg_n_id))
+              hr_updated_note_recordings.delete_if{|r| r.id.to_s == nm.hr_note_id.to_s}
             end
           end
         rescue Exception => e
-          ApiOperations::Common.log(:error,e,"\nProblem purging the duplicated changes of the notes")
+          ApiOperations::Common.log(:error,e,"\nProblem merging the changes of the notes")
         end
       end
 
 
-      def self.delete_rg_duplicated_changes(rg_note_id, contact_rg_feed, rg_deleted_notes_ids)
+      def self.delete_rg_duplicated_changes(rg_note_id, contact_rg_feed)
         if contact_rg_feed
           contact_rg_feed[1].delete_if{|n| n.id.to_s == rg_note_id.to_s}
         end
-        rg_deleted_notes_ids.delete_if{|n_id| n_id.to_s == rg_note_id.to_s}      
       end
 
 
@@ -352,7 +359,12 @@ module ApiOperations
             
             # if the note was already mapped to Ringio for this author user map, delete it there
             if (nm = NoteMap.find_by_author_user_map_id_and_hr_note_id(author_user_map.id,n_id))
-              nm.rg_resource_note.destroy
+              begin
+                rg_note = nm.rg_resource_note 
+                rg_note.destroy
+              rescue ActiveResource::ResourceNotFound
+                # the note was also deleted in Ringio                                
+              end
               nm.destroy
             end
             # otherwise, don't do anything, because that Highrise party has not been created yet in Ringio

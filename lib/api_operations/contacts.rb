@@ -149,8 +149,7 @@ module ApiOperations
         hr_party_deletions = is_new_user ? [] : hr_parties_feed[2]
 
         if user_rg_feed.present? || rg_deleted_contacts_ids.present? || hr_updated_people.present? || hr_updated_companies.present? || hr_party_deletions.present?
-          # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
-          self.purge_duplicated_changes(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed,rg_deleted_contacts_ids)
+          self.merge_changes(hr_updated_people,hr_updated_companies,hr_party_deletions,user_rg_feed,rg_deleted_contacts_ids)
   
           # apply changes from Ringio to Highrise
           self.update_rg_to_hr(user_map,user_rg_feed)
@@ -174,14 +173,19 @@ module ApiOperations
             
             # if the party was already mapped to Ringio for this user map, delete it there
             if (cm = ContactMap.find_by_user_map_id_and_hr_party_id_and_hr_party_type(user_map.id,p_deletion.id,p_deletion.type))
-              cm.rg_resource_contact.destroy
+              begin
+                rg_contact = cm.rg_resource_contact
+                rg_contact.destroy
+              rescue ActiveResource::ResourceNotFound
+                # the contact was also deleted in Ringio                                
+              end
               cm.destroy
             end
             # otherwise, don't do anything, because that Highrise party has not been created yet in Ringio
   
             ApiOperations::Common.log(:debug,nil,"Finished applying deletion from Highrise to Ringio of the party with Highrise id = " + p_deletion.id.to_s)
           rescue Exception => e
-            ApiOperations::Common.log(:error,e,"Problem applying update from Highrise to Ringio of the party with Highrise id = " + p_deletion.id.to_s)
+            ApiOperations::Common.log(:error,e,"Problem applying deletion from Highrise to Ringio of the party with Highrise id = " + p_deletion.id.to_s)
           end
         end
       end
@@ -460,43 +464,52 @@ module ApiOperations
         end
       end
   
-  
-      def self.purge_duplicated_changes(hr_updated_people, hr_updated_companies, hr_party_deletions, user_rg_feed, rg_deleted_contacts_ids)
+      # give priority to Highrise: discard changes in Ringio to contacts that have been changed in Highrise
+      # and give priority to deletions from one side over updates from the other side, wherever the deletion comes from  
+      def self.merge_changes(hr_updated_people, hr_updated_companies, hr_party_deletions, user_rg_feed, rg_deleted_contacts_ids)
         begin
           # delete duplicated changes for Highrise updated people
           hr_updated_people.each do |person|
             if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(person.id,'Person'))
-              self.delete_rg_duplicated_changes(cm.rg_contact_id,user_rg_feed,rg_deleted_contacts_ids)
+              self.delete_rg_duplicated_changes(cm.rg_contact_id,user_rg_feed)
             end
           end
           
           # delete duplicated changes for Highrise updated companies
           hr_updated_companies.each do |company|
             if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(company.id,'Company'))
-              self.delete_rg_duplicated_changes(cm.rg_contact_id,user_rg_feed,rg_deleted_contacts_ids)
+              self.delete_rg_duplicated_changes(cm.rg_contact_id,user_rg_feed)
             end
           end
           
           # delete duplicated changes for Highrise deleted parties
           hr_party_deletions.each do |p_deletion|
             if (cm = ContactMap.find_by_hr_party_id_and_hr_party_type(p_deletion.id,p_deletion.type))
-              self.delete_rg_duplicated_changes(cm.rg_contact_id,user_rg_feed,rg_deleted_contacts_ids)
+              self.delete_rg_duplicated_changes(cm.rg_contact_id,user_rg_feed)
+              rg_deleted_contacts_ids.delete_if{|c_id| c_id.to_s == cm.rg_contact_id.to_s}
+            end
+          end
+          
+          # delete duplicated changes for Ringio deleted contacts
+          rg_deleted_contacts_ids.each do |rg_c_id|
+            if (cm = ContactMap.find_by_rg_contact_id(rg_c_id))
+              hr_updated_people.delete_if{|p| p.id.to_s == cm.hr_party_id.to_s} if (cm.hr_party_type == 'Person')
+              hr_updated_companies.delete_if{|c| c.id.to_s == cm.hr_party_id.to_s} if (cm.hr_party_type == 'Company')
             end
           end
         rescue Exception => e
-          ApiOperations::Common.log(:error,e,"\nProblem purging the duplicated changes of the contacts")
+          ApiOperations::Common.log(:error,e,"\nProblem merging the changes of the contacts")
         end
       end
   
   
-      def self.delete_rg_duplicated_changes(rg_contact_id, user_rg_feed, rg_deleted_contacts_ids)
+      def self.delete_rg_duplicated_changes(rg_contact_id, user_rg_feed)
         if user_rg_feed
           user_rg_feed[1].delete_if{|c| c.id.to_s == rg_contact_id.to_s}
         end
-        rg_deleted_contacts_ids.delete_if{|c_id| c_id.to_s == rg_contact_id.to_s}      
       end
-  
-      
+
+
       def self.set_anonymous_person_in_hr(hr_person)
         hr_person.first_name = 'Anonymous Ringio Contact'
         hr_person.last_name = ''        
