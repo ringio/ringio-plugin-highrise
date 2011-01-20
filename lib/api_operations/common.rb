@@ -69,6 +69,7 @@ module ApiOperations
       case level
         when :debug then Rails.logger.debug no_exception_message
         when :info then Rails.logger.info no_exception_message
+        when :warn then Rails.logger.warn no_exception_message
         when :error
           if exception
             Rails.logger.error no_exception_message + "  " + exception.inspect + "\n" + exception.backtrace.inject(''){|error_message, error_line| error_message << "  " + error_line + "\n"} + "\n"
@@ -97,7 +98,15 @@ module ApiOperations
     private
 
       def self.synchronize_account(account)
-        if account.hr_subdomain.present? && account.user_maps.present? && self.are_tokens_correct(account)
+        begin
+          account.rg_resource_account
+          account_found = true
+        rescue ActiveResource::ResourceNotFound
+          account_found = false
+          ApiOperations::Common.log(:warn,nil,"\nCould not find account with id = " + account.id.to_s)
+        end
+        
+        if account_found && account.hr_subdomain.present? && account.user_maps.present? && self.are_tokens_correct(account)
           new_user_maps = account.user_maps.inject([]) do |total,um|
             if um.not_synchronized_yet
               total << um

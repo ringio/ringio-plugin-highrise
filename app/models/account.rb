@@ -53,4 +53,9 @@ class Account < ActiveRecord::Base
     )
   end
 
+  def rg_resource_account
+    RingioAPI::Account.find self.rg_account_id
+  end
+
+
 end
