@@ -21,6 +21,8 @@ module ApiOperations
 
     private
 
+      RG_CLIENT_GROUP = "3"
+
       def self.synchronize_account_process(account, user_map)
         # if there is a new user map
         if user_map
@@ -197,7 +199,7 @@ module ApiOperations
             ApiOperations::Common.log(:debug,nil,"Started applying update from Highrise to Ringio of the party with Highrise id = " + hr_party.id.to_s)
 
             rg_contact = self.prepare_rg_contact(user_map,hr_party)
-            self.hr_party_to_rg_contact(hr_party,rg_contact)
+            self.hr_party_to_rg_contact(hr_party,rg_contact,user_map)
     
             # if the Ringio contact is saved properly and it didn't exist before, create a new contact map
             new_rg_contact = rg_contact.new?
@@ -241,7 +243,7 @@ module ApiOperations
       end
 
 
-      def self.hr_party_to_rg_contact(hr_party, rg_contact)
+      def self.hr_party_to_rg_contact(hr_party, rg_contact, user_map)
         # note: we need the Highrise party to be already created because we cannot create the ContactData structure
         case hr_party
           when Highrise::Person
@@ -395,6 +397,10 @@ module ApiOperations
         end
         cd.rel = 'other'
         cd.type = 'website'
+        
+        # as a temporary bug fix, set the group to Clients for all contacts coming from the master user
+        # TODO: give proper support to visibility
+        rg_contact.groups = [RG_CLIENT_GROUP] if user_map.master_user
       end
   
   
