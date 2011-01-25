@@ -393,7 +393,9 @@ module ApiOperations
       def self.hr_note_to_rg_note(author_user_map, contact_map, hr_note, rg_note)
         rg_note.author_id = author_user_map.rg_user_id
         rg_note.contact_id = contact_map.rg_contact_id
-        rg_note.body =  hr_note.body  
+        rg_note.body =  hr_note.body
+        
+        # the visibility of the note in Ringio is automatically the same as the visibility of the contact
       end
 
 
@@ -455,9 +457,20 @@ module ApiOperations
         # Highrise assumes that the author of the note is the currently authenticated user, we don't have to specify the author_id
         hr_note.subject_id = contact_map.hr_party_id
         hr_note.subject_type = 'Party'
+
         # it is not necessary to specify if it is a Person or a Company (they can't have id collision),
         # and Highrise does not offer a way to specify it 
         hr_note.body = rg_note.body
+
+        # handle visibility: make it the same as the visibility of the contact
+        #   - if the contact is shared in Ringio (group Client), set Highrise visible_to to Everyone
+        #   - otherwise, restrict the visibility in Highrise to the owner of the contact
+        if contact_map.rg_resource_contact.groups.include?(ApiOperations::Contacts::RG_CLIENT_GROUP)
+          hr_note.visible_to = 'Everyone'
+        else
+          hr_note.visible_to = 'Owner'
+          hr_note.owner_id = contact_map.user_map.hr_user_id 
+        end
       end
 
   end

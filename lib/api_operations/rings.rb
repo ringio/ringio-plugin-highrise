@@ -241,7 +241,17 @@ module ApiOperations
                             "Outcome:  " + rg_ring.outcome + "\n" +
                             (rg_ring.attributes['voicemail'].present? ? ("Voicemail:  " + rg_ring.voicemail + "\n") : '') +
                             "Kind:  " + rg_ring.kind + "\n" +
-                            (rg_ring.attributes['department'].present? ? ("Department:  " + rg_ring.department + "\n") : '')                             
+                            (rg_ring.attributes['department'].present? ? ("Department:  " + rg_ring.department + "\n") : '')
+                            
+        # handle visibility: make it the same as the visibility of the contact
+        #   - if the contact is shared in Ringio (group Client), set Highrise visible_to to Everyone
+        #   - otherwise, restrict the visibility in Highrise to the owner of the contact
+        if contact_map.rg_resource_contact.groups.include?(ApiOperations::Contacts::RG_CLIENT_GROUP)
+          hr_ring_note.visible_to = 'Everyone'
+        else
+          hr_ring_note.visible_to = 'Owner'
+          hr_ring_note.owner_id = contact_map.user_map.hr_user_id 
+        end
       end
 
   end

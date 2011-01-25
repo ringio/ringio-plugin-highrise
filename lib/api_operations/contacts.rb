@@ -2,6 +2,8 @@ module ApiOperations
 
   module Contacts
 
+    RG_CLIENT_GROUP = "3"
+
     def self.synchronize_account(account, new_user_maps)
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the contacts of the account with id = " + account.id.to_s)
       
@@ -20,8 +22,6 @@ module ApiOperations
 
 
     private
-
-      RG_CLIENT_GROUP = "3"
 
       def self.synchronize_account_process(account, user_map)
         # if there is a new user map
