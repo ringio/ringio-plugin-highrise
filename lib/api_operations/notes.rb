@@ -3,7 +3,7 @@ module ApiOperations
   module Notes
 
     def self.synchronize_account(account, new_user_maps)
-debugger
+
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the notes of the account with id = " + account.id.to_s)
 
       # run a synchronization just for each new user map
@@ -124,7 +124,7 @@ debugger
             ApiOperations::Common.log(:error,nil,"\nProblem with the Highrise notes timestamp of the account with id = " + account.id.to_s)
           end
           
-          account.save
+          account.save!
         rescue Exception => e
           ApiOperations::Common.log(:error,e,"\nProblem updating the note synchronization timestamps of the account with id = " + account.id.to_s)
         end        

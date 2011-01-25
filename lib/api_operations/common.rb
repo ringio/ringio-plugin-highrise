@@ -36,7 +36,7 @@ module ApiOperations
       # TODO: find how to get this faster: from the HTTP header Date from the last Highrise response (ActiveResource does not give access to it)
       # create a fake contact, set timestamp to the created_at in the response and then destroy that fake contact
       timestamp_person = Highrise::Person.new(:first_name => 'Ringio Check')
-      timestamp_person.save
+      timestamp_person.save!
       timestamp = timestamp_person.created_at
       timestamp_person.destroy
 
@@ -111,7 +111,7 @@ module ApiOperations
             if um.not_synchronized_yet
               total << um
               um.not_synchronized_yet = false
-              um.save
+              um.save!
             end
             total
           end
@@ -131,7 +131,7 @@ module ApiOperations
           
           if account.not_synchronized_yet
             account.not_synchronized_yet = false
-            account.save
+            account.save!
           end
         end
       end

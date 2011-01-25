@@ -97,7 +97,7 @@ module ApiOperations
             ApiOperations::Common.log(:error,nil,"\nProblem with the Highrise parties timestamp of the account with id = " + account.id.to_s)
           end
           
-          account.save
+          account.save!
         rescue Exception => e
           ApiOperations::Common.log(:error,e,"\nProblem updating the contact synchronization timestamps of the account with id = " + account.id.to_s)
         end        
@@ -566,7 +566,7 @@ module ApiOperations
         if hr_party.new?
           # save so that the server creates the contact data structure
           # (we cannot create ourselves the Highrise::Person::ContactData because it is not in the Highrise gem)
-          hr_party.save
+          hr_party.save!
         else
           # make sure that the corresponding data is empty (or deleted) in the Highrise contact
           # (the corresponding data is the data that would have been synchronized from Highrise to Ringio if it existed)
