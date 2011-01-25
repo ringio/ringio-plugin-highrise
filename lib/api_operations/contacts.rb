@@ -398,9 +398,18 @@ module ApiOperations
         cd.rel = 'other'
         cd.type = 'website'
         
-        # as a temporary bug fix, set the group to Clients for all contacts coming from the master user
-        # TODO: give proper support to visibility
-        rg_contact.groups = [RG_CLIENT_GROUP] if user_map.master_user
+        # handle visibility:
+        #   - if Highrise visible_to is set to Everyone, share the contact in Ringio (need group Clients)
+        #   - otherwise, don't share the contact in Ringio (no Client group)
+        if (hr_party.visible_to == 'Everyone')
+          if rg_contact.attributes['groups'].present?
+            rg_contact.groups << RG_CLIENT_GROUP if ! rg_contact.groups.include?(RG_CLIENT_GROUP)
+          else
+            rg_contact.attributes['groups'] = [RG_CLIENT_GROUP]
+          end
+        else
+          rg_contact.groups.delete(RG_CLIENT_GROUP) if rg_contact.attributes['groups'].present?
+        end
       end
   
   
@@ -409,7 +418,7 @@ module ApiOperations
           ApiOperations::Common.log(:debug,nil,"Started applying update from Ringio to Highrise of the contact with Ringio id = " + rg_contact.id.to_s)
 
           begin
-            preparation = self.prepare_hr_party rg_contact
+            preparation = self.prepare_hr_party(rg_contact,user_map)
             hr_party = preparation[0]
             is_new_hr_party = preparation[1]
 
@@ -433,16 +442,16 @@ module ApiOperations
       end
 
 
-      def self.prepare_hr_party(rg_contact)
+      def self.prepare_hr_party(rg_contact, user_map)
         # if the contact was already mapped to Highrise, update it there
         if (cm = ContactMap.find_by_rg_contact_id(rg_contact.id))
           hr_party = cm.hr_resource_party
-          self.rg_contact_to_hr_party(rg_contact,hr_party)
+          self.rg_contact_to_hr_party(rg_contact,hr_party,user_map)
           is_new_hr_party = false
         else
         # if the contact is new, create it in Highrise (always as a Person, Ringio GUI does not allow creating a Company) and map it
           hr_party = Highrise::Person.new
-          self.rg_contact_to_hr_party(rg_contact,hr_party)
+          self.rg_contact_to_hr_party(rg_contact,hr_party,user_map)
           is_new_hr_party = true
         end
 
@@ -522,7 +531,7 @@ module ApiOperations
       end
       
         
-      def self.rg_contact_to_hr_party(rg_contact, hr_party)
+      def self.rg_contact_to_hr_party(rg_contact, hr_party, user_map)
         # the author of the Highrise party is set by Highrise as the current authenticated user
         case hr_party
           when Highrise::Person
@@ -606,7 +615,17 @@ module ApiOperations
             end
           end
         end
-
+        
+        # handle visibility:
+        #   - if the contact is shared in Ringio (group Client), set Highrise visible_to to Everyone
+        #   - otherwise, restrict the visibility in Highrise to the owner of the contact
+        if rg_contact.groups.include?(RG_CLIENT_GROUP)
+          hr_party.visible_to = 'Everyone'
+        else
+          hr_party.visible_to = 'Owner'
+          hr_party.owner_id = user_map.hr_user_id 
+        end
+               
       end
 
 

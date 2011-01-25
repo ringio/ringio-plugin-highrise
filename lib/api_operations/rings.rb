@@ -7,6 +7,7 @@ module ApiOperations
 
 
     def self.synchronize_account(account, new_user_maps)
+debugger
       ApiOperations::Common.log(:debug,nil,"Started the synchronization of the rings of the account with id = " + account.id.to_s)
 
       # run a synchronization just for each new user map
