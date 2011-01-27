@@ -49,8 +49,6 @@ class UserMap < ActiveRecord::Base
     hr_updated_people = Highrise::Person.find_all_across_pages_since(timestamp).reject{|p| p.author_id != self.hr_user_id}
     hr_updated_companies = Highrise::Company.find_all_across_pages_since(timestamp).reject{|c| c.author_id != self.hr_user_id}
 
-    # TODO: give support to shared contacts (set the group to Client in Ringio)
-
     # get deletions of person and companies, mind that author_id is not provided
     hr_party_deletions = is_new_user ? [] : Highrise::Party.deletions_since(timestamp)
 
@@ -58,7 +56,6 @@ class UserMap < ActiveRecord::Base
   end
   
   def all_rg_contacts_feed
-    # TODO: give support to shared contacts (group to Client in Ringio)
     feed = RingioAPI::Feed.find(
       :one,
       :from => RingioAPI::Feed.prefix + "feeds/users/" + self.rg_user_id.to_s + "/contacts"

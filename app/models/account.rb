@@ -11,7 +11,6 @@ class Account < ActiveRecord::Base
   end
     
   def rg_contacts_feed
-    # TODO: give support to shared contacts (group to Client in Ringio)
     feed = RingioAPI::Feed.find(
       :one,
       :from => RingioAPI::Feed.prefix + "feeds/accounts/" + self.rg_account_id.to_s + "/contacts",
@@ -20,7 +19,6 @@ class Account < ActiveRecord::Base
   end
 
   def all_rg_notes_feed
-    # TODO: give support to shared contacts (group to Client in Ringio)
     feed = RingioAPI::Feed.find(
       :one,
       :from => RingioAPI::Feed.prefix + "feeds/accounts/" + self.rg_account_id.to_s + "/notes"
@@ -28,7 +26,6 @@ class Account < ActiveRecord::Base
   end
   
   def rg_notes_feed
-    # TODO: give support to shared contacts (group to Client in Ringio)
     feed = RingioAPI::Feed.find(
       :one,
       :from => RingioAPI::Feed.prefix + "feeds/accounts/" + self.rg_account_id.to_s + "/notes",
@@ -37,7 +34,6 @@ class Account < ActiveRecord::Base
   end
   
   def all_rg_rings_feed
-    # TODO: give support to shared contacts (group to Client in Ringio)
     feed = RingioAPI::Feed.find(
       :one,
       :from => RingioAPI::Feed.prefix + "feeds/accounts/" + self.rg_account_id.to_s + "/rings"
@@ -45,7 +41,6 @@ class Account < ActiveRecord::Base
   end
 
   def rg_rings_feed
-    # TODO: give support to shared contacts (group to Client in Ringio)
     feed = RingioAPI::Feed.find(
       :one,
       :from => RingioAPI::Feed.prefix + "feeds/accounts/" + self.rg_account_id.to_s + "/rings",

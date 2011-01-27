@@ -35,7 +35,6 @@ class ContactMap < ActiveRecord::Base
     end
     
     notes.reject{|n| n.body.present? ? (n.body[0,10] == ApiOperations::Rings::HR_RING_NOTE_MARK) : false}
-    # TODO: give support to visibility
   end
 
 end
