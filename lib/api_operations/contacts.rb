@@ -62,7 +62,7 @@ module ApiOperations
       def self.synchronize_users(account, user_rg_feeds, rg_deleted_contact_ids)
         begin
           # synchronize the contacts owned by every user of this account
-          UserMap.find_all_by_account_id(account.id).each do |um|
+          account.user_maps.each do |um|
             begin
               user_rg_feed = (rg_f_index = user_rg_feeds.index{|urf| urf[0] == um})? user_rg_feeds[rg_f_index] : [um,[]]
               self.synchronize_user(false,um,user_rg_feed,rg_deleted_contact_ids)

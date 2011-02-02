@@ -134,13 +134,11 @@ module ApiOperations
       def self.synchronize_contacts(account, user_feeds, rg_deleted_notes_ids)
         begin
           # synchronize the notes created by every user of this account
-          user_feeds.each do |uf|
-            um = uf[0]
-            next if um.account != account
+          account.user_maps.each do |um|
             begin
               # we have to check all contacts in this account, not only the ones owned by this user,
               # because users can create notes for contacts that are not owned by them
-              um.account.user_maps.each do |aux_um|
+              account.user_maps.each do |aux_um|
                 aux_um.contact_maps.each do |cm|
                   begin
                     user_feed = (u_f_index = user_feeds.index{|uf| uf[0] == um})? user_feeds[u_f_index] : nil
