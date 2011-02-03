@@ -22,9 +22,6 @@
     <span class="ringioUser">
       <%= select :user_map, :rg_user_id, @mails_for_select, :selected => user_map.rg_user_id %>
     </span>
-    <span class="radioCell">
-      <%= f.radio_button :master_user, true, :class => 'master_radio' %>
-    </span>
     <span class="actions">
       <%= f.submit t('test_and_update') %>
     </span>

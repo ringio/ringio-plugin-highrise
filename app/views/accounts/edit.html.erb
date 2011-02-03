@@ -65,13 +65,6 @@
   	ajaxDeleteUserMapForm()
   })
 	
-  // manage master user radio buttons	
-  $('input.master_radio').live('click', function() {
-    $('input.master_radio').removeAttr('checked');
-  	$(this).attr('checked','checked');
-  	$(this).parent().submit();		
-  });
-	
   $('#wait').hide();
 	$('#error_container').hide();
 	$('#notice_container').hide();

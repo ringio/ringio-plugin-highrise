@@ -10,7 +10,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20101213164155) do
+ActiveRecord::Schema.define(:version => 20110203120634) do
 
   create_table "accounts", :force => true do |t|
     t.integer  "rg_account_id"
@@ -58,7 +58,6 @@ ActiveRecord::Schema.define(:version => 20101213164155) do
     t.integer  "hr_user_id"
     t.integer  "rg_user_id"
     t.string   "hr_user_token"
-    t.boolean  "master_user",          :default => false
     t.boolean  "not_synchronized_yet", :default => true
     t.datetime "created_at"
     t.datetime "updated_at"
