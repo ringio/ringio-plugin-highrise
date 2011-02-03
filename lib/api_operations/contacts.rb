@@ -22,6 +22,8 @@ module ApiOperations
 
 
     private
+    
+      COMPLEX_CONVERSIONS = [:im,:website,:address]
 
       def self.synchronize_account_process(account, user_map)
         # if there is a new user map
@@ -243,6 +245,56 @@ module ApiOperations
       end
 
 
+      # conversion from Highrise contact data to Ringio contact data
+      def self.hr_to_rg_data(highrise_data_array, rg_contact, value_variable, allowed_locations, type)
+        complex_conversion = COMPLEX_CONVERSIONS.include?(type)
+        highrise_data_array.each do |hd|
+          complex_value = self.send('hr_to_rg_value_' + type.to_s,hd) if complex_conversion
+          if complex_conversion && d_index = rg_contact.data.index{|cd| (cd.type == type.to_s) && (cd.value == complex_value)}
+            cd = rg_contact.data[d_index]
+          else
+            rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
+            cd.value = complex_conversion ? complex_value : hd.instance_variable_get(:@attributes)[value_variable.to_s]
+            cd.is_primary = nil
+          end
+          if allowed_locations.include?(hd.location)
+            cd.rel = case hd.location
+              when 'Personal' then 'home'
+              when 'Business' then 'work'
+              else hd.location.downcase
+            end
+          else
+            cd.rel = 'other'
+          end
+          cd.type = type.to_s
+        end
+      end
+
+
+      def self.hr_to_rg_value_im(im)
+        im.address + ' in ' + (im.protocol.present? ? im.protocol : '')
+      end
+
+      
+      # used ONLY for the twitter website
+      def self.hr_to_rg_value_website(ta)
+        'http://twitter.com/' + ta.username
+      end
+
+
+      def self.hr_to_rg_value_address(ad)
+        full_address = ''
+        full_address << (ad.street + ' ')  if ad.street.present? 
+        full_address << (ad.city + ' ') if ad.city.present?
+        full_address << (ad.state + ' ') if ad.state.present?
+        full_address << (ad.zip + ' ') if ad.zip.present?
+        full_address << (ad.country + ' ') if ad.country.present?
+
+        # remove the trailing white space
+        full_address = full_address[0,full_address.length - 1] if full_address.present?
+      end
+
+
       def self.hr_party_to_rg_contact(hr_party, rg_contact, user_map)
         # note: we need the Highrise party to be already created because we cannot create the ContactData structure
         case hr_party
@@ -285,107 +337,24 @@ module ApiOperations
           end
         end
 
-        # TODO: refactor to move repeated structures to a method
         if hr_party.contact_data.present?
           # set the email addresses
-          hr_party.contact_data.email_addresses.each do |ea|
-            rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
-            cd.value = ea.address
-            cd.is_primary = nil
-            cd.rel = case ea.location
-              when 'Work' then 'work'
-              when 'Home' then 'home'
-              when 'Other' then 'other'
-              else 'other'
-            end
-            cd.type = 'email'
-          end
-
+          self.hr_to_rg_data(hr_party.contact_data.email_addresses,rg_contact,:address,['Work','Home'],:email)
+          
           # set the phone numbers
-          hr_party.contact_data.phone_numbers.each do |pn|
-            rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
-            cd.value = pn.number
-            cd.is_primary = nil
-            cd.rel = case pn.location
-              when 'Work' then 'work'
-              when 'Mobile' then 'mobile'
-              when 'Fax' then 'fax'
-              when 'Pager' then 'pager'
-              when 'Home' then 'home'
-              when 'Other' then 'other'
-              else 'other'
-            end
-            cd.type = 'telephone'
-          end
-          
+          self.hr_to_rg_data(hr_party.contact_data.phone_numbers,rg_contact,:number,['Work','Mobile','Fax','Pager','Home'],:telephone)
+
           # set the IM data
-          hr_party.contact_data.instant_messengers.each do |im|
-            if d_index = rg_contact.data.index{|cd| (cd.type == 'im') && (cd.value == (im.address + ' in ' + im.protocol))}
-              cd = rg_contact.data[d_index]
-            else
-              rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
-              cd.value = im.address + ' in ' + (im.protocol.present? ? im.protocol : '')
-              cd.is_primary = nil
-            end
-            cd.rel = case im.location
-              when 'Work' then 'work'
-              when 'Personal' then 'home'
-              when 'Other' then 'other'
-              else 'other'
-            end
-            cd.type = 'im'
-          end
-  
-          # set the twitter accounts
-          hr_party.contact_data.twitter_accounts.each do |ta|
-            hr_twitter_url = 'http://twitter.com/' + ta.username
-            if d_index = rg_contact.data.index{|cd| (cd.type == 'website') && (cd.value == hr_twitter_url)}
-              cd = rg_contact.data[d_index]
-            else
-              rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
-              cd.value = hr_twitter_url
-              cd.is_primary = nil
-            end
-            cd.rel = case ta.location
-              when 'Personal' then 'home'
-              when 'Business' then 'work'
-              when 'Other' then 'other'
-              else 'other'
-            end
-            cd.type = 'website'
-          end
+          self.hr_to_rg_data(hr_party.contact_data.instant_messengers,rg_contact,nil,['Work','Personal'],:im)
           
+          # set the twitter accounts
+          self.hr_to_rg_data(hr_party.contact_data.twitter_accounts,rg_contact,nil,['Personal','Business'],:website)
+
           # set the addresses
-          hr_party.contact_data.addresses.each do |ad|
-            full_address = ''
-            full_address << (ad.street + ' ')  if ad.street.present? 
-            full_address << (ad.city + ' ') if ad.city.present?
-            full_address << (ad.state + ' ') if ad.state.present?
-            full_address << (ad.zip + ' ') if ad.zip.present?
-            full_address << (ad.country + ' ') if ad.country.present?
-
-            # remove the trailing white space
-            full_address = full_address[0,full_address.length - 1] if full_address.present?
-            
-            if d_index = rg_contact.data.index{|cd| (cd.type == 'address') && (cd.value == full_address)}
-              cd = rg_contact.data[d_index]
-            else
-              rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
-              cd.value = full_address
-              cd.is_primary = nil
-            end
-            cd.rel = case ad.location
-              when 'Work' then 'work'
-              when 'Home' then 'home'
-              when 'Other' then 'other'
-              else 'other'
-            end
-            cd.type = 'address'
-          end
-
+          self.hr_to_rg_data(hr_party.contact_data.addresses,rg_contact,nil,['Work','Home'],:address)
         end
         
-        # set the website as the URL for the Highrise party
+        # set the website as the URL for the Highrise party - whatever the website URLs the contact has
         root_resource_part = (Highrise::Base.site.to_s[Highrise::Base.site.to_s.length - 1] == '/') ? 'parties/' : '/parties/'
         url_hr_contact = Highrise::Base.site.to_s + root_resource_part + hr_party.id.to_s + '-' + rg_contact.name.downcase.gsub(' ','-')
         if d_index = rg_contact.data.index{|cd| (cd.type == 'website') && (cd.value == url_hr_contact)}
@@ -578,40 +547,15 @@ module ApiOperations
         end
     
         if rg_contact.data.present?
-
           # set the contact data
-          # TODO: refactor to move repeated structures to a method
           rg_contact.data.each do |datum|
             case datum.type
               when 'email'
                 hr_party.contact_data.email_addresses << (ea = Highrise::Person::ContactData::EmailAddress.new)
-                ea.address = datum.value
-                if datum.attributes['rel'].present?
-                  ea.location = case datum.rel
-                    when 'work' then 'Work'
-                    when 'home' then 'Home'
-                    when 'other' then 'Other'
-                    else 'Other'
-                  end
-                else
-                  ea.location = 'Other'
-                end
+                self.rg_to_hr_data(datum,hr_party.contact_data.email_addresses,:address,['work','home','other'])
               when 'telephone'
                 hr_party.contact_data.phone_numbers << (pn = Highrise::Person::ContactData::PhoneNumber.new)
-                pn.number = datum.value
-                if datum.attributes['rel'].present?
-                  pn.location = case datum.rel
-                    when 'work' then 'Work'
-                    when 'mobile' then 'Mobile'
-                    when 'fax' then 'Fax'
-                    when 'pager' then 'Pager'
-                    when 'home' then 'Home'
-                    when 'other' then 'Other'
-                    else 'Other'
-                  end
-                else
-                  pn.location = 'Other' 
-                end
+                self.rg_to_hr_data(datum,hr_party.contact_data.phone_numbers,:number,['work','mobile','fax','pager','home'])
             end
           end
         end
@@ -626,6 +570,19 @@ module ApiOperations
           hr_party.owner_id = user_map.hr_user_id 
         end
                
+      end
+      
+      
+      # conversion from Ringio contact data to Highrise contact data
+      def self.rg_to_hr_data(datum, highrise_data_array, type, allowed_locations)
+        hd = highrise_data_array.last
+        hd.instance_variable_set(:@attributes,{type.to_s => datum.value})
+
+        if datum.attributes['rel'].present?
+          hd.location = allowed_locations.include?(datum.rel) ? datum.rel.capitalize : 'Other'
+        else
+          hd.location = 'Other'
+        end
       end
 
 
