@@ -32,7 +32,7 @@ form.button_to div {
   display: inline;
 }
 
-#notice {
+#notice_set {
   background: url("../images/img15/msg_ok_25.png") no-repeat scroll 2px 1px #8EDB00;
 	-moz-border-radius: 4px 4px 4px 4px;
   color: #FFFFFF;

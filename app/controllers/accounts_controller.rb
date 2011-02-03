@@ -12,7 +12,7 @@ class AccountsController < ApplicationController
 
     respond_to do |format|
       if @account.update_attributes params[:account]
-        format.html { redirect_to edit_account_path(@account, :rg_account_id_hash => params[:rg_account_id_hash]), :notice => t('account.successfully_updated') }
+        format.html { redirect_to edit_account_path(@account, :rg_account_id_hash => params[:rg_account_id_hash]), :notice => t('activerecord.models.account').capitalize + t('successfully_updated') }
         format.xml  { head :ok }
       else
         format.html { render :action => "edit" }

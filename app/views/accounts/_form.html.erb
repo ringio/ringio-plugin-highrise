@@ -10,6 +10,10 @@
       </ul>
     </div>
   <% end %>
+	
+  <% if notice.present? && notice.start_with?(t('activerecord.models.account').capitalize) %>
+    <div id="notice"><%= notice%></div>
+  <% end %>
 
   <h4><%= t('account.hr_subdomain') %></h4>
   <div class="sectionContent">

@@ -69,7 +69,7 @@ class UserMap < ActiveRecord::Base
     # filter to keep those that were created at or updated at after the last synchronization datetime
     # and reject the notes corresponding to rings
     Highrise::Recording.find_all_across_pages_since(timestamp).reject do |r|
-      (r.type != 'Note') || (r.subject_type != 'Party') || (r.author_id != self.hr_user_id) || (r.body[0,10] == ApiOperations::Rings::HR_RING_NOTE_MARK)
+      (r.type != 'Note') || (r.subject_type != 'Party') || (r.author_id != self.hr_user_id) || r.body.start_with?(ApiOperations::Rings::HR_RING_NOTE_MARK)
     end
   end
 
@@ -80,6 +80,8 @@ class UserMap < ActiveRecord::Base
       begin
         user_hr = Highrise::User.me
       rescue ActiveResource::UnauthorizedAccess => e
+        self.errors[:hr_user_token] = I18n.t('user_map.unauthorized_token')
+      rescue ActiveResource::ResourceNotFound => e
         self.errors[:hr_user_token] = I18n.t('user_map.unauthorized_token')
       end
 

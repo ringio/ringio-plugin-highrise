@@ -14,7 +14,7 @@ class UserMapsController < ApplicationController
           @new_user_map = UserMap.new
           @new_user_map.account = @account
           @user_maps = UserMap.find_all_by_account_id @account.id
-          format.html { render :partial => "block_for_ajax" }        
+          format.html { render :partial => "block_for_ajax", :locals => {:notice => t('activerecord.models.user_map').capitalize + t('successfully_created')} }        
         else
           format.html { head :created }
           format.xml  { render :xml => @new_user_map, :status => :created, :location => @new_user_map }
@@ -40,7 +40,7 @@ class UserMapsController < ApplicationController
       if @user_map.update_attributes params[:user_map]
         if request.xhr?
           @user_maps = UserMap.find_all_by_account_id @account.id
-          format.html { render :partial => "account_form", :locals => {:account => @account, :user_map => @user_map} }        
+          format.html { render :partial => "account_form", :locals => {:account => @account, :user_map => @user_map, :notice => t('activerecord.models.user_map').capitalize + t('successfully_updated')} }        
         else
           format.html { head :ok }
           format.xml  { head :ok }

@@ -74,6 +74,7 @@
 	
   $('#wait').hide();
 	$('#error_container').hide();
+	$('#notice_container').hide();
 	
 	$('#newRecordButton').live('click', function() {
     var tb = $('#newRecordTable');
@@ -83,33 +84,49 @@
     }
   });
 
-  if ($('#notice').text().length > 0) {
-    $('#notice').animate({}, 500).delay(3000).fadeOut('slow');
-  }
-	
 	if ($('#error_explanation').length > 0) {
 	  move_error();
 	}
+	
+	$('#error_container').ajaxSuccess(function () {
+    if ($('#error_explanation').length > 0) {
+      $('#error_explanation').addClass('error_div');
+      move_error();
+    }
+  });
 	
 	function move_error() {
     $('#error_container').show();
     $('#error_container').append($('#error_explanation'));
     $('#error_explanation').attr('id','error_explanation_set');
+		$('#error_explanation').remove();
 	}
 	
-	$('#error_container').ajaxSuccess(function () {
-	  if ($('#error_explanation').length > 0) {
-      $('#error_explanation').addClass('error_div');
-			$('#error_container').show();
-      $('#error_container').append($('#error_explanation'));
+		
+  $('#notice_container').ajaxSuccess(function () {
+    if ($('#notice').length > 0) {
+      move_notice();
     }
-	});
+  });
+	
+  if ($('#notice').length > 0) {
+    move_notice();
+  }
+	
+	function move_notice() {
+	  $('#notice_container').show();
+    $('#notice_container').append($('#notice'));
+    $('#notice').attr('id','notice_set');
+    $('#notice').remove();
+    $('#notice_set').animate({}, 500).delay(3000).fadeOut('slow');
+		setTimeout(function () {$('#notice_set').attr('id','notice_ignored')},4000);
+	}
 
 <%end%>
 
 <div class="plugin">
 
-	<p id="notice"><%= notice %></p>
+	<div id="notice_container"></div>
 	<p id="alert"><%= alert %></p>
 	<div id="error_container" ></div>
 	

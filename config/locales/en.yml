@@ -11,7 +11,6 @@ en:
     prohibited_saving: " prohibited this account from being saved"
     save_subdomain: "Save your Highrise Subdomain first to be able to map users and tokens"
     submit: "Save plugin settings"
-    successfully_updated: "Account was successfully updated."
     tokens_and_users: "Tokens and Users"
   actions: "Actions"
   activerecord:
@@ -32,6 +31,8 @@ en:
   create: "Create"
   delete: "Delete"
   screenshot: "Screenshot"
+  successfully_created: " was successfully created."
+  successfully_updated: " was successfully updated."
   test: "Test"
   test_and_update: "Test & Update"
   update: "Update"
@@ -40,7 +41,6 @@ en:
     master_user: "Master User"
     prohibited_saving: " prohibited this user map from being saved"
     rg_user: "Ringio User"
-    successfully_created: "User map was successfully created."
     unauthorized_token: "is not authorized"
   wait_loading: "Loading, please wait..."
         

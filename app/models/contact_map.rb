@@ -34,7 +34,7 @@ class ContactMap < ActiveRecord::Base
       else raise 'Unknown party type'
     end
     
-    notes.reject{|n| n.body.present? ? (n.body[0,10] == ApiOperations::Rings::HR_RING_NOTE_MARK) : false}
+    notes.reject{|n| n.body.present? ? n.body.start_with?(ApiOperations::Rings::HR_RING_NOTE_MARK) : false}
   end
 
 end

@@ -1,6 +1,10 @@
 <div id="ajax_block" class="tableContent">
 	<%= t('account.find_token') %>: <%= link_to t('screenshot'), '/images/find_token.png', :target => '_blank' %>
 	
+  <% if notice.present? && notice.start_with?(t('activerecord.models.user_map').capitalize + t('successfully_created')) %>
+    <div id="notice"><%= notice%></div>
+  <% end %>
+	
 	<%= render 'user_maps/index' %>
 	
 	<br/>

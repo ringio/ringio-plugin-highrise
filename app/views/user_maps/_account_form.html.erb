@@ -11,6 +11,10 @@
 	      </ul>
 	    </div>
 	  <% end %>
+
+		<% if notice.present? && notice.start_with?(t('activerecord.models.user_map').capitalize) %>
+		  <div id="notice"><%= notice%></div>
+	  <% end %>
 	
     <span class="highrise">
       <%= f.text_field :hr_user_token %>
