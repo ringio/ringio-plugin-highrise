@@ -6,7 +6,7 @@ class RingMap < ActiveRecord::Base
   validates_uniqueness_of :rg_ring_id, :hr_ring_note_id
   
   def hr_resource_ring_note
-    Highrise::Note.find self.hr_note_id
+    Highrise::Note.find self.hr_ring_note_id
   end
   
   def rg_resource_ring
