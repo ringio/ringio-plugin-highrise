@@ -250,13 +250,10 @@ module ApiOperations
         complex_conversion = COMPLEX_CONVERSIONS.include?(type)
         highrise_data_array.each do |hd|
           complex_value = self.send('hr_to_rg_value_' + type.to_s,hd) if complex_conversion
-          if complex_conversion && d_index = rg_contact.data.index{|cd| (cd.type == type.to_s) && (cd.value == complex_value)}
-            cd = rg_contact.data[d_index]
-          else
-            rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
-            cd.value = complex_conversion ? complex_value : hd.instance_variable_get(:@attributes)[value_variable.to_s]
-            cd.is_primary = nil
-          end
+          rg_contact.data << (cd = RingioAPI::Contact::Datum.new)
+          cd.value = complex_conversion ? complex_value : hd.instance_variable_get(:@attributes)[value_variable.to_s]
+          cd.is_primary = nil
+
           if allowed_locations.include?(hd.location)
             cd.rel = case hd.location
               when 'Personal' then 'home'
@@ -266,6 +263,7 @@ module ApiOperations
           else
             cd.rel = 'other'
           end
+
           cd.type = type.to_s
         end
       end
@@ -322,20 +320,11 @@ module ApiOperations
             raise 'Unknown Party type'
         end
   
-        # clean the contact data structure of the updated Ringio contact
-        if rg_contact.new?
-          rg_contact.data = Array.new
-        else
-          # make sure that the corresponding data is empty in the Ringio contact.
-          # (the corresponding data is the data that would have been synchronized from Ringio to Highrise if it existed)
-          # Ringio API does not allow direct deletion of data, it assumes deletion if data is missing.
-          rg_contact.data.each do |cd|
-            case cd.type
-              when 'email' then rg_contact.data.delete cd
-              when 'telephone' then rg_contact.data.delete cd
-            end
-          end
-        end
+        # empty the contact data structure of the updated Ringio contact,
+        # because we don't handle contact data ids because Ringio does not offer them,
+        # so we cannot know which datum to update, so we delete everything and create the current data.
+        # Ringio API does not allow direct deletion of data, it assumes deletion if data is missing.
+        rg_contact.data = Array.new
 
         if hr_party.contact_data.present?
           # set the email addresses
@@ -530,25 +519,23 @@ module ApiOperations
           else
             raise 'Unknown Party type'
         end
-    
-        # clean the contact data structure of the updated Highrise contact
-        if hr_party.new?
-          # save so that the server creates the contact data structure
-          # (we cannot create ourselves the Highrise::Person::ContactData because it is not in the Highrise gem)
-          hr_party.save!
-        else
-          # make sure that the corresponding data is empty (or deleted) in the Highrise contact
-          # (the corresponding data is the data that would have been synchronized from Highrise to Ringio if it existed)
-          hr_party.contact_data.email_addresses.each{|ea| ea.id = -ea.id}
-          hr_party.contact_data.phone_numbers.each{|pn| pn.id = -pn.id}
-          hr_party.contact_data.instant_messengers.each{|im| im.id = -im.id}
-          hr_party.contact_data.twitter_accounts.each{|ta| ta.id = -ta.id}
-          hr_party.contact_data.addresses.each{|ad| ad.id = -ad.id}
-        end
+ 
+        # save so that the server creates the contact data structure
+        # (we cannot create ourselves the Highrise::Person::ContactData because it is not in the Highrise gem)
+        hr_party.save! if hr_party.new?
+ 
+        # empty the contact data structure of the updated Highrise party,
+        # because we don't handle contact data ids because Ringio does not offer them,
+        # so we cannot know which datum to update, so we delete everything and create the current data.
+        # Highrise API requires contact data to have negative ids if we want to delete them
+        hr_party.contact_data.email_addresses.each{|ea| ea.id = -ea.id}
+        hr_party.contact_data.phone_numbers.each{|pn| pn.id = -pn.id}
     
         if rg_contact.data.present?
           # set the contact data
           rg_contact.data.each do |datum|
+            # IM, Twitter and Addresses are not synchronized from Ringio to Highrise because Ringio does not offer
+            # fields for them, they are stored reusing other data fields, so we don't synchronize them for simplicity            
             case datum.type
               when 'email'
                 hr_party.contact_data.email_addresses << (ea = Highrise::Person::ContactData::EmailAddress.new)
