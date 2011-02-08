@@ -27,18 +27,18 @@ module ApiOperations
     private
 
 
-      def self.synchronize_account_process(account, user_map)
+      def self.synchronize_account_process(account, new_user_map)
         # if there is a new user map
-        if user_map
-          ApiOperations::Common.log(:debug,nil,"Started ring synchronization for the new user map with id = " + user_map.id.to_s + " of the account with id = " + account.id.to_s)
+        if new_user_map
+          ApiOperations::Common.log(:debug,nil,"Started ring synchronization for the new user map with id = " + new_user_map.id.to_s + " of the account with id = " + account.id.to_s)
 
           begin
             # get the feed of changed rings per contact of this new user map from Ringio,
             # we will not check for deleted rings, because they cannot be deleted
             account_rg_feed = account.all_rg_rings_feed
-            contact_rg_feeds = self.fetch_contact_rg_feeds(user_map,account_rg_feed,account)
+            contact_rg_feeds = self.fetch_contact_rg_feeds(new_user_map,account_rg_feed,account)
           rescue Exception => e
-            ApiOperations::Common.log(:error,e,"\nProblem fetching the changed rings for the new user map with id = " + user_map.id.to_s + " of the account with id = " + account.id.to_s)
+            ApiOperations::Common.log(:error,e,"\nProblem fetching the changed rings for the new user map with id = " + new_user_map.id.to_s + " of the account with id = " + account.id.to_s)
           end
         else
           begin
@@ -54,8 +54,8 @@ module ApiOperations
         
         self.synchronize_contacts contact_rg_feeds
         
-        if user_map
-          ApiOperations::Common.log(:debug,nil,"Finished ring synchronization for the new user map with id = " + user_map.id.to_s + " of the account with id = " + account.id.to_s)
+        if new_user_map
+          ApiOperations::Common.log(:debug,nil,"Finished ring synchronization for the new user map with id = " + new_user_map.id.to_s + " of the account with id = " + account.id.to_s)
         end
       end
 
@@ -110,14 +110,14 @@ module ApiOperations
       # [0] => contact map
       # [1] => updated Ringio rings for this contact map
       # we will choose the author of the ring event note in Highrise as the owner of the contact 
-      def self.fetch_contact_rg_feeds(user_map, account_rg_feed, account)
+      def self.fetch_contact_rg_feeds(new_user_map, account_rg_feed, account)
         account_rg_feed.updated.inject([]) do |contact_feeds,rg_ring_id|
           rg_ring = RingioAPI::Ring.find rg_ring_id
 
           if rg_ring.attributes['from_type'].present? && rg_ring.from_type == 'contact'
-            self.process_rg_ring_new_user_map(user_map,rg_ring.from_id,contact_feeds,rg_ring,account)
+            self.process_rg_ring_user_map(new_user_map,rg_ring.from_id,contact_feeds,rg_ring,account)
           elsif rg_ring.attributes['to_type'].present? && rg_ring.to_type == 'contact'
-            self.process_rg_ring_new_user_map(user_map,rg_ring.to_id,contact_feeds,rg_ring,account)
+            self.process_rg_ring_user_map(new_user_map,rg_ring.to_id,contact_feeds,rg_ring,account)
           end
 
           contact_feeds
@@ -125,10 +125,10 @@ module ApiOperations
       end
 
 
-      def self.process_rg_ring_new_user_map(user_map, rg_contact_id, contact_feeds, rg_ring, account)
+      def self.process_rg_ring_user_map(new_user_map, rg_contact_id, contact_feeds, rg_ring, account)
         # synchronize only notes of contacts already mapped for this account
-        if user_map
-          if (cm = ContactMap.find_by_user_map_id_and_rg_contact_id(user_map.id,rg_contact_id))
+        if new_user_map
+          if (cm = ContactMap.find_by_user_map_id_and_rg_contact_id(new_user_map.id,rg_contact_id))
             self.process_rg_ring(cm,contact_feeds,rg_ring)
           end
         else
