@@ -10,7 +10,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20110207172413) do
+ActiveRecord::Schema.define(:version => 20110203120634) do
 
   create_table "accounts", :force => true do |t|
     t.integer  "rg_account_id"
@@ -34,7 +34,6 @@ ActiveRecord::Schema.define(:version => 20110207172413) do
     t.string   "hr_party_type"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.boolean  "rg_hidden",     :default => false
   end
 
   create_table "note_maps", :force => true do |t|
