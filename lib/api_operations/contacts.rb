@@ -113,8 +113,8 @@ module ApiOperations
         account_rg_feed.updated.inject([]) do |user_feeds,rg_contact_id|
           rg_contact = RingioAPI::Contact.find rg_contact_id
 
-          # synchronize only contacts of users already mapped for this account
-          if (um = UserMap.find_by_account_id_and_rg_user_id(account.id,rg_contact.owner_id))
+          # synchronize only contacts of users already mapped for this account and that are not hidden in Ringio
+          if (um = UserMap.find_by_account_id_and_rg_user_id(account.id,rg_contact.owner_id)) && (! rg_contact.hidden)
             if (um_index = user_feeds.index{|uf| uf[0] == um})
               user_feeds[um_index][1] << rg_contact
             else
@@ -131,8 +131,8 @@ module ApiOperations
         updated_rg_contacts = user_map.all_rg_contacts_feed.updated.inject([]) do |u_rg_contacts,rg_contact_id|
           rg_contact = RingioAPI::Contact.find rg_contact_id
 
-          # synchronize only contacts that belong to this user map
-          if user_map.rg_user_id.to_s == rg_contact.owner_id
+          # synchronize only contacts that belong to this user map and are not hidden in Ringio
+          if (user_map.rg_user_id.to_s == rg_contact.owner_id) && (! rg_contact.hidden)
             u_rg_contacts << rg_contact
           end
 
