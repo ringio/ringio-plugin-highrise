@@ -214,28 +214,28 @@ module ApiOperations
         hr_ring_note.subject_type = 'Party'
         # it is not necessary to specify if it is a Person or a Company (they can't have id collision),
         # and Highrise does not offer a way to specify it
-          
-        if rg_ring.attributes['from_type'].present?
-          from = case rg_ring.from_type
-            when 'user' then RingioAPI::User.find rg_ring.from_id
-            when 'contact' then RingioAPI::Contact.find rg_ring.from_id
+        
+        extract_name = lambda do |type,id|
+          case type
+            when 'user'
+              begin
+                RingioAPI::User.find(id).name
+              rescue ActiveResource::ResourceNotFound
+                'deleted'
+              end
+            when 'contact' then RingioAPI::Contact.find(id).name
             else
               raise 'Unknown Ring From type'
           end
         end
         
-        if rg_ring.attributes['to_type'].present?
-          to = case rg_ring.to_type
-            when 'user' then RingioAPI::User.find rg_ring.to_id
-            when 'contact' then RingioAPI::Contact.find rg_ring.to_id
-            else
-              raise 'Unknown Ring To type'
-          end
-        end
+        from_name = extract_name.call(rg_ring.from_type,rg_ring.from_id) if rg_ring.attributes['from_type'].present?
+        
+        to_name = extract_name.call(rg_ring.to_type,rg_ring.to_id) if rg_ring.attributes['to_type'].present?
 
         hr_ring_note.body = HR_RING_NOTE_MARK + "\n" +
-                            (rg_ring.attributes['from_type'].present? ? ("From: " + rg_ring.from_type + " " + from.name + " " + rg_ring.callerid + "\n") : '') +
-                            (rg_ring.attributes['to_type'].present? ? ("To: " + rg_ring.to_type + " " + to.name + " " + rg_ring.called_number + "\n") : '') +
+                            (rg_ring.attributes['from_type'].present? ? ("From: " + rg_ring.from_type + " " + from_name + " " + rg_ring.callerid + "\n") : '') +
+                            (rg_ring.attributes['to_type'].present? ? ("To: " + rg_ring.to_type + " " + to_name + " " + rg_ring.called_number + "\n") : '') +
                             "Start Time: " + rg_ring.start_time + "\n" +
                             "Duration:  " + rg_ring.duration.to_s + "\n" +
                             "Outcome:  " + rg_ring.outcome + "\n" +

@@ -49,9 +49,9 @@ class UserMap < ActiveRecord::Base
 
       begin
         user_hr = Highrise::User.me
-      rescue ActiveResource::UnauthorizedAccess => e
+      rescue ActiveResource::UnauthorizedAccess
         self.errors[:hr_user_token] = I18n.t('user_map.unauthorized_token')
-      rescue ActiveResource::ResourceNotFound => e
+      rescue ActiveResource::ResourceNotFound
         self.errors[:hr_user_token] = I18n.t('user_map.unauthorized_token')
       end
 

@@ -146,7 +146,7 @@ module ApiOperations
           begin
             user_hr = Highrise::User.me
             result = true
-          rescue ActiveResource::UnauthorizedAccess => e
+          rescue ActiveResource::UnauthorizedAccess
             result = false
           end
 
