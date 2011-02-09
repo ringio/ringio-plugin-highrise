@@ -25,6 +25,26 @@ module ApiOperations
     
       COMPLEX_CONVERSIONS = [:im,:website,:address]
 
+      EMAIL_ADDRESS_PATTERN = begin
+        qtext = '[^\\x0d\\x22\\x5c\\x80-\\xff]'
+        dtext = '[^\\x0d\\x5b-\\x5d\\x80-\\xff]'
+        atom = '[^\\x00-\\x20\\x22\\x28\\x29\\x2c\\x2e\\x3a-' +
+          '\\x3c\\x3e\\x40\\x5b-\\x5d\\x7f-\\xff]+'
+        quoted_pair = '\\x5c[\\x00-\\x7f]'
+        domain_literal = "\\x5b(?:#{dtext}|#{quoted_pair})*\\x5d"
+        quoted_string = "\\x22(?:#{qtext}|#{quoted_pair})*\\x22"
+        domain_ref = atom
+        sub_domain = "(?:#{domain_ref}|#{domain_literal})"
+        word = "(?:#{atom}|#{quoted_string})"
+        domain = "#{sub_domain}(?:\\x2e#{sub_domain})*"
+        local_part = "#{word}(?:\\x2e#{word})*"
+        
+        # Ruby 1.9.2 is more strict than 1.8 so we have to force the binary encoding
+        addr_spec = "#{local_part}\\x40#{domain}".force_encoding('binary')
+
+        pattern = /\A#{addr_spec}\z/
+      end
+
       def self.synchronize_account_process(account, new_user_map)
         # if there is a new user map
         if new_user_map
@@ -538,8 +558,11 @@ module ApiOperations
             # fields for them, they are stored reusing other data fields, so we don't synchronize them for simplicity            
             case datum.type
               when 'email'
-                hr_party.contact_data.email_addresses << (ea = Highrise::Person::ContactData::EmailAddress.new)
-                self.rg_to_hr_data(datum,hr_party.contact_data.email_addresses,:address,['work','home','other'])
+                # do not synchronize invalid email addresses from Ringio, because Highrise does not accept them
+                if (datum.value =~ EMAIL_ADDRESS_PATTERN) == 0
+                  hr_party.contact_data.email_addresses << (ea = Highrise::Person::ContactData::EmailAddress.new)
+                  self.rg_to_hr_data(datum,hr_party.contact_data.email_addresses,:address,['work','home','other'])
+                end
               when 'telephone'
                 hr_party.contact_data.phone_numbers << (pn = Highrise::Person::ContactData::PhoneNumber.new)
                 self.rg_to_hr_data(datum,hr_party.contact_data.phone_numbers,:number,['work','mobile','fax','pager','home'])
