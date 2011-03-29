@@ -50,7 +50,11 @@ module ApiOperations
     def self.complete_synchronization
       # TODO: handle optional fields for all resources in Ringio and in Highrise
       Account.all.each do |account|
-        self.synchronize_account account
+        begin
+          self.synchronize_account account
+        rescue Exception => e
+          ApiOperations::Common.log(:error,e,"\nProblem with the initialization of the synchronization of the account with id = " + account.id.to_s)
+        end
       end
       return
     end
