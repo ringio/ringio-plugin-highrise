@@ -148,10 +148,16 @@ module ApiOperations
             result = true
           rescue ActiveResource::UnauthorizedAccess
             result = false
+          rescue ActiveResource::ResourceNotFound
+            result = false
           end
 
           ApiOperations::Common.empty_hr_base
-          break unless result
+
+          unless result
+            ApiOperations::Common.log(:warn,nil,"\nProblem accessing the user with Highrise id = " + um.hr_user_id.to_s)
+            break
+          end
         end
         
         result
