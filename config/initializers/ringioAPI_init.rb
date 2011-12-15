@@ -6,9 +6,7 @@ if RAILS_ENV == 'test'
 	RingioAPI::Base.user = 'apiauthtoken'
 end
 
-puts RAILS_ENV
 if RAILS_ENV == 'development'
-	puts 'dev detected'
 	RingioAPI::Base.site = 'http://newtesting.ringio.com/api-app/'
 	RingioAPI::Base.user = 'apiauthtoken'
 end
