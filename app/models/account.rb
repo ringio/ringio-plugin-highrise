@@ -11,10 +11,11 @@ class Account < ActiveRecord::Base
   end
     
   def rg_contacts_feed
+    rg_contacts_last_timestamp = Time.now
     feed = RingioAPI::Feed.find(
       :one,
       :from => RingioAPI::Feed.prefix + "feeds/accounts/" + self.rg_account_id.to_s + "/contacts",
-      :params => { :since => self.rg_contacts_last_timestamp }
+      :params => { :since => ApiOperations::Common.fixTime(self.rg_contacts_last_timestamp) }
     )
   end
 
@@ -29,7 +30,7 @@ class Account < ActiveRecord::Base
     feed = RingioAPI::Feed.find(
       :one,
       :from => RingioAPI::Feed.prefix + "feeds/accounts/" + self.rg_account_id.to_s + "/notes",
-      :params => { :since => self.rg_notes_last_timestamp }
+      :params => { :since => ApiOperations::Common.fixTime(self.rg_notes_last_timestamp) }
     )
   end
   
@@ -44,7 +45,7 @@ class Account < ActiveRecord::Base
     feed = RingioAPI::Feed.find(
       :one,
       :from => RingioAPI::Feed.prefix + "feeds/accounts/" + self.rg_account_id.to_s + "/rings",
-      :params => { :since => self.rg_rings_last_timestamp }
+      :params => { :since => ApiOperations::Common.fixTime(self.rg_rings_last_timestamp) }
     )
   end
 

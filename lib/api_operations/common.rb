@@ -98,6 +98,17 @@ module ApiOperations
       ApiOperations::Common.empty_hr_base    
     end
 
+    #Transforms any of the possible times in this application into iso8601
+    def self.fixTime(time)
+      if time.class == Fixnum
+        time = Time.mktime(time).iso8601
+      elsif time.class == ActiveSupport::TimeWithZone
+        time = time.iso8601
+      else
+        ApiOperations::Common.log(:warn,nil,"\nBizarre Time object found " + time.class)
+      end
+      time
+    end
     
     private
 
@@ -109,7 +120,6 @@ module ApiOperations
           account_found = false
           ApiOperations::Common.log(:warn,nil,"\nCould not find account with id = " + account.id.to_s)
         end
-        
         if account_found && account.hr_subdomain.present? && account.user_maps.present? && self.are_tokens_correct(account)
           new_user_maps = account.user_maps.inject([]) do |total,um|
             if um.not_synchronized_yet
@@ -123,8 +133,7 @@ module ApiOperations
           # we synchronize in reverse order of resource dependency: first contacts, then notes and then rings
           ApiOperations::Contacts.synchronize_account(account,new_user_maps)
           account.reload
-          new_user_maps.each{|um| um.reload}
-          
+          new_user_maps.each{|um| um.reload }
           ApiOperations::Notes.synchronize_account(account,new_user_maps)
           account.reload
           new_user_maps.each{|um| um.reload}
