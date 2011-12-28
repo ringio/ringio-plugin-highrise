@@ -101,11 +101,13 @@ module ApiOperations
     #Transforms any of the possible times in this application into iso8601
     def self.fixTime(time)
       if time.class == Fixnum
-        time = Time.mktime(time).iso8601
+        if(time > 1000000000)
+          time = Time.at(time/1000).iso8601
+        elsif
+          time = Time.mktime(time).iso8601
+        end
       elsif time.class == ActiveSupport::TimeWithZone
         time = time.iso8601
-      else
-        ApiOperations::Common.log(:warn,nil,"\nBizarre Time object found " + time.class)
       end
       time
     end

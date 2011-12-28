@@ -67,8 +67,8 @@ module ApiOperations
           # the changes that other agents may have caused for this account just when we were synchronizing)
           # TODO: ignore only our changes but not the changes made by other agents
           
-          rg_timestamp = account.rg_rings_feed.timestamp
-          if rg_timestamp && rg_timestamp > account.rg_rings_last_timestamp
+          rg_timestamp = Time.parse(account.rg_rings_feed.timestamp).to_i
+          if rg_timestamp && rg_timestamp > account.rg_rings_last_timestamp/1000
             account.rg_rings_last_timestamp = rg_timestamp
           else
             ApiOperations::Common.log(:error,nil,"\nProblem with the Ringio rings timestamp of the account with id = " + account.id.to_s)
