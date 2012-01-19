@@ -6,4 +6,4 @@ tmp/**/*
 config/initializers/ringioAPI.rb
 .tmp*
 lib/api_operations/testing_info.rb
-
+tmp/

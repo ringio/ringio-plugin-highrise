@@ -6,6 +6,7 @@ gem 'rails', '3.0.3'
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
 gem 'sqlite3-ruby', :require => 'sqlite3'
+gem 'mysql2', '0.2.7'
 
 # Use unicorn as the web server
 # gem 'unicorn'
@@ -32,5 +33,6 @@ group :development, :test do
   gem 'factory_girl_rails'
 end
 
+gem 'rake', '0.8.7'
 gem 'ringioAPI'
 gem 'highrise'

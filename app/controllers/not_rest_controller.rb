@@ -4,7 +4,9 @@ class NotRestController < ApplicationController
 
   # GET /not_rest/create_account?rg_account_id={Ringio not encrypted account id}
   def create_account
-    @account = Account.new(:rg_account_id => params[:rg_account_id])
+    if(!@account = Account.find_by_rg_account_id(params[:rg_account_id]))
+      @account = Account.new(:rg_account_id => params[:rg_account_id])
+    end
 
     respond_to do |format|
       if @account.save

@@ -49,13 +49,18 @@ module ApiOperations
     # run a complete synchronization event between Ringio and Highrise
     def self.complete_synchronization
       # TODO: handle optional fields for all resources in Ringio and in Highrise
+      totalAccounts = Account.all.count.to_s
+      currentAccount = 0
+      ApiOperations::Common.log(:info,nil,"Beginning Sync: " + Account.all.count.to_s + " accounts")
       Account.all.each do |account|
         begin
+          ApiOperations::Common.log(:info,nil,"Synchronizing account id = " + account.rg_account_id.to_s + " (" + (currentAccount += 1).to_s + " of " + totalAccounts.to_s + ")")
           self.synchronize_account account
         rescue Exception => e
-          ApiOperations::Common.log(:error,e,"\nProblem with the initialization of the synchronization of the account with id = " + account.id.to_s)
+          ApiOperations::Common.log(:error,e,"Problem with the initialization of the synchronization of the account with id = " + account.id.to_s)
         end
       end
+      ApiOperations::Common.log(:info,nil,"\nCompleted Sync")
       return
     end
 
@@ -100,7 +105,7 @@ module ApiOperations
 
     #Transforms any of the possible times in this application into iso8601
     def self.fixTime(time)
-      if time.class == Fixnum
+      if time.class == Fixnum || time.class == Bignum
         if(time > 1000000000)
           time = Time.at(time/1000).iso8601
         elsif

@@ -10,18 +10,30 @@ class ContactMap < ActiveRecord::Base
   validates_uniqueness_of :hr_party_type, :scope => :hr_party_id
   
   def hr_resource_party
+    start_time = Time.now
+    
     case self.hr_party_type 
       when 'Person'
-        Highrise::Person.find self.hr_party_id
+        apiResponse = Highrise::Person.find self.hr_party_id
       when 'Company'
-        Highrise::Company.find self.hr_party_id
+        apiResponse = Highrise::Company.find self.hr_party_id
       else
         raise 'Unknown party type'
     end
+    
+    ApiOperations::Common.log(:debug,nil,"Highrise (hr_resource_party) API timing: " + ((Time.now - start_time) * 1000).to_s + " ms")
+    
+    return apiResponse
   end
   
   def rg_resource_contact
-    RingioAPI::Contact.find self.rg_contact_id
+    start_time = Time.now
+    
+    apiResponse = RingioAPI::Contact.find self.rg_contact_id
+    
+    ApiOperations::Common.log(:debug,nil,"Ringio (rg_resource_contact) API timing: " + ((Time.now - start_time) * 1000).to_s + " ms")
+    
+    return apiResponse
   end
 
   def hr_notes
