@@ -24,7 +24,7 @@ class AccountsController < ApplicationController
   def sync
     prepare params[:id]
 
-    system("#{RAILS_ROOT}/script/sync_one.sh " + @account.rg_account_id.to_s)
+    system("#{RAILS_ROOT}/script/sync_one.sh " + @account.rg_account_id.to_s + " background")
 
     respond_to do |format|
         format.html { render :action => "edit" }
