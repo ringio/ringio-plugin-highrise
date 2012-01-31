@@ -11,9 +11,11 @@ class UserMapsController < ApplicationController
     respond_to do |format|
       if @new_user_map.save
         if request.xhr?
+      
           @new_user_map = UserMap.new
           @new_user_map.account = @account
           @user_maps = UserMap.find_all_by_account_id @account.id
+          system("#{RAILS_ROOT}/script/sync_one.sh " + @account.rg_account_id.to_s)
           format.html { render :partial => "block_for_ajax", :locals => {:notice => t('activerecord.models.user_map').capitalize + t('successfully_created')} }        
         else
           format.html { head :created }
