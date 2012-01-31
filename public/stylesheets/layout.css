@@ -380,7 +380,7 @@ input.input_ui15, select.input_ui15 { width: 240px;}
 	margin-right:5px;
     margin-bottom:3px;
 	background:#4F92C3 url('../images/img15/button.png') repeat-x left bottom;
-	border:solid 1px #0A6CAA;
+	/*border:solid 1px #0A6CAA;*/
 	
 	color:#fff;
 	line-height:21px;
@@ -391,6 +391,11 @@ input.input_ui15, select.input_ui15 { width: 240px;}
 	-webkit-border-radius: 4px;
 	border-radius: 4px;
 }
+
+
+.button a { color: #FFF; }
+.button a:visited { color: #FFF; }
+.button a:hover { color: #fff; background-color:#000; }
 
 .button span { color:#fff; font-weight:normal;}
 

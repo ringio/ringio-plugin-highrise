@@ -7,7 +7,9 @@ RingioPluginHighrise::Application.routes.draw do
   match 'not_rest/create_account' => 'not_rest#create_account'
   match 'not_rest/edit_account' => 'not_rest#edit_account'
   match 'not_rest/destroy_account' => 'not_rest#destroy_account'
+  match 'not_rest/sync_one' => 'not_rest#sync_one'
 
+  match 'accounts/:id/sync' => "accounts#sync", :as => :sync
   # The priority is based upon order of creation:
   # first created -> highest priority.
 
