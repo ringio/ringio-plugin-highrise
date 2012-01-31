@@ -55,3 +55,10 @@ task :synchronize_one_debugging, [:rg_account_id] => [:environment] do |t,args|
   Rails.logger.level = previous_level
   Rails.logger.auto_flushing = previous_flushing
 end
+
+desc "Synchronize all, but with good programming practice"
+task :sync_all_smart => :environment do
+  Account.all.each do |act|
+    system("/etc/jobs/sync_one.sh " + act.id)
+  end
+end
