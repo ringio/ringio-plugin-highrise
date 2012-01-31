@@ -59,6 +59,7 @@ end
 desc "Synchronize all, but with good programming practice"
 task :sync_all_smart => :environment do
   Account.all.each do |act|
-    system("/etc/jobs/sync_one.sh " + act.id)
+    system("#{RAILS_ROOT}/script/sync_one.sh " + act.id.to_s)
   end
 end
+
