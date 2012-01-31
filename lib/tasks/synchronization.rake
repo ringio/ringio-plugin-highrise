@@ -62,7 +62,7 @@ task :sync_all_smart => :environment do
   currentAccount = 0
   ApiOperations::Common.log(:info,nil,"Beginning Sync: " + totalAccounts + " accounts")
   Account.all.each do |act|
-    ApiOperations::Common.log(:info,nil,"Synchronizing account id = " + account.rg_account_id.to_s + " (" + (currentAccount += 1).to_s + " of " + totalAccounts + ")")
+    ApiOperations::Common.log(:info,nil,"Synchronizing account id = " + act.rg_account_id.to_s + " (" + (currentAccount += 1).to_s + " of " + totalAccounts + ")")
     system("#{RAILS_ROOT}/script/sync_one.sh " + act.rg_account_id.to_s)
   end
   ApiOperations::Common.log(:info,nil,"\nCompleted Sync")
