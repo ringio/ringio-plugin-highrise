@@ -58,6 +58,12 @@ end
 
 desc "Synchronize all, but with good programming practice"
 task :sync_all_smart => :environment do
+  previous_flushing = Rails.logger.auto_flushing
+  Rails.logger.auto_flushing = true
+
+  # set the logger properly for debugging
+  Rails.logger.level = 0
+
   totalAccounts = Account.all.count.to_s
   currentAccount = 0
   ApiOperations::Common.log(:info,nil,"Beginning Sync: " + totalAccounts + " accounts")
@@ -66,5 +72,7 @@ task :sync_all_smart => :environment do
     system("#{RAILS_ROOT}/script/sync_one.sh " + act.rg_account_id.to_s)
   end
   ApiOperations::Common.log(:info,nil,"\nCompleted Sync")
+
+  Rails.logger.auto_flushing = previous_flushing
 end
 
