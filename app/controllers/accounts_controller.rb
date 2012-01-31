@@ -21,6 +21,18 @@ class AccountsController < ApplicationController
     end
   end
 
+  def sync
+    prepare params[:id]
+
+    system("#{RAILS_ROOT}/script/sync_one.sh " + @account.rg_account_id.to_s)
+
+    respond_to do |format|
+        format.html { render :action => "edit" }
+        format.xml  { render :xml => @account.errors, :status => :unprocessable_entity }
+     
+    end
+  end
+
   private
     def prepare(account_id)
       @account = Account.find account_id
