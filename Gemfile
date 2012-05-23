@@ -29,7 +29,7 @@ gem 'mysql2', '0.2.7'
 group :development, :test do
   # gem 'webrat'
   gem "rspec-rails", ">= 2.4.1"
-  gem 'factory_girl_rails'
+  gem 'factory_girl_rails', "1.5.0"
 end
 
 gem 'rake', '0.8.7'
