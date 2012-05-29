@@ -11,12 +11,10 @@ describe ApiOperations::Contacts do
     ApiOperations::Common.empty_hr_parties @user_map
   end
 
-
   it "should create a new Highrise person for a new Ringio contact" do
     # initial empty synchronization
     ApiOperations::Common.complete_synchronization
-    
-    rg_contact = Factory.create(:ringio_contact)
+    rg_contact = create_contact
     previous_cm_count = ContactMap.count
     ApiOperations::Common.complete_synchronization
     assert_equal previous_cm_count + 1, ContactMap.count
@@ -49,10 +47,9 @@ describe ApiOperations::Contacts do
       end
     end
   end
-
 
   it "in the initial synchronization should create a new Highrise person for a new Ringio contact" do
-    rg_contact = Factory.create(:ringio_contact)
+    rg_contact = create_contact
     previous_cm_count = ContactMap.count
     ApiOperations::Common.complete_synchronization
     assert_equal previous_cm_count + 1, ContactMap.count
@@ -85,24 +82,29 @@ describe ApiOperations::Contacts do
       end
     end
   end
-
 
   it "should update a Highrise person for an edited Ringio contact" do
     # initial empty synchronization
     ApiOperations::Common.complete_synchronization
     
-    rg_contact = Factory.create(:ringio_contact)
+    rg_contact = create_contact
     previous_cm_count = ContactMap.count
     ApiOperations::Common.complete_synchronization
     assert_equal previous_cm_count + 1, ContactMap.count
    
     # edit the title as it is a simple change, and use a new variable so as not to modify the initial values
+    
+
+    oldToken = RingioAPI::Base.user
+    RingioAPI::Base.user = ApiOperations::TestingInfo::RINGIO_TEST_TOKEN
     aux_rg_contact = RingioAPI::Contact.find rg_contact.id
     aux_rg_contact.title = 'Edited title'
+
     aux_rg_contact.save
     
-    ApiOperations::Common.complete_synchronization
+    RingioAPI::Base.user = oldToken
     
+    ApiOperations::Common.complete_synchronization
     cm = ContactMap.find_by_rg_contact_id(rg_contact.id)
     assert_not_nil cm
     
@@ -137,7 +139,7 @@ describe ApiOperations::Contacts do
     # initial empty synchronization
     ApiOperations::Common.complete_synchronization
     
-    rg_contact = Factory.create(:ringio_contact)
+    rg_contact = create_contact
     previous_cm_count = ContactMap.count
     ApiOperations::Common.complete_synchronization
     assert_equal previous_cm_count + 1, ContactMap.count
@@ -152,7 +154,13 @@ describe ApiOperations::Contacts do
     ApiOperations::Common.empty_hr_base
 
     # delete the Ringio contact
-    (RingioAPI::Contact.find rg_contact.id).destroy
+    rg_to_delete = RingioAPI::Contact.find rg_contact.id
+    oldToken = RingioAPI::Base.user
+    RingioAPI::Base.user = ApiOperations::TestingInfo::RINGIO_TEST_TOKEN
+    rg_to_delete.save
+
+    rg_to_delete.destroy
+    RingioAPI::Base.user = oldToken
 
     ApiOperations::Common.complete_synchronization
     assert_equal previous_cm_count, ContactMap.count
@@ -166,7 +174,6 @@ describe ApiOperations::Contacts do
       ApiOperations::Common.empty_hr_base
     end
   end
-
 
   it "should create a new Ringio contact for a new Highrise person" do
     # initial empty synchronization
@@ -358,7 +365,15 @@ describe ApiOperations::Contacts do
     @account.destroy
   end
 
-  
+  def create_contact
+    oldToken = RingioAPI::Base.user
+    RingioAPI::Base.user = ApiOperations::TestingInfo::RINGIO_TEST_TOKEN
+    @account.save()
+    rg_contact = Factory.create(:ringio_contact)
+    RingioAPI::Base.user = oldToken
+    rg_contact
+  end
+
   def create_full_hr_person
     # we need this method because the factory cannot save in the middle of the process to get the ContactData structure
     hr_person = Factory.create(:highrise_person)
