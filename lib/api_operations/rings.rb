@@ -240,7 +240,7 @@ module ApiOperations
             (min > 0 ? min.to_s + (hour > 1 ? " minutes, " : " minute, " ) : "") + 
             (sec.to_s + " seconds.") 
 
-        startTime = Time.iso8601(rg_ring.start_time).in_time_zone('EST').strftime("%D %l:%M %p")
+        startTime = Time.iso8601(rg_ring.start_time).in_time_zone("Eastern Time (US & Canada)").strftime("%D %l:%M %p")
 
 
         hr_ring_note.body = HR_RING_NOTE_MARK + "\n" +
