@@ -107,7 +107,7 @@ module ApiOperations
     def self.fixTime(time)
       if time.class == Fixnum || time.class == Bignum
         if(time > 1000000000)
-          time = Time.at(time/1000).iso8601
+          time = Time.at(time).iso8601
         elsif
           time = Time.mktime(time).iso8601
         end
