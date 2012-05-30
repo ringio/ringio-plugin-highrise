@@ -233,16 +233,26 @@ module ApiOperations
         
         to_name = extract_name.call(rg_ring.to_type,rg_ring.to_id) if rg_ring.attributes['to_type'].present?
 
+        min, sec = (rg_ring.duration / 1000).divmod(60)     
+        hour, min = min.divmod(60)         
+        formatted_duration = 
+            (hour > 0 ? hour.to_s + (hour > 1 ? " hours, " : " hour, " ) : "") + 
+            (min > 0 ? min.to_s + (hour > 1 ? " minutes, " : " minute, " ) : "") + 
+            (sec.to_s + " seconds.") 
+
+        startTime = Time.iso8601(rg_ring.start_time).in_time_zone('EST').strftime("%D %l:%M %p")
+
+
         hr_ring_note.body = HR_RING_NOTE_MARK + "\n" +
                             (rg_ring.attributes['from_type'].present? ? ("From: " + rg_ring.from_type + " " + from_name + " " + rg_ring.callerid + "\n") : '') +
                             (rg_ring.attributes['to_type'].present? ? ("To: " + rg_ring.to_type + " " + to_name + " " + rg_ring.called_number + "\n") : '') +
-                            "Start Time: " + rg_ring.start_time + "\n" +
-                            "Duration:  " + rg_ring.duration.to_s + "\n" +
+                            "Start Time: " + startTime + "\n" +
+                            "Duration:  " + formatted_duration + "\n" +
                             "Outcome:  " + rg_ring.outcome + "\n" +
                             (rg_ring.attributes['voicemail'].present? ? ("Voicemail:  " + rg_ring.voicemail + "\n") : '') +
+                            (rg_ring.attributes['call_recording'].present? ? ("Call Recording:  " + rg_ring.call_recording + "\n") : '') +
                             "Kind:  " + rg_ring.kind + "\n" +
-                            (rg_ring.attributes['department'].present? ? ("Department:  " + rg_ring.department + "\n") : '')
-                            
+                            (rg_ring.attributes['department'].present? ? ("Department:  " + rg_ring.department + "\n") : '')            
         # handle visibility: make it the same as the visibility of the contact
         #   - if the contact is shared in Ringio (group Client), set Highrise visible_to to Everyone
         #   - otherwise, restrict the visibility in Highrise to the owner of the contact
