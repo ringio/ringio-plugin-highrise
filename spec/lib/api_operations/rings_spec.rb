@@ -1,5 +1,12 @@
 require 'spec_helper'
 
+require 'ringioAPI'
+
+class RingioAPI::Ring < RingioAPI::Base
+  def save
+      new? ? create : update
+  end
+end
 describe ApiOperations::Rings do
 
   
@@ -11,6 +18,31 @@ describe ApiOperations::Rings do
     ApiOperations::Common.empty_hr_parties @user_map
   end
 
+  
+  it "should create a new Highrise ring note for a new ringio ring" do
+
+    ApiOperations::Common.complete_synchronization
+
+    previous_rm_count = RingMap.count
+    @contact = create_contact
+    @ring = create_rg_ring
+    ApiOperations::Common.complete_synchronization
+
+    assert_equal previous_rm_count + 1, RingMap.count
+
+    destroy_last_ring
+
+  end
+
+  it "should create a new Highrise ring note for a new ringio ring in the initial synchronization" do
+    previous_rm_count = RingMap.count
+    @contact = create_contact
+    @ring = create_rg_ring
+    ApiOperations::Common.complete_synchronization
+
+    assert_equal previous_rm_count + 1, RingMap.count
+    destroy_last_ring
+  end
 
   it "should NOT create a new Ringio note or ring for a new Highrise ring note" do
     # initial empty synchronization
@@ -29,7 +61,7 @@ describe ApiOperations::Rings do
     assert_nil NoteMap.find_by_hr_note_id(hr_note.id)
     assert_nil RingMap.find_by_hr_ring_note_id(hr_note.id)
   end
-  
+
   
   it "in the initial synchronization should NOT create a new Ringio note or ring for a new Highrise ring note" do
     ApiOperations::Common.set_hr_base @user_map
@@ -78,10 +110,38 @@ describe ApiOperations::Rings do
     assert_nil RingMap.find_by_hr_ring_note_id(hr_note.id)
   end
 
-  
   after(:each) do 
     # remove all the stuff created: everything depends on the account for destruction
     @account.destroy
+  end
+
+  def destroy_last_ring
+    oldToken = RingioAPI::Base.user
+    RingioAPI::Base.user = ApiOperations::TestingInfo::RINGIO_TEST_TOKEN
+    @ring.id = RingMap.last.rg_ring_id
+    @ring.destroy
+    RingioAPI::Base.user = oldToken
+  end
+
+  def create_contact
+    oldToken = RingioAPI::Base.user
+    RingioAPI::Base.user = ApiOperations::TestingInfo::RINGIO_TEST_TOKEN
+    @account.save()
+    rg_contact = Factory.create(:ringio_contact)
+    RingioAPI::Base.user = oldToken
+    rg_contact
+  end
+
+  def create_rg_ring
+    oldToken = RingioAPI::Base.user
+    RingioAPI::Base.user = ApiOperations::TestingInfo::RINGIO_TEST_TOKEN
+    rg_ring = RingioAPI::Ring.new
+    rg_ring.accountId = ApiOperations::TestingInfo::RINGIO_ACCOUNT_ID
+    rg_ring.src_person_id = @contact.id
+    rg_ring.dst_person_id = RingioAPI::User.find(ApiOperations::TestingInfo::RINGIO_USER_ID).personid
+    rg_ring.save
+    RingioAPI::Base.user = oldToken
+    rg_ring
   end
   
   
