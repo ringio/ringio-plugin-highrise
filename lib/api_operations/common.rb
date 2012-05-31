@@ -152,6 +152,9 @@ module ApiOperations
           if account.not_synchronized_yet
             account.not_synchronized_yet = false
             account.save!
+          else
+            account.account_last_synchronized_at = DateTime.now
+            account.save!
           end
         end
       end

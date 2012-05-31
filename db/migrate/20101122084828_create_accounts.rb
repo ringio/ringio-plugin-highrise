@@ -10,6 +10,7 @@ class CreateAccounts < ActiveRecord::Migration
       t.datetime :hr_parties_last_synchronized_at, :default => ApiOperations::Common::INITIAL_DATETIME
       t.datetime :hr_notes_last_synchronized_at, :default => ApiOperations::Common::INITIAL_DATETIME
       t.datetime :hr_ring_notes_last_synchronized_at, :default => ApiOperations::Common::INITIAL_DATETIME
+      t.datetime :account_last_synchronized_at, :default => ApiOperations::Common::INITIAL_DATETIME
       t.boolean :not_synchronized_yet, :default => true
 
       t.timestamps
