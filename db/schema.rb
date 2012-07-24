@@ -22,6 +22,7 @@ ActiveRecord::Schema.define(:version => 20110210151358) do
     t.datetime "hr_parties_last_synchronized_at",    :default => '1900-01-01 00:00:01'
     t.datetime "hr_notes_last_synchronized_at",      :default => '1900-01-01 00:00:01'
     t.datetime "hr_ring_notes_last_synchronized_at", :default => '1900-01-01 00:00:01'
+    t.datetime "account_last_synchronized_at",       :default => '1900-01-01 00:00:01'
     t.boolean  "not_synchronized_yet",               :default => true
     t.datetime "created_at"
     t.datetime "updated_at"
