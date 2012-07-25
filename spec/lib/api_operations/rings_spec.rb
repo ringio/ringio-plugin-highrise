@@ -138,7 +138,7 @@ describe ApiOperations::Rings do
     rg_ring = RingioAPI::Ring.new
     rg_ring.accountId = ApiOperations::TestingInfo::RINGIO_ACCOUNT_ID
     rg_ring.src_person_id = @contact.id
-    rg_ring.dst_person_id = RingioAPI::User.find(ApiOperations::TestingInfo::RINGIO_USER_ID).personid
+    rg_ring.dst_person_id = RingioAPI::User.find(ApiOperations::TestingInfo::RINGIO_USER_ID).id
     rg_ring.save
     RingioAPI::Base.user = oldToken
     rg_ring
