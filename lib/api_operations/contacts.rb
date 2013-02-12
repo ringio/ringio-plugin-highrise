@@ -389,6 +389,16 @@ module ApiOperations
           rg_contact.groups.delete(RG_CLIENT_GROUP) if rg_contact.attributes['groups'].present?
         end
       end
+
+      def self.try_hr_party_save(hr_party)
+        hr_party.attributes.each do |key,val|
+            if val == nil
+              hr_party.attributes.delete(key)
+            end  
+        end
+
+        hr_party.save!
+      end
   
   
       def self.update_rg_to_hr(user_map, user_rg_feed)
@@ -401,7 +411,7 @@ module ApiOperations
             is_new_hr_party = preparation[1]
 
             # if the Highrise party is saved properly and it didn't exist before, create a new contact map
-            if hr_party.save! && is_new_hr_party
+            if try_hr_party_save(hr_party) && is_new_hr_party
               new_cm = ContactMap.new(:user_map_id => user_map.id, :rg_contact_id => rg_contact.id, :hr_party_id => hr_party.id)
               new_cm.hr_party_type = case hr_party
                 when Highrise::Person then 'Person'
@@ -542,7 +552,8 @@ module ApiOperations
  
         # save so that the server creates the contact data structure
         # (we cannot create ourselves the Highrise::Person::ContactData because it is not in the Highrise gem)
-        hr_party.save! if hr_party.new?
+
+        try_hr_party_save(hr_party) if hr_party.new?
  
         # empty the contact data structure of the updated Highrise party,
         # because we don't handle contact data ids because Ringio does not offer them,
